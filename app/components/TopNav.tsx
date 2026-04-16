@@ -5,16 +5,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Briefcase, Menu, X } from 'lucide-react';
 
 export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean, setMobileMenuOpen: (v: boolean) => void }) => {
-  const [aiNeon, setAiNeon] = useState(false);
-  const [dotVisible, setDotVisible] = useState(false);
+  const [dotIgnited, setDotIgnited] = useState(false);
 
   useEffect(() => {
-    const neonTimer = setTimeout(() => setAiNeon(true), 2000);
-    const dotTimer = setTimeout(() => setDotVisible(true), 4000);
-    return () => {
-      clearTimeout(neonTimer);
-      clearTimeout(dotTimer);
-    };
+    // Dot ignites after neon "ai" ignition stabilizes (~3.5s end + 0.3s buffer)
+    // Flashlight-on CSS animation handles the white flash → cyan glow sequence
+    const dotTimer = setTimeout(() => setDotIgnited(true), 3800);
+    return () => clearTimeout(dotTimer);
   }, []);
 
   return (
@@ -30,29 +27,18 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
           <a href="#" aria-label="Nehorai" className="text-2xl font-bold tracking-tighter text-zinc-100 relative group inline-block w-max">
             <span aria-hidden="true">
               Nehor
-              <motion.span 
-                animate={{ 
-                  color: aiNeon ? '#22d3ee' : '#f4f4f5', // cyan-400 vs zinc-100
-                  textShadow: aiNeon ? '0px 0px 12px rgba(34,211,238,0.8)' : '0px 0px 0px rgba(34,211,238,0)'
-                }}
-                transition={{ duration: 0.5 }}
-                className="font-light"
-              >
+              <span className="font-light logo-ai-neon">
                 a
                 <span className="relative inline-block">
-                  <motion.span 
-                    id="logo-dot" 
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ 
-                      opacity: dotVisible ? 1 : 0, 
-                      scale: dotVisible ? 1 : 0 
-                    }}
-                    transition={{ duration: 0.3, type: 'spring' }}
-                    className="absolute top-[0.12em] left-[50%] -translate-x-1/2 w-[0.16em] h-[0.16em] bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]" 
+                  <span
+                    id="logo-dot"
+                    className={`absolute top-[0.12em] left-[50%] -translate-x-1/2 w-[0.16em] h-[0.16em] rounded-full ${
+                      dotIgnited ? 'flashlight-active' : 'opacity-0 scale-0 bg-white'
+                    }`}
                   />
                   ı
                 </span>
-              </motion.span>
+              </span>
             </span>
           </a>
           <span className="text-[10px] text-zinc-500 tracking-widest uppercase mt-0.5 hidden sm:block">
