@@ -77,7 +77,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
         setMessages(prev => [...prev, { 
           id: Date.now().toString(), 
           type: 'system', 
-          content: '> Orchestrator: Initiating secure file transfer... [CV_Nehorai_Hadad.pdf]' 
+          content: '> Orchestrator: Initiating secure file transfer... [Nehorai Hadad CV - SW.pdf]' 
         }]);
         setIsTyping(false);
       }, 800);

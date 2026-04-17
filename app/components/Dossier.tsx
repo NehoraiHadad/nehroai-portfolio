@@ -139,8 +139,8 @@ export const Dossier = () => {
             {/* CV */}
             <motion.a
               whileHover={{ x: 4 }}
-              href="/CV_Nehorai_Hadad.pdf"
-              download="CV_Nehorai_Hadad.pdf"
+              href="/Nehorai Hadad CV - SW.pdf"
+              download="Nehorai Hadad CV - SW.pdf"
               className="inline-flex items-center gap-3 text-zinc-400 hover:text-zinc-100 transition-colors text-sm font-medium w-fit group"
             >
               <span className="w-8 h-8 rounded-lg border border-zinc-800 group-hover:border-zinc-600 flex items-center justify-center transition-colors">
