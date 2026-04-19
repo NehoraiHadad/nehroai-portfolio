@@ -23,9 +23,6 @@ export const ThePractice = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-zinc-100 mb-4 tracking-tight">
             {practice.title}
           </h2>
-          <p className={`text-zinc-400 text-lg max-w-2xl ${isRtl ? '' : 'mx-auto'}`}>
-            {practice.description}
-          </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">

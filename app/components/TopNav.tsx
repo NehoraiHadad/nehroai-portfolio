@@ -33,7 +33,12 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
       <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo Area */}
         <div className="flex flex-col justify-center" style={{ textAlign: 'start' }}>
-          <a href="#" aria-label="Nehorai" className="text-2xl font-bold tracking-tighter text-zinc-100 relative group inline-block w-max">
+          <a
+            href="#"
+            aria-label="Nehorai"
+            dir="ltr"
+            className="text-2xl font-bold tracking-tighter text-zinc-100 relative group inline-block w-max bidi-ltr"
+          >
             <span aria-hidden="true">
               Nehor
               <span className="font-light logo-ai-neon">

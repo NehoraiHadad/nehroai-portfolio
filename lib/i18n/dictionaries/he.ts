@@ -21,15 +21,13 @@ export const heDictionary: AppDictionary = {
   hero: {
     rotatingWords: ['סוכנים.', 'תהליכי עבודה.', 'ממשקים.', 'מערכות.'],
     statusLabel: 'System.Status: מקוון',
-    titlePrefix: 'הנדסה',
-    subtitle: 'מהנדס AI עם עומק תשתיתי. אני בונה agents, workflows ומערכות web ב-Full-Stack.',
-    body: 'אני מספק מקצה לקצה: אפליקציות Next.js על Vercel, צינורות אודיו מבוזרים על AWS Lambda, ודשבורדים self-hosted ל-agents עם MCP. מאחורי זה עומדות שמונה שנות ניסיון ב-datacenter on-prem ובחומרת שרתים.',
+    titlePrefix: 'בונה',
+    subtitle: 'מפתח Full-Stack עם התמחות ב-AI. אני בונה agents, workflows ומערכות web.',
     primaryCta: 'לראות מה בניתי',
-    secondaryCta: 'צור קשר',
+    secondaryCta: 'הורד קורות חיים',
   },
   practice: {
     title: 'סטאק',
-    description: 'הכלים שאני עובד איתם, מסודרים לפי שכבה.',
   },
   showcase: {
     title: 'פרויקטים נבחרים',
@@ -55,9 +53,9 @@ export const heDictionary: AppDictionary = {
   },
   dossier: {
     sectionLabel: '04 — יצירת קשר',
-    availability: 'זמין · ישראל / Remote',
-    titleLines: ['פתוח ל', 'הזדמנות'],
-    titleHighlight: 'הנכונה.',
+    availability: 'זמין · היברידי / Remote',
+    titleLines: ['פתוח', 'להזדמנויות'],
+    titleHighlight: 'הנכונות.',
     description: 'תפקידי Full-Stack + AI. בונים מוצרי AI, אוטומציה או תשתית web מודרנית? בואו נדבר.',
     stackLines: [
       { tag: 'AI', stack: 'LangGraph · AgentCore · MCP · RAG' },
@@ -92,7 +90,7 @@ export const heDictionary: AppDictionary = {
       messageLabel: 'גוף_ההודעה',
       namePlaceholder: 'השם שלך',
       emailPlaceholder: 'you@company.com',
-      messagePlaceholder: 'הזן נתוני שידור...',
+      messagePlaceholder: 'כתוב הודעה...',
       submitLabel: 'שגר',
       errorPrefix: '> שגיאה: ',
     },

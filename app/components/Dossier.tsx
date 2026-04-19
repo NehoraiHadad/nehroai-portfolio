@@ -121,7 +121,7 @@ export const Dossier = () => {
             {/* Stack lines */}
             <div className="space-y-4">
               {dossier.stackLines.map(({ tag, stack }) => (
-                <div key={tag} className="flex items-center gap-4">
+                <div key={tag} className="flex items-center gap-4 bidi-ltr">
                   <span className="font-mono text-[9px] text-cyan-500 tracking-widest w-8 bidi-ltr">{tag}</span>
                   <div className="h-px w-4 bg-zinc-700" />
                   <span className="font-mono text-xs text-zinc-500 bidi-ltr">{stack}</span>
@@ -274,9 +274,9 @@ export const Dossier = () => {
                           onChange={(e) => { setName(e.target.value); setError(null); }}
                           disabled={isSubmitting}
                           placeholder={dossier.form.namePlaceholder}
-                          dir="auto"
+                          dir={isRtl ? 'rtl' : 'ltr'}
                           className="w-full bg-transparent border-0 border-b border-zinc-800 focus:border-cyan-500/40 text-zinc-200 text-sm font-mono py-2 placeholder:text-zinc-700 focus:outline-none transition-colors disabled:opacity-40"
-                          style={{ textAlign: 'start' }}
+                          style={{ textAlign: isRtl ? 'right' : 'left' }}
                         />
                       </div>
 
@@ -303,7 +303,7 @@ export const Dossier = () => {
                       </div>
 
                       {/* Message */}
-                      <div className="flex flex-col flex-grow">
+                      <div className="flex flex-col">
                         <div className="flex items-baseline gap-2 mb-2">
                           <span className="font-mono text-xs text-zinc-600">&gt;</span>
                           <label htmlFor="message" className="font-mono text-[10px] text-cyan-500 uppercase tracking-widest">
@@ -317,9 +317,9 @@ export const Dossier = () => {
                           onChange={(e) => { setMessage(e.target.value); setError(null); }}
                           disabled={isSubmitting}
                           placeholder={dossier.form.messagePlaceholder}
-                          dir="auto"
-                          className="flex-grow w-full bg-transparent border-0 border-b border-zinc-800 focus:border-cyan-500/40 text-zinc-200 text-sm font-mono py-2 placeholder:text-zinc-700 focus:outline-none transition-colors resize-none disabled:opacity-40 min-h-[90px]"
-                          style={{ textAlign: 'start' }}
+                          dir={isRtl ? 'rtl' : 'ltr'}
+                          className="w-full bg-zinc-900/30 border border-zinc-800 rounded-lg px-3 py-3 text-zinc-200 text-sm font-mono placeholder:text-zinc-700 focus:border-cyan-500/40 focus:bg-zinc-900/40 focus:outline-none transition-colors resize-none disabled:opacity-40 min-h-[96px]"
+                          style={{ textAlign: isRtl ? 'right' : 'left' }}
                         />
                       </div>
 

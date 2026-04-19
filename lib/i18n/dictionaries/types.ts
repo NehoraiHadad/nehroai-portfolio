@@ -49,13 +49,11 @@ export interface AppDictionary {
     statusLabel: string;
     titlePrefix: string;
     subtitle: string;
-    body: string;
     primaryCta: string;
     secondaryCta: string;
   };
   practice: {
     title: string;
-    description: string;
   };
   showcase: {
     title: string;

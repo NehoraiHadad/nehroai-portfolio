@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, ArrowRight, Terminal, Brain, Network, Database, Cpu, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, FileText, Brain, Network, Database, Cpu, Sparkles } from 'lucide-react';
 import { OpenAILogo, AnthropicLogo, GeminiLogo, N8nLogo, MetaLogo, PythonLogo, VercelLogo, DockerLogo, HuggingFaceLogo } from './TechLogos';
 import { InteractiveAgent } from './InteractiveAgent';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
@@ -542,7 +542,7 @@ const IlluminationBackground = () => {
 };
 
 export const Hero = () => {
-  const { hero } = useDictionary();
+  const { hero, dossier } = useDictionary();
   const direction = useDirection();
   const isRtl = direction === 'rtl';
   const CtaArrow = isRtl ? ArrowLeft : ArrowRight;
@@ -583,10 +583,6 @@ export const Hero = () => {
           {hero.subtitle}
         </motion.h2>
 
-        <motion.p variants={item} className="text-lg text-zinc-500 max-w-xl mb-10">
-          {hero.body}
-        </motion.p>
-
         <motion.div
           variants={item}
           className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
@@ -602,10 +598,11 @@ export const Hero = () => {
           <motion.a
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            href="#dossier"
+            href={dossier.resumeFile}
+            download={dossier.resumeDownloadName}
             className="w-full sm:w-auto bg-zinc-900 border border-zinc-700 text-zinc-100 px-8 py-3.5 rounded-xl font-medium hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"
           >
-            <Terminal className="w-4 h-4" />
+            <FileText className="w-4 h-4" />
             {hero.secondaryCta}
           </motion.a>
         </motion.div>

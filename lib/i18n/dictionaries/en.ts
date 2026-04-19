@@ -23,13 +23,11 @@ export const enDictionary: AppDictionary = {
     statusLabel: 'System.Status: Online',
     titlePrefix: 'Engineering',
     subtitle: 'AI engineer with infrastructure depth. I build agents, workflows, and full-stack web systems.',
-    body: 'I ship end-to-end: Next.js apps on Vercel, distributed audio pipelines on AWS Lambda, self-hosted agent dashboards with MCP. Eight years of on-prem datacenter and server hardware under the hood.',
     primaryCta: 'See what I ship',
-    secondaryCta: 'Get in touch',
+    secondaryCta: 'Download Resume',
   },
   practice: {
     title: 'Stack',
-    description: 'The tools I reach for, grouped by layer.',
   },
   showcase: {
     title: 'Selected Projects',
@@ -55,7 +53,7 @@ export const enDictionary: AppDictionary = {
   },
   dossier: {
     sectionLabel: '04 — CONTACT',
-    availability: 'Available · Israel / Remote',
+    availability: 'Available · Hybrid / Remote',
     titleLines: ['Open to', 'the right'],
     titleHighlight: 'opportunity.',
     description: "Full-stack + AI roles. Building AI products, automation, or modern web infrastructure? Let's talk.",
