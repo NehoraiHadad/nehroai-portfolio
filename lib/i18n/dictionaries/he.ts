@@ -138,7 +138,7 @@ export const heDictionary: AppDictionary = {
       default:
         'אני יכול לענות על שאלות לגבי ה-stack של Nehorai, הפרויקטים שלו ואיך ליצור איתו קשר. נסה לשאול על הטכנולוגיות שלו, הפרויקטים שלו או על עבודה משותפת.',
       showcase:
-        'מוצגים ארבעה פרויקטים: Podcasto (Telegram → פודקאסטים בקריינות AI על AWS), Agendo (דשבורד self-hosted לריבוי agents), ושני אתרי לקוח חיים — ykl.org.il ו-judah-brigade.vercel.app. גלול לאזור הפרויקטים הנבחרים כדי לראות את הפרטים.',
+        'מוצגים חמישה פרויקטים: Podcasto, Agendo, Story Creator, ושני אתרי לקוח חיים — ykl.org.il ו-judah-brigade.vercel.app. גלול לאזור הפרויקטים הנבחרים כדי לראות את הפרטים.',
       tech:
         'ה-stack היומיומי: Next.js 15/16 + TypeScript בפרונט, Node ו-Python בבק, PostgreSQL/pgvector לנתונים, AWS Lambda/SQS/DynamoDB לפייפליינים, ו-LangGraph / AWS AgentCore / MCP ל-agents. מתחת לכל זה יש שמונה שנות ניסיון עם Linux on-prem.',
       contact:
@@ -192,6 +192,32 @@ export const heDictionary: AppDictionary = {
           'אפליקציית Next.js 16 שמגלה אוטומטית CLIs מותקנים של agents, עוטפת אותם ב-Kanban מגובה PostgreSQL ובטרמינלים חיים לסשנים, וחושפת את הכול דרך MCP כדי ש-agents יוכלו לתאם.',
         architecture: ['Next.js 16', 'TypeScript (strict)', 'PostgreSQL 17', 'Docker', 'PM2', 'Model Context Protocol'],
         githubUrl: 'https://github.com/NehoraiHadad/agendo',
+      },
+    },
+    {
+      id: 'story-creator',
+      title: 'Story Creator',
+      description:
+        'מוצר AI ליצירת ספרי ילדים שממיר תמונה של הילד לספר מאויר אישי עם עקביות דמויות, חוויית שימוש דו-לשונית ו-wizard רב-שלבי שניתן להמשיך ממנו.',
+      impact:
+        'מדגים הנדסת מוצר AI מקצה לקצה: auth, מערכת credits, persistence, בדיקות, וזרימת יצירת תמונות ברמת production בתוך אפליקציה אחת.',
+      tags: ['Next.js 16', 'Gemini', 'Firebase', 'NextAuth.js 5', 'Playwright'],
+      icon: 'book',
+      details: {
+        challenge:
+          'דמואים של image generation נופלים בדרך כלל על עקביות דמויות, שחזור טיוטות, ו-UX של תהליך רב-שלבי. הורים צריכים מוצר אמין, לא רק prompt box.',
+        solution:
+          'נבנה wizard בן חמישה שלבים עם שמירת טיוטה מתמשכת, סנכרון ל-Firestore, mutations בטוחים מבחינת credits, ו-pipeline דו-שלבי שמייצר תבניות דמויות לפני רינדור של כל עמוד בסיפור.',
+        architecture: [
+          'Next.js 16',
+          'React 19',
+          'TypeScript',
+          'Firebase Firestore + Storage',
+          'NextAuth.js 5',
+          'Gemini לטקסט ולתמונות',
+          'Tailwind CSS 4 + shadcn/ui',
+          'Vitest + Playwright',
+        ],
       },
     },
     {

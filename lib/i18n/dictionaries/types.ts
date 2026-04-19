@@ -1,4 +1,4 @@
-export type CaseStudyIconKey = 'podcast' | 'dashboard' | 'globe' | 'map';
+export type CaseStudyIconKey = 'podcast' | 'dashboard' | 'globe' | 'map' | 'book';
 
 export interface CaseStudyContent {
   id: string;

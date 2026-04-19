@@ -138,7 +138,7 @@ export const enDictionary: AppDictionary = {
       default:
         "I can answer questions about Nehorai's stack, projects, or how to reach him. Try asking about his tech, his projects, or working together.",
       showcase:
-        'Four projects are featured: Podcasto (Telegram → AI podcasts on AWS), Agendo (self-hosted multi-agent dashboard), and two live client sites — ykl.org.il and judah-brigade.vercel.app. Scroll to Selected Projects for the details.',
+        'Five projects are featured: Podcasto, Agendo, Story Creator, and two live client sites — ykl.org.il and judah-brigade.vercel.app. Scroll to Selected Projects for the details.',
       tech:
         'Day-to-day stack: Next.js 15/16 + TypeScript on the front, Node and Python on the back, PostgreSQL/pgvector for data, AWS Lambda/SQS/DynamoDB for pipelines, and LangGraph / AWS AgentCore / MCP for agents. Eight years of on-prem Linux underneath it all.',
       contact:
@@ -192,6 +192,32 @@ export const enDictionary: AppDictionary = {
           'A Next.js 16 app that auto-discovers installed agent CLIs, wraps them with a PostgreSQL-backed Kanban and live session terminals, and exposes everything over MCP so agents can coordinate.',
         architecture: ['Next.js 16', 'TypeScript (strict)', 'PostgreSQL 17', 'Docker', 'PM2', 'Model Context Protocol'],
         githubUrl: 'https://github.com/NehoraiHadad/agendo',
+      },
+    },
+    {
+      id: 'story-creator',
+      title: 'Story Creator',
+      description:
+        "AI storybook product that turns a child's photo into a personalized illustrated book with character-consistent images, bilingual UX, and a resumable multi-step wizard.",
+      impact:
+        'Shows end-to-end AI product engineering: auth, credits, persistence, testing, and a production-grade image generation workflow in one app.',
+      tags: ['Next.js 16', 'Gemini', 'Firebase', 'NextAuth.js 5', 'Playwright'],
+      icon: 'book',
+      details: {
+        challenge:
+          'Image-generation demos usually break on character consistency, draft recovery, and multi-step UX. Parents need a reliable product, not a prompt box.',
+        solution:
+          'Built a five-step wizard with persisted draft state, Firestore sync, credit-safe mutations, and a two-stage image pipeline that generates reusable character templates before rendering each story page.',
+        architecture: [
+          'Next.js 16',
+          'React 19',
+          'TypeScript',
+          'Firebase Firestore + Storage',
+          'NextAuth.js 5',
+          'Gemini text + image models',
+          'Tailwind CSS 4 + shadcn/ui',
+          'Vitest + Playwright',
+        ],
       },
     },
     {
