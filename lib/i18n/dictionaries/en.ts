@@ -121,6 +121,19 @@ export const enDictionary: AppDictionary = {
       tech: 'TechAgent',
       contact: 'CommAgent',
     },
+    intentKeywords: {
+      commands: {
+        clear: ['clear', '/clear', 'reset'],
+        help: ['help', '/help', 'commands'],
+        download: ['download', 'cv', 'resume', '/download_cv'],
+        matrix: ['matrix', 'metrix', '/matrix'],
+      },
+      routing: {
+        showcase: ['build', 'project', 'projects', 'case', 'show', 'portfolio'],
+        tech: ['stack', 'skill', 'skills', 'tech', 'technology'],
+        contact: ['contact', 'hire', 'work', 'together', 'email', 'reach'],
+      },
+    },
     responses: {
       default:
         "I can answer questions about Nehorai's stack, projects, or how to reach him. Try asking about his tech, his projects, or working together.",

@@ -121,6 +121,19 @@ export const heDictionary: AppDictionary = {
       tech: 'TechAgent',
       contact: 'CommAgent',
     },
+    intentKeywords: {
+      commands: {
+        clear: ['clear', '/clear', 'נקה', 'אפס'],
+        help: ['help', '/help', 'עזרה', 'פקודות'],
+        download: ['download', '/download_cv', 'cv', 'resume', 'קורות', 'חיים'],
+        matrix: ['matrix', '/matrix', 'מטריקס'],
+      },
+      routing: {
+        showcase: ['פרויקט', 'פרויקטים', 'עבודות', 'תיק עבודות', 'מה בנית', 'הצג'],
+        tech: ['סטאק', 'טכנולוג', 'טכנולוגי', 'skill', 'skills', 'tech'],
+        contact: ['קשר', 'צור קשר', 'אימייל', 'מייל', 'לעבוד', 'יחד', 'העסקה'],
+      },
+    },
     responses: {
       default:
         'אני יכול לענות על שאלות לגבי ה-stack של Nehorai, הפרויקטים שלו ואיך ליצור איתו קשר. נסה לשאול על הטכנולוגיות שלו, הפרויקטים שלו או על עבודה משותפת.',

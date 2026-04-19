@@ -135,6 +135,19 @@ export interface AppDictionary {
       tech: string;
       contact: string;
     };
+    intentKeywords: {
+      commands: {
+        clear: string[];
+        help: string[];
+        download: string[];
+        matrix: string[];
+      };
+      routing: {
+        showcase: string[];
+        tech: string[];
+        contact: string[];
+      };
+    };
     responses: {
       default: string;
       showcase: string;

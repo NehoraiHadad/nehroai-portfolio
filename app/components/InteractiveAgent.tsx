@@ -43,6 +43,10 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
     return String(messageIdRef.current);
   };
 
+  const normalizeInput = (value: string) => value.toLocaleLowerCase().trim();
+  const includesAnyKeyword = (value: string, keywords: string[]) =>
+    keywords.some((keyword) => value.includes(normalizeInput(keyword)));
+
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
 
@@ -51,10 +55,9 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
     setInputValue('');
     setIsTyping(true);
 
-    // Robust Easter Egg Commands
-    const lowerText = text.toLowerCase();
+    const normalizedText = normalizeInput(text);
     
-    if (lowerText.includes('clear')) {
+    if (includesAnyKeyword(normalizedText, assistant.intentKeywords.commands.clear)) {
       setTimeout(() => {
         setMatrixMode(false);
         setMessages([
@@ -65,7 +68,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       return;
     }
 
-    if (lowerText.includes('help')) {
+    if (includesAnyKeyword(normalizedText, assistant.intentKeywords.commands.help)) {
       setTimeout(() => {
         setMessages(prev => [...prev, { 
           id: nextMessageId(), 
@@ -77,7 +80,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       return;
     }
 
-    if (lowerText.includes('download') || lowerText.includes('cv') || lowerText.includes('resume')) {
+    if (includesAnyKeyword(normalizedText, assistant.intentKeywords.commands.download)) {
       setTimeout(() => {
         setMessages(prev => [...prev, { 
           id: nextMessageId(), 
@@ -89,7 +92,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       return;
     }
 
-    if (lowerText.includes('matrix') || lowerText.includes('metrix')) {
+    if (includesAnyKeyword(normalizedText, assistant.intentKeywords.commands.matrix)) {
       setTimeout(() => {
         setMatrixMode(true);
         setMessages(prev => [...prev, { 
@@ -111,14 +114,13 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       let agentName = assistant.agentNames.portfolio;
       let response = assistant.responses.default;
 
-      const lower = text.toLowerCase();
-      if (lower.includes('build') || lower.includes('project') || lower.includes('case') || lower.includes('show')) {
+      if (includesAnyKeyword(normalizedText, assistant.intentKeywords.routing.showcase)) {
         agentName = assistant.agentNames.showcase;
         response = assistant.responses.showcase;
-      } else if (lower.includes('stack') || lower.includes('skill') || lower.includes('tech')) {
+      } else if (includesAnyKeyword(normalizedText, assistant.intentKeywords.routing.tech)) {
         agentName = assistant.agentNames.tech;
         response = assistant.responses.tech;
-      } else if (lower.includes('contact') || lower.includes('hire') || lower.includes('work') || lower.includes('together')) {
+      } else if (includesAnyKeyword(normalizedText, assistant.intentKeywords.routing.contact)) {
         agentName = assistant.agentNames.contact;
         response = assistant.responses.contact;
       }
