@@ -46,6 +46,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
   const normalizeInput = (value: string) => value.toLocaleLowerCase().trim();
   const includesAnyKeyword = (value: string, keywords: string[]) =>
     keywords.some((keyword) => value.includes(normalizeInput(keyword)));
+  const inputDirection = inputValue.trim() ? 'auto' : direction;
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
@@ -256,13 +257,13 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
             onChange={(e) => setInputValue(e.target.value)}
             disabled={isTyping}
             placeholder={matrixMode ? assistant.matrixInputPlaceholder : assistant.inputPlaceholder}
-            dir="auto"
+            dir={inputDirection}
             className={`w-full border rounded-xl py-3 text-sm focus:outline-none transition-colors disabled:opacity-50 ${
               matrixMode
                 ? 'bg-black border-green-900/50 text-green-500 placeholder:text-green-900 focus:border-green-500/50 font-mono'
                 : 'bg-zinc-950 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:border-cyan-500/50'
             }`}
-            style={{ paddingInlineStart: '1rem', paddingInlineEnd: '3rem' }}
+            style={{ paddingInlineStart: '1rem', paddingInlineEnd: '3rem', textAlign: 'start' }}
           />
           <button
             type="submit"
