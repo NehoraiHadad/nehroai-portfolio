@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getLocaleDirection, isLocale, locales } from '@/lib/i18n/config';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { I18nProvider } from '@/lib/i18n/provider';
+import { fontVariables } from '@/lib/fonts';
 
 export async function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -46,8 +47,8 @@ export default async function RootLayout({
   const direction = getLocaleDirection(lang);
 
   return (
-    <html lang={lang} dir={direction} suppressHydrationWarning>
-      <body suppressHydrationWarning>
+    <html lang={lang} dir={direction} className={fontVariables} suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
         <I18nProvider locale={lang} dictionary={dictionary}>
           {children}
         </I18nProvider>

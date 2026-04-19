@@ -5,12 +5,9 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare } from 'lucide-react';
 import { InteractiveAgent } from './InteractiveAgent';
-import { useDirection } from '@/lib/i18n/provider';
 
 export const MobileAgent = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const direction = useDirection();
-  const isRtl = direction === 'rtl';
 
   return (
     <div className="lg:hidden">
@@ -22,7 +19,8 @@ export const MobileAgent = () => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-            className={`fixed bottom-6 ${isRtl ? 'left-6' : 'right-6'} z-40 w-14 h-14 bg-cyan-500 text-zinc-950 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:scale-105 transition-transform`}
+            className="fixed bottom-6 z-40 w-14 h-14 bg-cyan-500 text-zinc-950 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:scale-105 transition-transform"
+            style={{ insetInlineEnd: '1.5rem' }}
           >
             <MessageSquare className="w-6 h-6" />
           </motion.button>

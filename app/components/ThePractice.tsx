@@ -35,22 +35,21 @@ export const ThePractice = () => {
               className="reveal bg-zinc-950/80 backdrop-blur-md border border-zinc-800/80 rounded-2xl p-6 shadow-xl transition-colors duration-300"
               style={{ '--reveal-delay': `${idx * 100}ms` } as React.CSSProperties}
               whileHover={{ y: -5, borderColor: 'rgba(6, 182, 212, 0.5)' }}
+              dir={isRtl ? 'ltr' : undefined}
             >
-              <h3 className="text-zinc-100 font-semibold mb-4 flex items-center gap-2" style={{ textAlign: 'start' }}>
-                {isRtl ? null : <Layers className="w-4 h-4 text-cyan-400" />}
+              <h3 className="text-zinc-100 font-semibold mb-4 flex items-center gap-2 bidi-ltr" style={{ textAlign: 'left' }}>
+                <Layers className="w-4 h-4 text-cyan-400 shrink-0" />
                 {skillGroup.category}
-                {isRtl ? <Layers className="w-4 h-4 text-cyan-400" /> : null}
               </h3>
               <ul className="space-y-3">
                 {skillGroup.items.map((item, i) => (
                   <li
                     key={i}
-                    className="text-zinc-400 text-sm flex items-start gap-2 font-mono"
-                    style={{ textAlign: 'start' }}
+                    className="text-zinc-400 text-sm flex items-start gap-2 font-mono bidi-ltr"
+                    style={{ textAlign: 'left' }}
                   >
-                    {isRtl ? null : <span className="text-cyan-500/50 mt-0.5 shrink-0">{'>'}</span>}
-                    {item}
-                    {isRtl ? <span className="text-cyan-500/50 mt-0.5 shrink-0">{'<'}</span> : null}
+                    <span className="text-cyan-500/50 mt-0.5 shrink-0" aria-hidden="true">•</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>

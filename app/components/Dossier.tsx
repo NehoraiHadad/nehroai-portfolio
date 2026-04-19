@@ -93,7 +93,7 @@ export const Dossier = () => {
 
         <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-start">
 
-          <div className={`flex flex-col gap-10 ${isRtl ? 'lg:order-2' : 'lg:order-1'}`} style={{ textAlign: 'start' }}>
+          <div className="flex flex-col gap-10" style={{ textAlign: 'start' }}>
 
             {/* Headline */}
             <div>
@@ -122,16 +122,16 @@ export const Dossier = () => {
             <div className="space-y-4">
               {dossier.stackLines.map(({ tag, stack }) => (
                 <div key={tag} className="flex items-center gap-4">
-                  <span className="font-mono text-[9px] text-cyan-500 tracking-widest w-8">{tag}</span>
+                  <span className="font-mono text-[9px] text-cyan-500 tracking-widest w-8 bidi-ltr">{tag}</span>
                   <div className="h-px w-4 bg-zinc-700" />
-                  <span className="font-mono text-xs text-zinc-500">{stack}</span>
+                  <span className="font-mono text-xs text-zinc-500 bidi-ltr">{stack}</span>
                 </div>
               ))}
             </div>
 
             {/* CV */}
             <motion.a
-              whileHover={{ x: 4 }}
+              whileHover={{ x: isRtl ? -4 : 4 }}
               href={dossier.resumeFile}
               download={dossier.resumeDownloadName}
               className="inline-flex items-center gap-3 text-zinc-400 hover:text-zinc-100 transition-colors text-sm font-medium w-fit group"
@@ -143,7 +143,7 @@ export const Dossier = () => {
             </motion.a>
           </div>
 
-          <div className={`relative ${isRtl ? 'lg:order-1' : 'lg:order-2'}`} style={{ textAlign: 'start' }}>
+          <div className="relative" style={{ textAlign: 'start' }}>
             {/* Outer glow */}
             <div className="absolute -inset-3 bg-cyan-500/[0.03] rounded-3xl blur-2xl" />
 
@@ -155,13 +155,13 @@ export const Dossier = () => {
                   <div className="w-3 h-3 rounded-full bg-zinc-700 hover:bg-red-400 transition-colors cursor-default" />
                   <div className="w-3 h-3 rounded-full bg-zinc-700 hover:bg-amber-400 transition-colors cursor-default" />
                   <div className="w-3 h-3 rounded-full bg-zinc-700 hover:bg-green-400 transition-colors cursor-default" />
-                  <span className="font-mono text-[10px] text-zinc-600 select-none" style={{ marginInlineStart: '0.75rem' }}>
+                  <span className="font-mono text-[10px] text-zinc-600 select-none bidi-ltr" style={{ marginInlineStart: '0.75rem' }}>
                     {dossier.terminalFileName}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Lock className="w-3 h-3 text-green-500" />
-                  <span className="font-mono text-[9px] text-green-500 tracking-widest">{dossier.securityLabel}</span>
+                  <span className="font-mono text-[9px] text-green-500 tracking-widest bidi-ltr">{dossier.securityLabel}</span>
                 </div>
               </div>
 
@@ -186,7 +186,7 @@ export const Dossier = () => {
                         <AnimatePresence key={i}>
                           {initStep >= i && (
                             <motion.p
-                              initial={{ opacity: 0, x: -6 }}
+                              initial={{ opacity: 0, x: isRtl ? 6 : -6 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ duration: 0.25 }}
                               className={`font-mono text-xs ${i < initStep ? 'text-zinc-600' : 'text-cyan-400'}`}
@@ -276,6 +276,7 @@ export const Dossier = () => {
                           placeholder={dossier.form.namePlaceholder}
                           dir="auto"
                           className="w-full bg-transparent border-0 border-b border-zinc-800 focus:border-cyan-500/40 text-zinc-200 text-sm font-mono py-2 placeholder:text-zinc-700 focus:outline-none transition-colors disabled:opacity-40"
+                          style={{ textAlign: 'start' }}
                         />
                       </div>
 
@@ -295,8 +296,9 @@ export const Dossier = () => {
                           onChange={(e) => { setEmail(e.target.value); setError(null); }}
                           disabled={isSubmitting}
                           placeholder={dossier.form.emailPlaceholder}
-                          dir="auto"
-                          className="w-full bg-transparent border-0 border-b border-zinc-800 focus:border-cyan-500/40 text-zinc-200 text-sm font-mono py-2 placeholder:text-zinc-700 focus:outline-none transition-colors disabled:opacity-40"
+                          dir="ltr"
+                          className="w-full bg-transparent border-0 border-b border-zinc-800 focus:border-cyan-500/40 text-zinc-200 text-sm font-mono py-2 placeholder:text-zinc-700 focus:outline-none transition-colors disabled:opacity-40 bidi-ltr"
+                          style={{ textAlign: 'left' }}
                         />
                       </div>
 
@@ -317,6 +319,7 @@ export const Dossier = () => {
                           placeholder={dossier.form.messagePlaceholder}
                           dir="auto"
                           className="flex-grow w-full bg-transparent border-0 border-b border-zinc-800 focus:border-cyan-500/40 text-zinc-200 text-sm font-mono py-2 placeholder:text-zinc-700 focus:outline-none transition-colors resize-none disabled:opacity-40 min-h-[90px]"
+                          style={{ textAlign: 'start' }}
                         />
                       </div>
 

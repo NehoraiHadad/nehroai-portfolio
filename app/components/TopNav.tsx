@@ -1,15 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { Briefcase, Menu, X } from 'lucide-react';
-import { useDictionary, useDirection } from '@/lib/i18n/provider';
+import { locales } from '@/lib/i18n/config';
+import { useDictionary, useLocale } from '@/lib/i18n/provider';
 
 export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean, setMobileMenuOpen: (v: boolean) => void }) => {
   const [dotIgnited, setDotIgnited] = useState(false);
   const { navigation } = useDictionary();
-  const direction = useDirection();
-  const isRtl = direction === 'rtl';
+  const locale = useLocale();
+  const localeLabels: Record<(typeof locales)[number], string> = {
+    en: 'EN',
+    he: 'עב',
+  };
 
   useEffect(() => {
     // Dot ignites after neon "ai" ignition stabilizes (~3.5s end + 0.3s buffer)
@@ -60,15 +65,27 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
               {item.label}
             </a>
           ))}
+          <div className="flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/70 p-1">
+            {locales.map((nextLocale) => (
+              <Link
+                key={nextLocale}
+                href={`/${nextLocale}`}
+                className={`min-w-10 rounded-full px-3 py-1 text-center text-xs font-semibold transition-colors ${
+                  locale === nextLocale ? 'bg-zinc-100 text-zinc-950' : 'text-zinc-400 hover:text-zinc-100'
+                }`}
+              >
+                {localeLabels[nextLocale]}
+              </Link>
+            ))}
+          </div>
           <motion.a 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             href="#dossier" 
             className="bg-zinc-100 text-zinc-950 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-white transition-colors flex items-center gap-2 shadow-sm"
           >
-            {isRtl ? null : <Briefcase className="w-4 h-4" />}
+            <Briefcase className="w-4 h-4 shrink-0" />
             {navigation.contactCta}
-            {isRtl ? <Briefcase className="w-4 h-4" /> : null}
           </motion.a>
         </div>
 
@@ -91,6 +108,22 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
             className="md:hidden bg-zinc-950 border-b border-zinc-800 overflow-hidden"
           >
             <div className="flex flex-col px-6 py-4 gap-4">
+              <div className="flex items-center gap-2">
+                {locales.map((nextLocale) => (
+                  <Link
+                    key={nextLocale}
+                    href={`/${nextLocale}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      locale === nextLocale
+                        ? 'border-zinc-100 bg-zinc-100 text-zinc-950'
+                        : 'border-zinc-800 bg-zinc-900/70 text-zinc-400 hover:text-zinc-100'
+                    }`}
+                  >
+                    {localeLabels[nextLocale]}
+                  </Link>
+                ))}
+              </div>
               <a href="#practice" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-cyan-400 font-medium transition-colors">{navigation.links.practice}</a>
               <a href="#showcase" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-cyan-400 font-medium transition-colors">{navigation.links.showcase}</a>
               <a href="#dossier" onClick={() => setMobileMenuOpen(false)} className="bg-zinc-100 text-zinc-950 px-4 py-2 rounded-lg text-sm font-semibold text-center mt-2">

@@ -8,7 +8,12 @@ import { OpenAILogo, AnthropicLogo, GeminiLogo, N8nLogo, MetaLogo, PythonLogo, V
 import { InteractiveAgent } from './InteractiveAgent';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
 
-const SCRAMBLE_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789!<>-_\\/[]{}cxz=+*^?#';
+const LATIN_SCRAMBLE_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789!<>-_\\/[]{}cxz=+*^?#';
+const HEBREW_SCRAMBLE_CHARS = 'אבגדהוזחטיכלמנסעפצקרשת0123456789!?@#$%';
+const HEBREW_CHAR_PATTERN = /[\u0590-\u05FF]/;
+
+const getScrambleChars = (word: string) =>
+  HEBREW_CHAR_PATTERN.test(word) ? HEBREW_SCRAMBLE_CHARS : LATIN_SCRAMBLE_CHARS;
 
 const ScrambleText = ({ words, isRtl }: { words: string[]; isRtl: boolean }) => {
   const initialWord = words[0] ?? '';
@@ -30,13 +35,14 @@ const ScrambleText = ({ words, isRtl }: { words: string[]; isRtl: boolean }) => 
       let iteration = 0;
 
       clearInterval(scrambleInterval);
+      const scrambleChars = getScrambleChars(nextWord);
       
       scrambleInterval = setInterval(() => {
         setText(nextWord.split('').map((char, index) => {
           if (index < Math.floor(iteration)) {
             return nextWord[index];
           }
-          return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+          return scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
         }).join(''));
 
         if (iteration >= nextWord.length) {
@@ -62,7 +68,7 @@ const ScrambleText = ({ words, isRtl }: { words: string[]; isRtl: boolean }) => 
       {/* Absolutely positioned scrambling text doesn't affect document flow */}
       <span
         className="absolute top-0 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500"
-        style={isRtl ? { right: 0 } : { left: 0 }}
+        style={{ insetInlineStart: 0, textAlign: isRtl ? 'right' : 'left' }}
       >
         {text}
       </span>
@@ -549,7 +555,7 @@ export const Hero = () => {
         variants={container}
         initial="hidden"
         animate="show"
-        className={`flex flex-col items-start ${isRtl ? 'lg:order-2' : 'lg:order-1'}`}
+        className="flex flex-col items-start"
         style={{ textAlign: 'start' }}
       >
         <motion.div variants={item} className="flex items-center gap-2 mb-6 bg-zinc-900/50 border border-zinc-800 px-3 py-1.5 rounded-full">
@@ -610,7 +616,7 @@ export const Hero = () => {
         initial={{ opacity: 0, x: isRtl ? -40 : 40, filter: 'blur(10px)' }}
         animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
         transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className={`relative hidden lg:block ${isRtl ? 'lg:order-1' : 'lg:order-2'}`}
+        className="relative hidden lg:block"
       >
         <div className="absolute inset-0 bg-cyan-500/20 blur-[100px] rounded-full pointer-events-none" />
         <InteractiveAgent />

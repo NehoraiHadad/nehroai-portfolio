@@ -29,6 +29,7 @@ type OrchestratorNodeData = Record<string, unknown> & {
 
 type ProjectNodeData = Record<string, unknown> & CaseStudy & {
   isMobile: boolean;
+  isRtl: boolean;
 };
 
 type ShowcaseNode = Node<OrchestratorNodeData | ProjectNodeData>;
@@ -57,7 +58,11 @@ const OrchestratorNode = ({ data }: { data: OrchestratorNodeData }) => (
 const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
   const Icon = data.icon || Cpu;
   return (
-    <div className="bg-zinc-900/90 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-cyan-500/40 hover:shadow-[0_0_20px_rgba(6,182,212,0.1)] transition-all duration-300 group cursor-pointer relative overflow-hidden">
+    <div
+      className="bg-zinc-900/90 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-cyan-500/40 hover:shadow-[0_0_20px_rgba(6,182,212,0.1)] transition-all duration-300 group cursor-pointer relative overflow-hidden"
+      dir={data.isRtl ? 'rtl' : 'ltr'}
+      style={{ textAlign: 'start' }}
+    >
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500/0 via-cyan-500/0 to-cyan-500/0 group-hover:from-cyan-500/50 group-hover:via-blue-500/50 group-hover:to-purple-500/50 transition-all duration-500" />
 
       <Handle
@@ -119,7 +124,7 @@ export const Showcase = () => {
       {
         id: 'orchestrator',
         type: 'orchestrator',
-        position: isMobile ? { x: 0, y: 0 } : { x: isRtl ? 600 : 0, y: (caseStudies.length * 180) / 2 - 80 },
+        position: isMobile ? { x: 0, y: 0 } : { x: 0, y: (caseStudies.length * 180) / 2 - 80 },
         data: { isMobile, label: showcase.orchestratorLabel, shippingLabel: showcase.shippingLabel },
       },
       ...caseStudies.map((study, idx) => ({
@@ -127,10 +132,8 @@ export const Showcase = () => {
         type: 'project',
         position: isMobile
           ? { x: idx % 2 === 0 ? -60 : 60, y: 200 + idx * 220 }
-          : isRtl
-            ? { x: idx % 2 === 0 ? 0 : 250, y: idx * 180 }
-            : { x: 350 + (idx % 2 === 0 ? 0 : 250), y: idx * 180 },
-        data: { ...study, isMobile },
+          : { x: 350 + (idx % 2 === 0 ? 0 : 250), y: idx * 180 },
+        data: { ...study, isMobile, isRtl },
       }))
     ];
 
@@ -187,7 +190,7 @@ export const Showcase = () => {
         {/* Overlay hint */}
         <div
           className="absolute top-4 bg-zinc-900/90 backdrop-blur-md border border-zinc-800/80 px-3 py-2 rounded-lg text-[10px] sm:text-xs font-mono text-zinc-400 flex items-center gap-2 pointer-events-none z-10 shadow-lg"
-          style={isRtl ? { right: '1rem' } : { left: '1rem' }}
+          style={{ insetInlineStart: '1rem' }}
         >
           <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
           {showcase.hint}
@@ -215,8 +218,9 @@ export const Showcase = () => {
                 animate={{ x: 0 }}
                 exit={{ x: isRtl ? '-100%' : '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className={`fixed top-0 ${isRtl ? 'left-0 border-r' : 'right-0 border-l'} h-full w-full sm:w-[480px] bg-zinc-950 border-zinc-800 shadow-2xl z-[101] flex flex-col`}
+                className="fixed top-0 h-full w-full sm:w-[480px] bg-zinc-950 border-zinc-800 shadow-2xl z-[101] flex flex-col"
                 dir={direction}
+                style={{ insetInlineEnd: 0, borderInlineStartWidth: '1px' }}
               >
                 {/* Drawer Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800/80 bg-zinc-900/50 shrink-0">
@@ -239,7 +243,7 @@ export const Showcase = () => {
                   <div className="flex gap-4">
                     <div className="flex-1 space-y-2">
                       <label className="text-[10px] font-mono text-zinc-500 uppercase">{showcase.fields.nodeId}</label>
-                      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-lg px-3 py-2 text-xs font-mono text-zinc-400">
+                      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-lg px-3 py-2 text-xs font-mono text-zinc-400 bidi-ltr">
                         {selectedStudy.id}
                       </div>
                     </div>
@@ -295,7 +299,7 @@ export const Showcase = () => {
                       <label className="text-[10px] font-mono text-zinc-500 uppercase">{showcase.fields.dependencies}</label>
                       <div className="flex flex-wrap gap-2 pt-1">
                         {selectedStudy.details.architecture.map((tech, i) => (
-                          <span key={i} className="px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 text-[11px] font-mono rounded-md">
+                          <span key={i} className="px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 text-[11px] font-mono rounded-md bidi-ltr">
                             {tech}
                           </span>
                         ))}
@@ -322,7 +326,7 @@ export const Showcase = () => {
                       href={selectedStudy.details.githubUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-sm font-medium rounded-lg transition-colors border border-zinc-700"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-sm font-medium rounded-lg transition-colors border border-zinc-700 bidi-ltr"
                     >
                       <Code2 className="w-4 h-4" />
                       {showcase.actions.github}

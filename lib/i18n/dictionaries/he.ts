@@ -220,12 +220,12 @@ export const heDictionary: AppDictionary = {
     },
   ],
   skills: [
-    { category: 'AI וסוכנים', items: ['LangGraph', 'AWS AgentCore', 'Strands Agents SDK', 'MCP', 'RAG + pgvector'] },
-    { category: 'ווב Full-Stack', items: ['Next.js 15/16', 'React 19', 'TypeScript', 'Tailwind + shadcn/ui'] },
-    { category: 'Backend ונתונים', items: ['Node.js', 'Python', 'PostgreSQL', 'Supabase + Drizzle'] },
+    { category: 'AI & Agents', items: ['LangGraph', 'AWS AgentCore', 'Strands Agents SDK', 'MCP', 'RAG + pgvector'] },
+    { category: 'Full-Stack Web', items: ['Next.js 15/16', 'React 19', 'TypeScript', 'Tailwind + shadcn/ui'] },
+    { category: 'Backend & Data', items: ['Node.js', 'Python', 'PostgreSQL', 'Supabase + Drizzle'] },
     {
-      category: 'Cloud ותשתיות',
-      items: ['AWS (Lambda, SQS, SES, DynamoDB)', 'Docker + PM2', '8 שנות on-prem datacenter', 'Server hardware ותשתית פיזית'],
+      category: 'Cloud & Infra',
+      items: ['AWS (Lambda, SQS, SES, DynamoDB)', 'Docker + PM2', '8 years of on-prem datacenter', 'Server hardware & physical infra'],
     },
   ],
 };

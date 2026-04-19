@@ -15,7 +15,6 @@ interface Message {
 export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => {
   const { assistant } = useDictionary();
   const direction = useDirection();
-  const isRtl = direction === 'rtl';
   const messageIdRef = useRef(assistant.initialMessages.length);
   const [messages, setMessages] = useState<Message[]>(
     assistant.initialMessages.map((message, index) => ({
@@ -187,11 +186,11 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
                 <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 transition-all duration-1000 ${
                   msg.type === 'user' 
                     ? matrixMode 
-                      ? `bg-green-950/50 text-green-400 border border-green-500/30 ${isRtl ? 'rounded-tl-sm' : 'rounded-tr-sm'} font-mono`
-                      : `bg-cyan-500 text-zinc-950 ${isRtl ? 'rounded-tl-sm' : 'rounded-tr-sm'}` 
+                      ? 'bg-green-950/50 text-green-400 border border-green-500/30 chat-bubble-user font-mono'
+                      : 'bg-cyan-500 text-zinc-950 chat-bubble-user' 
                     : matrixMode
-                      ? `bg-black text-green-500 border border-green-500/30 ${isRtl ? 'rounded-tr-sm' : 'rounded-tl-sm'} font-mono shadow-[0_0_15px_rgba(34,197,94,0.1)]`
-                      : `bg-zinc-800/50 border border-zinc-700/50 text-zinc-200 ${isRtl ? 'rounded-tr-sm' : 'rounded-tl-sm'}`
+                      ? 'bg-black text-green-500 border border-green-500/30 chat-bubble-agent font-mono shadow-[0_0_15px_rgba(34,197,94,0.1)]'
+                      : 'bg-zinc-800/50 border border-zinc-700/50 text-zinc-200 chat-bubble-agent'
                 }`} style={{ textAlign: 'start' }}>
                   {msg.type === 'agent' && (
                     <div className={`flex items-center gap-1.5 mb-1 text-[10px] font-mono uppercase tracking-wider transition-colors duration-1000 ${matrixMode ? 'text-green-600' : 'text-cyan-400'}`}>
@@ -199,7 +198,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
                       {msg.agentName}
                     </div>
                   )}
-                  <p className="text-sm leading-relaxed" dir="auto">{msg.content}</p>
+                  <p className="text-sm leading-relaxed bidi-plaintext" dir="auto">{msg.content}</p>
                 </div>
               )}
             </motion.div>
@@ -210,7 +209,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
               animate={{ opacity: 1, y: 0 }}
               className="flex items-start"
             >
-              <div className={`border rounded-2xl ${isRtl ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-4 py-3 flex items-center gap-1.5 transition-colors duration-1000 ${
+              <div className={`border rounded-2xl chat-bubble-agent px-4 py-3 flex items-center gap-1.5 transition-colors duration-1000 ${
                 matrixMode ? 'bg-black border-green-500/30' : 'bg-zinc-800/50 border-zinc-700/50'
               }`}>
                 <div className={`w-1.5 h-1.5 rounded-full animate-bounce transition-colors duration-1000 ${matrixMode ? 'bg-green-500' : 'bg-cyan-400'}`} style={{ animationDelay: '0ms' }} />
@@ -260,16 +259,18 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
               matrixMode
                 ? 'bg-black border-green-900/50 text-green-500 placeholder:text-green-900 focus:border-green-500/50 font-mono'
                 : 'bg-zinc-950 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:border-cyan-500/50'
-            } ${isRtl ? 'pr-4 pl-12' : 'pl-4 pr-12'}`}
+            }`}
+            style={{ paddingInlineStart: '1rem', paddingInlineEnd: '3rem' }}
           />
           <button
             type="submit"
             disabled={!inputValue.trim() || isTyping}
-            className={`absolute ${isRtl ? 'left-2' : 'right-2'} p-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+            className={`absolute p-1.5 rounded-lg transition-colors disabled:opacity-50 ${
               matrixMode
                 ? 'bg-green-900/30 text-green-500 hover:bg-green-900/60 border border-green-500/30 disabled:hover:bg-green-900/30'
                 : 'bg-cyan-500 text-zinc-950 hover:bg-cyan-400 disabled:hover:bg-cyan-500'
             }`}
+            style={{ insetInlineEnd: '0.5rem' }}
           >
             <Send className="w-4 h-4" />
           </button>

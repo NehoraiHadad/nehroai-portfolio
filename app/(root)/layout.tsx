@@ -1,4 +1,5 @@
 import '../globals.css';
+import { fontVariables } from '@/lib/fonts';
 
 export default function RootLayout({
   children,
@@ -6,8 +7,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" dir="ltr" suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+    <html lang="en" dir="ltr" className={fontVariables} suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>{children}</body>
     </html>
   );
 }
