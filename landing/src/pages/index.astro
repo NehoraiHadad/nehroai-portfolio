@@ -1,0 +1,115 @@
+---
+import Base from "../layouts/Base.astro";
+import CharacterStage from "../components/CharacterStage.astro";
+import LinkCards from "../components/LinkCards.astro";
+
+/*
+  Video assets live in /public/video. Phase 1 ships PLACEHOLDERS — drop the real
+  clip in with the same filenames (or point these at an R2 URL for big files).
+  - mode="framed"  -> rectangular H.264 clip, edge-masked into the background.
+  - mode="alpha"   -> transparent character (provide webm + hevc), no box.
+  See landing/README.md and public/video/README.md.
+*/
+const VIDEO = {
+  mode: "framed" as const,
+  poster: "/video/character.poster.png",
+  mp4: "/video/character.mp4",
+  webm: "/video/character.webm",
+  // hevc: "/video/character.mov",   // add for transparent Safari support
+};
+---
+
+<Base
+  title="Nehorai Hadad — Welcome"
+  description="Hi, I'm Nehorai. Pick a world to explore — starting with my AI portfolio."
+>
+  <main class="welcome u-container">
+    <header class="welcome__intro">
+      <p class="eyebrow">Nehorai Hadad</p>
+      <h1 class="display">
+        Welcome.
+      </h1>
+      <p class="welcome__lede">
+        Hi — I'm Nehorai. Let me show you around.
+      </p>
+    </header>
+
+    <CharacterStage
+      poster={VIDEO.poster}
+      mp4={VIDEO.mp4}
+      webm={VIDEO.webm}
+      mode={VIDEO.mode}
+    />
+
+    <LinkCards />
+  </main>
+</Base>
+
+<style>
+  /* Single centred column at every width: intro -> character -> cards.
+     The character sits directly above the cards it "presents". Clean and
+     unbreakable; the stage stays the focal point as it grows in Phase 2. */
+  .welcome {
+    position: relative;
+    z-index: var(--z-base);
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-7);
+    padding-block: var(--s-8);
+    text-align: center;
+  }
+
+  .welcome__intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s-3);
+  }
+
+  .welcome__lede {
+    max-width: 38ch;
+    font-size: var(--t-18);
+    color: var(--fg-1);
+  }
+
+</style>
+
+<script>
+  import { onBeat, BEAT_MAP } from "../lib/beats";
+
+  // Reaction side: reveal each card when its beat fires. Decoupled from the
+  // beat SOURCE — works identically for video (Phase 1) and R3F (Phase 2).
+  const cards = document.querySelectorAll<HTMLElement>("[data-beat]");
+
+  cards.forEach((card) => {
+    const beat = card.dataset.beat;
+    if (!beat) return;
+    onBeat(beat, () => {
+      card.classList.add("is-revealed");
+      // WAAPI flourish on top of the CSS class — runs on the compositor.
+      card.animate(
+        [
+          { opacity: 0, transform: "translateY(18px) scale(0.98)" },
+          { opacity: 1, transform: "translateY(0) scale(1)" },
+        ],
+        { duration: 520, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", fill: "both" }
+      );
+    });
+  });
+
+  // Safety net: if no beat has fired a few seconds in (e.g. video 404 in dev,
+  // or a still-missing placeholder), reveal everything so the page isn't blank.
+  window.setTimeout(() => {
+    const anyHidden = document.querySelector("[data-beat]:not(.is-revealed)");
+    if (anyHidden) {
+      BEAT_MAP.forEach((b) => {
+        document
+          .querySelector<HTMLElement>(`[data-beat="${b.id}"]`)
+          ?.classList.add("is-revealed");
+      });
+    }
+  }, 4000);
+</script>

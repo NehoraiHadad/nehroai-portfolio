@@ -1,0 +1,176 @@
+/* ============================================================
+   Nehorai — Design Tokens
+   Ported verbatim from the portfolio's app/globals.css (:root block)
+   so nehoraihadad.com (landing) and ai.nehoraihadad.com (portfolio)
+   share one visual language: deep navy -> electric blue -> ice highlights.
+
+   Difference from the portfolio: fonts here come from @fontsource-variable
+   (self-hosted, no next/font), so the --font-* vars point at the
+   @fontsource family names instead of next/font CSS variables.
+   ============================================================ */
+:root {
+  /* Surface ramp — deep navy */
+  --bg-0: #050e22; /* page */
+  --bg-1: #0a1735; /* card / panel */
+  --bg-2: #132348; /* raised / hover */
+  --bg-3: #1b2f5c; /* press / active */
+  --bg-elev: #16264f; /* floating panels */
+
+  /* Hairlines */
+  --line: #1a2a55;
+  --line-strong: #2a3d78;
+
+  /* Foreground — cool whites */
+  --fg-0: #eef2fb; /* primary text */
+  --fg-1: #9ca9c8; /* body */
+  --fg-2: #5f6b8a; /* labels, hints */
+  --fg-3: #3b4566; /* decorative only */
+  --fg-placeholder: var(--fg-2);
+  --fg-inverse: #050e22; /* on LIGHT fills (--soft, --accent-ice) */
+  --fg-on-accent: var(--fg-0); /* on saturated --accent fills (CTA) */
+
+  /* Brand — electric / wave blues */
+  --accent: #2563eb;
+  --accent-hover: #3b82f6;
+  --accent-press: #1d4ed8;
+  --accent-dim: #1e3a8a;
+  --accent-faint: color-mix(in oklab, var(--accent) 10%, transparent);
+  --accent-pale: #60a5fa;
+  --accent-ice: #baeffe;
+
+  /* Signal — network glow */
+  --signal: #7dd3fc;
+  --signal-bright: #baeffe;
+  --signal-dim: #1e3a56;
+
+  /* Soft — avatar backdrop */
+  --soft: #d1d8f2;
+  --soft-dim: #596780;
+
+  /* Semantic */
+  --ok: #34d399;
+  --ok-dim: #134e4a;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --danger-dim: #4c1d1d;
+
+  /* Status */
+  --status-available: var(--ok);
+  --status-busy: var(--warn);
+  --status-off: var(--fg-3);
+
+  /* Semantic aliases */
+  --color-page: var(--bg-0);
+  --color-surface: var(--bg-1);
+  --color-surface-raised: var(--bg-2);
+  --color-text: var(--fg-0);
+  --color-text-muted: var(--fg-1);
+  --color-text-dim: var(--fg-2);
+  --color-border: var(--line);
+  --color-border-strong: var(--line-strong);
+  --color-link: var(--accent);
+  --color-focus: var(--accent);
+
+  /* Type families — @fontsource-variable family names */
+  --font-mono: "Geist Mono Variable", "SF Mono", "Menlo", ui-monospace, monospace;
+  --font-sans: "Geist Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans-he: "Rubik Variable", "Geist Variable", system-ui, sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+  --font-display: "Geist Variable", system-ui, sans-serif;
+  --font-display-he: "Rubik Variable", "Geist Variable", system-ui, sans-serif;
+
+  /* Type scale */
+  --t-12: 0.75rem;
+  --t-14: 0.875rem;
+  --t-16: 1rem;
+  --t-18: 1.125rem;
+  --t-20: 1.25rem;
+  --t-24: 1.5rem;
+  --t-30: 1.875rem;
+  --t-36: 2.25rem;
+  --t-48: 3rem;
+  --t-64: 4rem;
+  --t-80: 5rem;
+  --t-96: 6rem;
+  --t-144: 9rem;
+
+  --lh-tight: 1.05;
+  --lh-snug: 1.2;
+  --lh-normal: 1.5;
+  --lh-loose: 1.75;
+
+  --ls-display: -0.02em;
+  --ls-display-tight: -0.04em;
+  --ls-tight: -0.01em;
+  --ls-normal: 0;
+  --ls-wide: 0.04em;
+  --ls-wider: 0.08em;
+  --ls-widest: 0.16em;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+  --fw-black: 900;
+
+  /* Spacing (8-pt) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-8b: 48px;
+  --s-9: 56px;
+  --s-10: 72px;
+  --s-11: 96px;
+  --s-12: 128px;
+
+  /* Radius */
+  --r-0: 0px;
+  --r-1: 6px;
+  --r-2: 12px;
+  --r-pill: 9999px;
+
+  /* Shadows / glows */
+  --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-2: 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  --shadow-3: 0 16px 48px -16px rgba(0, 0, 0, 0.8);
+  --shadow-glow: 0 0 0 1px var(--accent), 0 0 24px -8px var(--accent);
+  --shadow-glow-soft: 0 0 32px -8px rgba(37, 99, 235, 0.4);
+  --shadow-glow-ice: 0 0 24px -8px var(--accent-ice);
+  --shadow-focus-ring: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-linear: linear;
+  --dur-0: 80ms;
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 480ms;
+  --dur-4: 960ms;
+
+  /* Layout */
+  --page-max: 1280px;
+  --read-max: 64ch;
+  --header-h: 64px;
+  --bp-sm: 580px;
+  --bp-md: 720px;
+  --bp-lg: 980px;
+  --bp-xl: 1240px;
+  --z-base: 1;
+  --z-sticky: 50;
+  --z-overlay: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+
+  /* Motifs */
+  --grid-color: rgba(123, 178, 255, 0.06);
+  --grid-size: 32px;
+  --scanline-opacity: 0.03;
+}

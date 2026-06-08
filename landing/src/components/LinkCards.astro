@@ -1,0 +1,19 @@
+---
+/** Container that maps over the data-driven LINKS list. */
+import LinkCard from "./LinkCard.astro";
+import { LINKS } from "../lib/links";
+---
+
+<nav class="link-cards" aria-label="Where to go next">
+  {LINKS.map((link) => <LinkCard link={link} />)}
+</nav>
+
+<style>
+  .link-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+    width: min(92vw, 420px);
+    margin-inline: auto;
+  }
+</style>

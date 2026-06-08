@@ -6,3 +6,6 @@
 .agents
 .agendo
 skills-lock.json
+
+# Separate Cloudflare Pages project — not part of the Vercel/Next.js build
+landing

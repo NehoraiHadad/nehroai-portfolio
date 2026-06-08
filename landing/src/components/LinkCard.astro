@@ -1,0 +1,97 @@
+---
+/**
+ * A single link card the character "presents". Starts hidden; reveals when its
+ * beat fires (see the inline script in index.astro -> onBeat). The reveal is
+ * driven by a data attribute so it works whether the beat came from the video
+ * (Phase 1) or an R3F timeline (Phase 2).
+ */
+import type { LinkTarget } from "../lib/links";
+
+interface Props {
+  link: LinkTarget;
+}
+const { link } = Astro.props;
+const rel = link.external ? "noopener noreferrer" : undefined;
+const target = link.external ? "_blank" : undefined;
+---
+
+<a
+  class="link-card card"
+  href={link.href}
+  rel={rel}
+  target={target}
+  data-beat={link.beat}
+>
+  <span class="link-card__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d={link.icon}></path>
+    </svg>
+  </span>
+  <span class="link-card__body">
+    <span class="eyebrow link-card__kicker">{link.kicker}</span>
+    <span class="link-card__label">{link.label}</span>
+    <span class="link-card__desc">{link.description}</span>
+  </span>
+</a>
+
+<style>
+  .link-card {
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+    padding: var(--s-5) var(--s-6);
+    text-align: start;
+    transition: transform var(--dur-2) var(--ease-out),
+      border-color var(--dur-2), box-shadow var(--dur-2);
+
+    /* Hidden initial state — revealed by .is-revealed (beat fires) */
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+
+  .link-card.is-revealed {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .link-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-2), var(--shadow-glow-soft);
+  }
+
+  .link-card__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-1);
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--accent-pale);
+  }
+
+  .link-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .link-card__kicker {
+    margin-bottom: 2px;
+  }
+
+  .link-card__label {
+    font-size: var(--t-18);
+    font-weight: var(--fw-bold);
+    color: var(--fg-0);
+  }
+
+  .link-card__desc {
+    font-size: var(--t-14);
+    color: var(--fg-1);
+  }
+</style>

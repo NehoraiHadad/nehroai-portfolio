@@ -1,0 +1,175 @@
+/* ============================================================
+   Base + component recipes for the landing page.
+   Intentionally small — mirrors the portfolio's look (.card, .eyebrow,
+   .btn) without pulling in Tailwind. Everything reads from tokens.css.
+   ============================================================ */
+
+/* Self-hosted variable fonts (no next/font here) */
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/rubik";
+
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: var(--bg-0);
+  color: var(--fg-0);
+  font-family: var(--font-sans);
+  font-size: var(--t-16);
+  line-height: var(--lh-normal);
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hebrew copy opts into Rubik via [lang="he"] or .he */
+[lang="he"],
+.he {
+  font-family: var(--font-sans-he);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: var(--ls-display);
+  line-height: var(--lh-snug);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+video,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-ring);
+  border-radius: var(--r-1);
+}
+
+/* --- Display / hero type --- */
+.display {
+  font-family: var(--font-display);
+  font-weight: var(--fw-black);
+  /* Capped at 96px — this is a compact welcome screen, not the portfolio hero. */
+  font-size: clamp(var(--t-48), 9vw, var(--t-96));
+  line-height: 0.95;
+  letter-spacing: var(--ls-display-tight);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--t-12);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+
+/* --- Card (matches portfolio .card) --- */
+.card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  box-shadow: var(--shadow-1);
+}
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--t-14);
+  padding: 10px 20px;
+  border-radius: var(--r-1);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background var(--dur-1), color var(--dur-1),
+    border-color var(--dur-1), transform var(--dur-0), box-shadow var(--dur-2);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--fg-on-accent);
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-glow-soft);
+}
+
+.btn-secondary {
+  background: var(--bg-1);
+  color: var(--fg-0);
+  border-color: var(--line-strong);
+}
+.btn-secondary:hover {
+  background: var(--bg-2);
+}
+
+/* --- Decorative background: blueprint grid + scanlines --- */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  -webkit-mask-image: radial-gradient(
+    ellipse 80% 70% at 50% 40%,
+    #000 35%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 80% 70% at 50% 40%,
+    #000 35%,
+    transparent 100%
+  );
+}
+
+.u-container {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--s-6);
+}
+
+/* --- Reduced-motion: kill non-essential animation --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

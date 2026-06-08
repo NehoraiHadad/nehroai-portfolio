@@ -1,0 +1,110 @@
+---
+/**
+ * CharacterStage — the centred "stage" that hosts the character island.
+ * This wrapper (sizing, glow, ground) is layout and SURVIVES into Phase 2.
+ * Only the island inside (<CharacterVideo>) gets swapped for an R3F <Canvas>.
+ */
+import CharacterVideo, { type StageMode } from "./CharacterVideo.tsx";
+
+interface Props {
+  poster: string;
+  webm?: string;
+  hevc?: string;
+  mp4?: string;
+  mode?: StageMode;
+}
+
+const { poster, webm, hevc, mp4, mode = "framed" } = Astro.props;
+---
+
+<div class="stage">
+  <CharacterVideo
+    client:load
+    poster={poster}
+    sources={{ webm, hevc, mp4 }}
+    mode={mode}
+  />
+  <div class="stage__ground" aria-hidden="true"></div>
+</div>
+
+<!-- is:global — React islands don't receive Astro's scoped data-attrs -->
+<style is:global>
+  .stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    /* Bound by width AND viewport height (3:4 ratio -> height = width * 4/3)
+       so the figure + cards stay on one screen on typical laptops. */
+    width: min(92vw, 520px, 40svh);
+    margin-inline: auto;
+  }
+
+  /* The character island box */
+  .character {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    display: grid;
+    place-items: center;
+    isolation: isolate;
+  }
+
+  .character__media {
+    position: relative;
+    z-index: var(--z-base);
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Poster is visible immediately; real frames just replace it on play. */
+    opacity: 1;
+    transition: opacity var(--dur-4) var(--ease-out);
+  }
+
+  /* Glow pad behind the figure */
+  .character__glow {
+    position: absolute;
+    inset: 8% 4% 12%;
+    z-index: 0;
+    background: radial-gradient(
+      55% 55% at 50% 42%,
+      var(--accent-faint) 0%,
+      transparent 70%
+    );
+    filter: blur(28px);
+    pointer-events: none;
+  }
+
+  /* FRAMED mode: melt a rectangular clip into the navy page with an edge mask
+     + rounded card-like surround. Disabled for alpha clips (no box wanted). */
+  .character[data-mode="framed"] .character__media {
+    border-radius: var(--r-2);
+    -webkit-mask-image: radial-gradient(
+      120% 100% at 50% 45%,
+      #000 62%,
+      transparent 92%
+    );
+    mask-image: radial-gradient(
+      120% 100% at 50% 45%,
+      #000 62%,
+      transparent 92%
+    );
+  }
+
+  /* Soft contact "ground" shadow/pool under the character */
+  .stage__ground {
+    position: absolute;
+    bottom: -2%;
+    left: 50%;
+    translate: -50% 0;
+    width: 60%;
+    height: 36px;
+    background: radial-gradient(
+      50% 50% at 50% 50%,
+      rgba(5, 14, 34, 0.85) 0%,
+      transparent 70%
+    );
+    filter: blur(6px);
+    z-index: 0;
+    pointer-events: none;
+  }
+</style>
