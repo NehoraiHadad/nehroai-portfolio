@@ -73,12 +73,13 @@ svg {
 
 /* --- Display / hero type --- */
 .display {
-  font-family: var(--font-display);
+  /* Tracks the active world (mono in the terminal, rounded in the vibe). */
+  font-family: var(--w-font, var(--font-display));
   font-weight: var(--fw-black);
   /* Capped at 96px — this is a compact welcome screen, not the portfolio hero. */
   font-size: clamp(var(--t-48), 9vw, var(--t-96));
   line-height: 0.95;
-  letter-spacing: var(--ls-display-tight);
+  letter-spacing: var(--w-ls, var(--ls-display-tight));
 }
 
 .eyebrow {
@@ -134,15 +135,15 @@ svg {
   background: var(--bg-2);
 }
 
-/* --- Decorative background: blueprint grid + scanlines --- */
+/* --- Decorative background: blueprint grid (themed per world) --- */
 .bg-grid {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image: linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-  background-size: var(--grid-size) var(--grid-size);
+  background-image: linear-gradient(var(--w-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--w-grid) 1px, transparent 1px);
+  background-size: var(--w-grid-size) var(--w-grid-size);
   -webkit-mask-image: radial-gradient(
     ellipse 80% 70% at 50% 40%,
     #000 35%,
@@ -155,11 +156,244 @@ svg {
   );
 }
 
+/* Soft world-coloured glow that washes the page; colour shifts per world.
+   Slowly breathes so the page never feels frozen between world changes. */
+.bg-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 50% at 50% 38%,
+    var(--w-glow) 0%,
+    transparent 70%
+  );
+  opacity: 0.9;
+  animation: glow-breathe 9s var(--ease-out) infinite;
+}
+
+/* Halftone dots — the "vibe / anime" world's texture. Hidden elsewhere
+   (--w-dots = 0); drifts slowly upward so the world feels alive. */
+.bg-grid::before {
+  content: "";
+  position: absolute;
+  inset: -20px 0;
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in oklab, var(--w-accent-2) 70%, transparent) 1.2px,
+    transparent 1.8px
+  );
+  background-size: 20px 20px;
+  opacity: var(--w-dots, 0);
+  -webkit-mask-image: radial-gradient(
+    ellipse 80% 70% at 50% 40%,
+    #000 30%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 80% 70% at 50% 40%,
+    #000 30%,
+    transparent 100%
+  );
+  animation: dot-drift 7s linear infinite;
+}
+
+/* Scanline veil — invisible in most worlds, faint CRT in the code world.
+   Drifts vertically so the terminal world reads as a live CRT, not a sticker. */
+.bg-grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.5) 3px
+  );
+  opacity: var(--w-scan, 0);
+  mix-blend-mode: overlay;
+  animation: scan-drift 0.5s steps(3) infinite;
+}
+
+@keyframes glow-breathe {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes dot-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 -20px;
+  }
+}
+
+@keyframes scan-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 3px;
+  }
+}
+
 .u-container {
   width: 100%;
   max-width: var(--page-max);
   margin-inline: auto;
   padding-inline: var(--s-6);
+}
+
+/* ============================================================
+   WORLD THEMING — the page transforms WITH the character.
+   beats.ts sets body[data-world]; these vars cross-fade (registered via
+   @property so colours/lengths interpolate) so the whole page — grid, glow,
+   accents, active card — morphs in sync with the realistic→code→anime video.
+   ============================================================ */
+@property --w-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #3b82f6;
+}
+@property --w-accent-2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #7dd3fc;
+}
+@property --w-grid {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(123, 178, 255, 0.07);
+}
+@property --w-glow {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(59, 130, 246, 0.26);
+}
+@property --w-grid-size {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 32px;
+}
+@property --w-scan {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+/* Halftone-dot veil — the "anime / vibe" world's signature texture. */
+@property --w-dots {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+body {
+  /* the cross-fade between worlds */
+  transition: --w-accent var(--dur-4) var(--ease-out),
+    --w-accent-2 var(--dur-4) var(--ease-out), --w-grid var(--dur-4) var(--ease-out),
+    --w-glow var(--dur-4) var(--ease-out),
+    --w-grid-size var(--dur-4) var(--ease-out), --w-scan var(--dur-4) var(--ease-out),
+    --w-dots var(--dur-4) var(--ease-out);
+  /* Per-world display font — an INSTANT swap (no transition) reads as stepping
+     into a different room, which is the point. Default is the studio sans. */
+  --w-font: var(--font-display);
+  --w-ls: var(--ls-display-tight);
+}
+
+/* Portfolio · "The Studio" — professional electric blue, clean blueprint.
+   Crisp geometric sans; the calm, authored baseline. */
+body[data-world="portfolio"] {
+  --w-accent: #3b82f6;
+  --w-accent-2: #7dd3fc;
+  --w-grid: rgba(123, 178, 255, 0.07);
+  --w-glow: rgba(59, 130, 246, 0.26);
+  --w-grid-size: 32px;
+  --w-scan: 0;
+  --w-dots: 0;
+  --w-font: var(--font-display);
+}
+
+/* GitHub · "The Terminal" — green CRT: monospace, dense grid, scanlines. */
+body[data-world="github"] {
+  --w-accent: #34d399;
+  --w-accent-2: #6ee7b7;
+  --w-grid: rgba(52, 211, 153, 0.12);
+  --w-glow: rgba(52, 211, 153, 0.22);
+  --w-grid-size: 22px;
+  --w-scan: 0.14;
+  --w-dots: 0;
+  --w-font: var(--font-mono);
+  --w-ls: 0; /* mono needs room to breathe at display size */
+}
+
+/* Contact · "The Vibe" — anime magenta (primary) with teal accents: rounded
+   type, halftone dots, the hard grid recedes and a soft vivid bloom takes over.
+   Accent + glow share the magenta hue so the active card matches the world. */
+body[data-world="contact"] {
+  --w-accent: #f472b6;
+  --w-accent-2: #2dd4bf;
+  --w-grid: rgba(244, 114, 182, 0.06);
+  --w-glow: rgba(244, 114, 182, 0.3);
+  --w-grid-size: 30px;
+  --w-scan: 0;
+  --w-dots: 0.5;
+  --w-font: var(--font-sans-he);
+}
+
+/* --- Active-card spotlight: the world the character is presenting pops;
+       the others recede. Connection to the figure is carried by shared colour
+       (--w-accent/--w-glow) + an upward light beam. --- */
+.link-cards:has(.link-card.is-active) .link-card.is-revealed:not(.is-active) {
+  opacity: 0.5;
+  filter: saturate(0.65);
+}
+
+.link-card.is-active {
+  border-color: var(--w-accent);
+  box-shadow: 0 0 0 1px var(--w-accent), 0 0 48px -10px var(--w-glow),
+    var(--shadow-3);
+  transform: translateY(-3px) scale(1.035);
+}
+.link-card.is-active .link-card__icon {
+  color: #fff;
+  border-color: var(--w-accent);
+  background: color-mix(in oklab, var(--w-accent) 65%, transparent);
+  box-shadow: 0 0 18px -4px var(--w-glow);
+}
+
+/* Upward light beam linking the active card to the character above it. */
+.link-card.is-active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  translate: -50% 0;
+  width: 2px;
+  height: 56px;
+  background: linear-gradient(to top, var(--w-accent), transparent);
+  opacity: 0.55;
+  animation: beam-pulse 1.8s var(--ease-out) infinite;
+  pointer-events: none;
+}
+
+@keyframes beam-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    height: 44px;
+  }
+  50% {
+    opacity: 0.7;
+    height: 60px;
+  }
 }
 
 /* --- Reduced-motion: kill non-essential animation --- */

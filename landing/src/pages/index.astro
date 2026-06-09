@@ -10,11 +10,17 @@ import LinkCards from "../components/LinkCards.astro";
   - mode="alpha"   -> transparent character (provide webm + hevc), no box.
   See landing/README.md and public/video/README.md.
 */
+// Bump on every re-encode of the character clip so browsers (and the CDN)
+// fetch the new file instead of a stale cached copy.
+const V = "7";
 const VIDEO = {
-  mode: "framed" as const,
-  poster: "/video/character.poster.png",
-  mp4: "/video/character.mp4",
-  webm: "/video/character.webm",
+  // alpha = transparent character floats over the grid background (VP9-alpha
+  // webm). mp4 is an opaque navy-baked fallback for engines without VP9 alpha
+  // (e.g. Safari, which would need an HEVC-alpha .mov for true transparency).
+  mode: "alpha" as const,
+  poster: `/video/character.poster.png?v=${V}`,
+  mp4: `/video/character.mp4?v=${V}`,
+  webm: `/video/character.webm?v=${V}`,
   // hevc: "/video/character.mov",   // add for transparent Safari support
 };
 ---
@@ -24,24 +30,29 @@ const VIDEO = {
   description="Hi, I'm Nehorai. Pick a world to explore — starting with my AI portfolio."
 >
   <main class="welcome u-container">
-    <header class="welcome__intro">
-      <p class="eyebrow">Nehorai Hadad</p>
-      <h1 class="display">
-        Welcome.
-      </h1>
-      <p class="welcome__lede">
-        Hi — I'm Nehorai. Let me show you around.
-      </p>
-    </header>
+    {/* Rotor — swings a few degrees on rotateY each world change so the page
+        appears to "turn toward" the next world. The fixed grid/glow backdrop
+        stays put and cross-fades, so the content turns against it. */}
+    <div class="welcome__rotor" data-rotor>
+      <header class="welcome__intro">
+        <p class="eyebrow">Nehorai Hadad</p>
+        <h1 class="display">
+          Welcome.
+        </h1>
+        <p class="welcome__lede">
+          Hi — I'm Nehorai. Let me show you around.
+        </p>
+      </header>
 
-    <CharacterStage
-      poster={VIDEO.poster}
-      mp4={VIDEO.mp4}
-      webm={VIDEO.webm}
-      mode={VIDEO.mode}
-    />
+      <CharacterStage
+        poster={VIDEO.poster}
+        mp4={VIDEO.mp4}
+        webm={VIDEO.webm}
+        mode={VIDEO.mode}
+      />
 
-    <LinkCards />
+      <LinkCards />
+    </div>
   </main>
 </Base>
 
@@ -57,9 +68,27 @@ const VIDEO = {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--s-7);
-    padding-block: var(--s-8);
+    padding-block: var(--s-6);
     text-align: center;
+    /* The rotor swings on rotateY; clip the few px it can overhang. */
+    overflow-x: clip;
+  }
+
+  /* The 3D rotor — content turns toward each world; JS drives the swing. */
+  .welcome__rotor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s-5);
+    width: 100%;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  @media (min-width: 720px) {
+    .welcome__rotor {
+      gap: var(--s-6);
+    }
   }
 
   .welcome__intro {
@@ -78,38 +107,129 @@ const VIDEO = {
 </style>
 
 <script>
-  import { onBeat, BEAT_MAP } from "../lib/beats";
+  import {
+    onBeat,
+    onWorld,
+    gotoWorld,
+    releaseWorld,
+    BEAT_MAP,
+  } from "../lib/beats";
 
-  // Reaction side: reveal each card when its beat fires. Decoupled from the
-  // beat SOURCE — works identically for video (Phase 1) and R3F (Phase 2).
+  // Reaction side. Decoupled from the beat SOURCE — works identically for video
+  // (Phase 1) and an R3F timeline (Phase 2).
   const cards = document.querySelectorAll<HTMLElement>("[data-beat]");
+  const byBeat = (id: string) =>
+    document.querySelector<HTMLElement>(`[data-beat="${id}"]`);
 
-  cards.forEach((card) => {
-    const beat = card.dataset.beat;
-    if (!beat) return;
-    onBeat(beat, () => {
-      card.classList.add("is-revealed");
-      // WAAPI flourish on top of the CSS class — runs on the compositor.
-      card.animate(
-        [
-          { opacity: 0, transform: "translateY(18px) scale(0.98)" },
-          { opacity: 1, transform: "translateY(0) scale(1)" },
-        ],
-        { duration: 520, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", fill: "both" }
-      );
+  // Reveal a card once (cumulative) with a one-shot flourish.
+  const reveal = (card: HTMLElement | null) => {
+    if (!card || card.classList.contains("is-revealed")) return;
+    card.classList.add("is-revealed");
+    card.animate(
+      [
+        { opacity: 0, transform: "translateY(18px) scale(0.98)" },
+        { opacity: 1, transform: "translateY(0) scale(1)" },
+      ],
+      { duration: 520, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", fill: "both" }
+    );
+  };
+
+  // Beat = "present this card" (cumulative reveal; also the fallback path used
+  // by emitAllBeats on reduced-motion / no-video).
+  cards.forEach((card) => card.dataset.beat && onBeat(card.dataset.beat, () => reveal(card)));
+
+  // World = "the character now inhabits this world": theme the whole page +
+  // spotlight that world's card (exclusive) + make sure it's revealed.
+  const rotor = document.querySelector<HTMLElement>("[data-rotor]");
+  const order = BEAT_MAP.map((b) => b.id);
+  const reduced = window.matchMedia?.(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+  let prevIdx = order.indexOf("portfolio");
+
+  onWorld((id) => {
+    document.body.dataset.world = id;
+    cards.forEach((card) => {
+      const active = card.dataset.beat === id;
+      card.classList.toggle("is-active", active);
+      if (active) reveal(card);
     });
+
+    // Perspective swing: the content "turns toward" the new world. Direction
+    // follows the world order (forward = swing in from the right, back = left).
+    if (rotor && !reduced) {
+      const idx = order.indexOf(id);
+      const dir = idx >= prevIdx ? 1 : -1;
+      prevIdx = idx;
+      rotor.animate(
+        [
+          {
+            transform: `perspective(1400px) rotateY(${dir * 9}deg)`,
+            opacity: 0.8,
+          },
+          { transform: "perspective(1400px) rotateY(0deg)", opacity: 1 },
+        ],
+        { duration: 640, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "both" }
+      );
+    }
   });
 
-  // Safety net: if no beat has fired a few seconds in (e.g. video 404 in dev,
-  // or a still-missing placeholder), reveal everything so the page isn't blank.
-  window.setTimeout(() => {
-    const anyHidden = document.querySelector("[data-beat]:not(.is-revealed)");
-    if (anyHidden) {
-      BEAT_MAP.forEach((b) => {
-        document
-          .querySelector<HTMLElement>(`[data-beat="${b.id}"]`)
-          ?.classList.add("is-revealed");
+  // --- User steering: hovering / focusing a card SUMMONS that world. The
+  // character jumps to that style's dwell and the whole page slams into its
+  // aesthetic; on leave, control returns to the ambient auto-cycle. This is
+  // what turns the loop from a screensaver into something you drive. ---
+  const nav = document.querySelector<HTMLElement>(".link-cards");
+  if (nav) {
+    let raf = 0;
+    let releaseTimer = 0;
+    // The world currently summoned by the user (null = none → auto-cycle).
+    let current: string | null = null;
+    // Which card the pointer/keyboard is currently on, if any.
+    const summonedCard = (): HTMLElement | null => {
+      const hovered = nav.querySelector<HTMLElement>(".link-card:hover");
+      if (hovered) return hovered;
+      const focused = document.activeElement as HTMLElement | null;
+      return focused?.classList.contains("link-card") && nav.contains(focused)
+        ? focused
+        : null;
+    };
+    const evaluate = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const want = summonedCard()?.dataset.beat ?? null;
+        // De-dupe: moving WITHIN a card crosses inner-element boundaries and
+        // re-fires these events; only react when the target world changes.
+        // This is what stops the screen "going crazy" on hover.
+        if (want === current) return;
+        if (want === null) {
+          // Debounce release: the swing transform can momentarily move a card
+          // out from under a still pointer, firing a spurious leave. Wait a
+          // beat; if the pointer is back on a card, ignore it.
+          window.clearTimeout(releaseTimer);
+          releaseTimer = window.setTimeout(() => {
+            if (summonedCard()) return;
+            current = null;
+            releaseWorld();
+          }, 140);
+          return;
+        }
+        window.clearTimeout(releaseTimer);
+        current = want;
+        gotoWorld(want);
       });
+    };
+    ["pointerenter", "pointerleave", "focusin", "focusout"].forEach((ev) =>
+      nav.addEventListener(ev, evaluate, true)
+    );
+  }
+
+  // Safety net: only if NOTHING has revealed a few seconds in (video 404 /
+  // autoplay blocked / missing clip) do we reveal everything. When the video
+  // works, the cards reveal one-by-one on their beats — so this must NOT fire
+  // just because later beats haven't arrived yet (that dumped 2 cards at once).
+  window.setTimeout(() => {
+    if (!document.querySelector("[data-beat].is-revealed")) {
+      BEAT_MAP.forEach((b) => reveal(byBeat(b.id)));
     }
-  }, 4000);
+  }, 4500);
 </script>

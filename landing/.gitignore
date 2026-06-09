@@ -12,3 +12,6 @@ pnpm-debug.log*
 .env.production
 # macOS
 .DS_Store
+
+# working media (heavy intermediate render files; final assets live in public/video)
+media/

@@ -35,7 +35,7 @@ const { poster, webm, hevc, mp4, mode = "framed" } = Astro.props;
     place-items: center;
     /* Bound by width AND viewport height (3:4 ratio -> height = width * 4/3)
        so the figure + cards stay on one screen on typical laptops. */
-    width: min(92vw, 520px, 40svh);
+    width: min(86vw, 440px, 34svh);
     margin-inline: auto;
   }
 
@@ -60,18 +60,19 @@ const { poster, webm, hevc, mp4, mode = "framed" } = Astro.props;
     transition: opacity var(--dur-4) var(--ease-out);
   }
 
-  /* Glow pad behind the figure */
+  /* Glow pad behind the figure — colour tracks the active world. */
   .character__glow {
     position: absolute;
-    inset: 8% 4% 12%;
+    inset: -6% -12% 6%;
     z-index: 0;
     background: radial-gradient(
-      55% 55% at 50% 42%,
-      var(--accent-faint) 0%,
+      52% 52% at 50% 40%,
+      var(--w-glow) 0%,
       transparent 70%
     );
-    filter: blur(28px);
+    filter: blur(34px);
     pointer-events: none;
+    transition: background var(--dur-4) var(--ease-out);
   }
 
   /* FRAMED mode: melt a rectangular clip into the navy page with an edge mask

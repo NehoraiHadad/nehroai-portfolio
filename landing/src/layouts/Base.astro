@@ -38,7 +38,8 @@ const ogImage = new URL("/brand/cover.png", Astro.site ?? "https://nehoraihadad.
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage.href} />
   </head>
-  <body>
+  <body data-world="portfolio">
+    <div class="bg-glow" aria-hidden="true"></div>
     <div class="bg-grid" aria-hidden="true"></div>
     <slot />
   </body>
