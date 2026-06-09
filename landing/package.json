@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Welcome landing page for nehoraihadad.com (Phase 1: character video). Deploys separately to Cloudflare Pages from this subdirectory.",
+  "packageManager": "pnpm@10.27.0",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
