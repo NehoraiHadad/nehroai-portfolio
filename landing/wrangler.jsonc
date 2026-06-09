@@ -1,0 +1,16 @@
+{
+  // Static-assets Worker for the nehoraihadad.com landing page.
+  // This is an ASSETS-ONLY Worker (no server script): `wrangler deploy` uploads
+  // the Astro build output in ./dist and Cloudflare serves it directly.
+  //
+  // The Worker's Git build (Root directory = landing) runs:
+  //   build:  pnpm run build      -> produces ./dist
+  //   deploy: npx wrangler deploy  -> reads this file, uploads ./dist
+  //
+  // `name` MUST match the existing Worker created in the dashboard.
+  "name": "nehroai-portfolio",
+  "compatibility_date": "2026-06-09",
+  "assets": {
+    "directory": "./dist"
+  }
+}
