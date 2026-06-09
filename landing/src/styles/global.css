@@ -34,10 +34,23 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Hebrew copy opts into Rubik via [lang="he"] or .he */
+/* Hebrew copy opts into Rubik via [lang="he"] or .he. body, headings, .display,
+   and .eyebrow each set their own Latin font-family (Geist / Geist Mono) — which
+   carry NO Hebrew glyphs — and .display tracks a per-world font. So we must
+   re-assert the Hebrew stack on all of them, with selectors specific enough to
+   win over those base/per-world rules regardless of source order. */
 [lang="he"],
 .he {
   font-family: var(--font-sans-he);
+}
+[lang="he"] body,
+[lang="he"] :is(.eyebrow, p, a, .btn),
+.he :is(.eyebrow, p, a, .btn) {
+  font-family: var(--font-sans-he);
+}
+[lang="he"] :is(h1, h2, h3, .display),
+.he :is(h1, h2, h3, .display) {
+  font-family: var(--font-display-he);
 }
 
 h1,

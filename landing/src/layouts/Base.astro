@@ -1,41 +1,69 @@
 ---
 import "../styles/global.css";
+import {
+  DEFAULT_LOCALE,
+  STRINGS,
+  dirOf,
+  localeUrl,
+  type Locale,
+} from "../lib/i18n";
 
 interface Props {
+  locale?: Locale;
   title?: string;
   description?: string;
 }
 
-const {
-  title = "Nehorai Hadad",
-  description = "Welcome — pick a world to explore.",
-} = Astro.props;
+const { locale = DEFAULT_LOCALE, title, description } = Astro.props;
+const strings = STRINGS[locale];
+const pageTitle = title ?? strings.metaTitle;
+const pageDescription = description ?? strings.metaDescription;
+const dir = dirOf(locale);
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://nehoraihadad.com");
 const ogImage = new URL("/brand/cover.png", Astro.site ?? "https://nehoraihadad.com");
+
+// Hreflang alternates so search engines pair the two locales.
+const enUrl = new URL(localeUrl("en"), Astro.site ?? "https://nehoraihadad.com");
+const heUrl = new URL(localeUrl("he"), Astro.site ?? "https://nehoraihadad.com");
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={locale} dir={dir}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/brand/monogram.svg" type="image/svg+xml" />
     <link rel="canonical" href={canonical.href} />
+    <link rel="alternate" hreflang="en" href={enUrl.href} />
+    <link rel="alternate" hreflang="he" href={heUrl.href} />
+    <link rel="alternate" hreflang="x-default" href={enUrl.href} />
     <meta name="theme-color" content="#050E22" />
 
-    <title>{title}</title>
-    <meta name="description" content={description} />
+    {
+      /* Auto-redirect Hebrew browsers once. Only on the default-locale page so
+         /he/ never loops back. Respects an explicit choice saved by the toggle
+         (localStorage.lang). Runs before paint to avoid an English flash. */
+      locale === DEFAULT_LOCALE && (
+        <script is:inline>
+          {`(function(){try{var c=localStorage.getItem("lang");if(c)return;if((navigator.language||"").toLowerCase().indexOf("he")===0){localStorage.setItem("lang","he");location.replace("/he/");}}catch(e){}})();`}
+        </script>
+      )
+    }
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
 
     <!-- Open Graph / share -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
     <meta property="og:url" content={canonical.href} />
     <meta property="og:image" content={ogImage.href} />
+    <meta property="og:locale" content={locale === "he" ? "he_IL" : "en_US"} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDescription} />
     <meta name="twitter:image" content={ogImage.href} />
   </head>
   <body data-world="portfolio">

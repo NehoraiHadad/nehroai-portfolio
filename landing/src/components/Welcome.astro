@@ -1,0 +1,332 @@
+---
+/**
+ * Welcome — the shared landing body, rendered for every locale. All the
+ * interactive wiring (beats, world steering, mobile deck) lives here ONCE so
+ * the per-locale pages stay thin. Copy comes from STRINGS[locale]; structural
+ * link data from links.ts.
+ */
+import CharacterStage from "./CharacterStage.astro";
+import LinkCards from "./LinkCards.astro";
+import { STRINGS, DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = DEFAULT_LOCALE } = Astro.props;
+const t = STRINGS[locale];
+
+/*
+  Video assets live in /public/video. Phase 1 ships PLACEHOLDERS — drop the real
+  clip in with the same filenames (or point these at an R2 URL for big files).
+  - mode="framed"  -> rectangular H.264 clip, edge-masked into the background.
+  - mode="alpha"   -> transparent character (provide webm + hevc), no box.
+  See landing/README.md and public/video/README.md.
+*/
+// Bump on every re-encode of the character clip so browsers (and the CDN)
+// fetch the new file instead of a stale cached copy.
+const V = "7";
+const VIDEO = {
+  // alpha = transparent character floats over the grid background (VP9-alpha
+  // webm). mp4 is an opaque navy-baked fallback for engines without VP9 alpha
+  // (e.g. Safari, which would need an HEVC-alpha .mov for true transparency).
+  mode: "alpha" as const,
+  poster: `/video/character.poster.png?v=${V}`,
+  mp4: `/video/character.mp4?v=${V}`,
+  webm: `/video/character.webm?v=${V}`,
+  // hevc: "/video/character.mov",   // add for transparent Safari support
+};
+---
+
+<main class="welcome u-container">
+  {/* Rotor — swings a few degrees on rotateY each world change so the page
+      appears to "turn toward" the next world. The fixed grid/glow backdrop
+      stays put and cross-fades, so the content turns against it. */}
+  <div class="welcome__rotor" data-rotor>
+    <header class="welcome__intro">
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h1 class="display">
+        {t.headline}
+      </h1>
+      <p class="welcome__lede">
+        {t.lede}
+      </p>
+    </header>
+
+    <CharacterStage
+      poster={VIDEO.poster}
+      mp4={VIDEO.mp4}
+      webm={VIDEO.webm}
+      mode={VIDEO.mode}
+      label={t.videoLabel}
+    />
+
+    <LinkCards locale={locale} />
+  </div>
+</main>
+
+<style>
+  /* Single centred column at every width: intro -> character -> cards.
+     The character sits directly above the cards it "presents". Clean and
+     unbreakable; the stage stays the focal point as it grows in Phase 2. */
+  .welcome {
+    position: relative;
+    z-index: var(--z-base);
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-block: var(--s-6);
+    text-align: center;
+    /* The rotor swings on rotateY; clip the few px it can overhang. */
+    overflow-x: clip;
+  }
+
+  /* The 3D rotor — content turns toward each world; JS drives the swing. */
+  .welcome__rotor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s-5);
+    width: 100%;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  @media (min-width: 720px) {
+    .welcome__rotor {
+      gap: var(--s-6);
+    }
+  }
+
+  .welcome__intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s-3);
+  }
+
+  .welcome__lede {
+    max-width: 38ch;
+    font-size: var(--t-18);
+    color: var(--fg-1);
+  }
+
+</style>
+
+<script>
+  import {
+    onBeat,
+    onWorld,
+    gotoWorld,
+    releaseWorld,
+    BEAT_MAP,
+  } from "../lib/beats";
+
+  // Reaction side. Decoupled from the beat SOURCE — works identically for video
+  // (Phase 1) and an R3F timeline (Phase 2).
+  const cards = document.querySelectorAll<HTMLElement>("[data-beat]");
+  const byBeat = (id: string) =>
+    document.querySelector<HTMLElement>(`[data-beat="${id}"]`);
+
+  // Reveal a card once (cumulative) with a one-shot flourish.
+  const reveal = (card: HTMLElement | null) => {
+    if (!card || card.classList.contains("is-revealed")) return;
+    card.classList.add("is-revealed");
+    const anim = card.animate(
+      [
+        { opacity: 0, transform: "translateY(18px) scale(0.98)" },
+        { opacity: 1, transform: "translateY(0) scale(1)" },
+      ],
+      { duration: 520, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", fill: "both" }
+    );
+    // Hand the steady state back to CSS once the flourish ends. A `fill: both`
+    // animation would otherwise persist and pin opacity/transform at the final
+    // frame — which blocks the spotlight dim (desktop) and the deck's hide of
+    // inactive cards (mobile). Cancel on finish so the class rules win.
+    anim.addEventListener("finish", () => anim.cancel(), { once: true });
+  };
+
+  // Beat = "present this card" (cumulative reveal; also the fallback path used
+  // by emitAllBeats on reduced-motion / no-video).
+  cards.forEach((card) => card.dataset.beat && onBeat(card.dataset.beat, () => reveal(card)));
+
+  // World = "the character now inhabits this world": theme the whole page +
+  // spotlight that world's card (exclusive) + make sure it's revealed.
+  const rotor = document.querySelector<HTMLElement>("[data-rotor]");
+  const order = BEAT_MAP.map((b) => b.id);
+  const reduced = window.matchMedia?.(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+  let prevIdx = order.indexOf("portfolio");
+
+  onWorld((id) => {
+    document.body.dataset.world = id;
+    cards.forEach((card) => {
+      const active = card.dataset.beat === id;
+      card.classList.toggle("is-active", active);
+      if (active) reveal(card);
+    });
+
+    // Perspective swing: the content "turns toward" the new world. Direction
+    // follows the world order (forward = swing in from the right, back = left).
+    if (rotor && !reduced) {
+      const idx = order.indexOf(id);
+      const dir = idx >= prevIdx ? 1 : -1;
+      prevIdx = idx;
+      rotor.animate(
+        [
+          {
+            transform: `perspective(1400px) rotateY(${dir * 9}deg)`,
+            opacity: 0.8,
+          },
+          { transform: "perspective(1400px) rotateY(0deg)", opacity: 1 },
+        ],
+        { duration: 640, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "both" }
+      );
+    }
+  });
+
+  // --- User steering: hovering / focusing a card SUMMONS that world. The
+  // character jumps to that style's dwell and the whole page slams into its
+  // aesthetic; on leave, control returns to the ambient auto-cycle. This is
+  // what turns the loop from a screensaver into something you drive. ---
+  const nav = document.querySelector<HTMLElement>(".link-cards");
+  if (nav) {
+    let raf = 0;
+    let releaseTimer = 0;
+    // The world currently summoned by the user (null = none → auto-cycle).
+    let current: string | null = null;
+    // Which card the pointer/keyboard is currently on, if any.
+    const summonedCard = (): HTMLElement | null => {
+      const hovered = nav.querySelector<HTMLElement>(".link-card:hover");
+      if (hovered) return hovered;
+      const focused = document.activeElement as HTMLElement | null;
+      return focused?.classList.contains("link-card") && nav.contains(focused)
+        ? focused
+        : null;
+    };
+    const evaluate = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const want = summonedCard()?.dataset.beat ?? null;
+        // De-dupe: moving WITHIN a card crosses inner-element boundaries and
+        // re-fires these events; only react when the target world changes.
+        // This is what stops the screen "going crazy" on hover.
+        if (want === current) return;
+        if (want === null) {
+          // Debounce release: the swing transform can momentarily move a card
+          // out from under a still pointer, firing a spurious leave. Wait a
+          // beat; if the pointer is back on a card, ignore it.
+          window.clearTimeout(releaseTimer);
+          releaseTimer = window.setTimeout(() => {
+            if (summonedCard()) return;
+            current = null;
+            releaseWorld();
+          }, 140);
+          return;
+        }
+        window.clearTimeout(releaseTimer);
+        current = want;
+        gotoWorld(want);
+      });
+    };
+    ["pointerenter", "pointerleave", "focusin", "focusout"].forEach((ev) =>
+      nav.addEventListener(ev, evaluate, true)
+    );
+  }
+
+  // --- Mobile DECK: the row collapses into ONE swipeable card. Swipe L/R or tap
+  // a dot to change worlds — which drives the character (gotoWorld) too, so the
+  // deck and the figure stay in lockstep. Desktop keeps the 3-up row. ---
+  if (nav) {
+    const dots = Array.from(nav.querySelectorAll<HTMLElement>(".deck-dot"));
+    const mq = window.matchMedia("(max-width: 719px)");
+
+    const syncDots = (id: string) =>
+      dots.forEach((d) =>
+        d.setAttribute("aria-selected", String(d.dataset.world === id))
+      );
+    onWorld((id) => syncDots(id));
+
+    // Guarantee exactly one visible card in deck mode, even if the video never
+    // emitted a world (reduced-motion / 404 → emitAllBeats reveals all at once).
+    const ensureActive = () => {
+      const activeId =
+        nav.querySelector<HTMLElement>(".link-card.is-active")?.dataset.beat;
+      if (activeId) return syncDots(activeId);
+      const first = order[0];
+      document.body.dataset.world = first;
+      cards.forEach((c) => {
+        const on = c.dataset.beat === first;
+        c.classList.toggle("is-active", on);
+        if (on) reveal(c);
+      });
+      syncDots(first);
+    };
+
+    const applyDeck = () => {
+      nav.classList.toggle("is-deck", mq.matches);
+      if (mq.matches) ensureActive();
+    };
+    mq.addEventListener?.("change", applyDeck);
+    applyDeck();
+
+    // Move N worlds along the order (wraps). dir +1 = next, -1 = prev.
+    const cycle = (dir: number) => {
+      const cur = document.body.dataset.world || order[0];
+      const i = Math.max(0, order.indexOf(cur));
+      gotoWorld(order[(i + dir + order.length) % order.length]);
+    };
+
+    dots.forEach((d) =>
+      d.addEventListener(
+        "click",
+        () => d.dataset.world && gotoWorld(d.dataset.world)
+      )
+    );
+
+    // Horizontal swipe → change world. Vertical motion = page scroll (ignore);
+    // tiny motion = a tap (let the link through). A real swipe suppresses the
+    // click that would otherwise fire on the card link. In RTL the natural
+    // direction is mirrored: swipe toward the start edge = next world.
+    const rtl = document.documentElement.dir === "rtl";
+    let sx = 0, sy = 0, tracking = false, swiped = false;
+    nav.addEventListener("pointerdown", (e) => {
+      if (!mq.matches) return;
+      sx = e.clientX; sy = e.clientY; tracking = true; swiped = false;
+    });
+    nav.addEventListener("pointerup", (e) => {
+      if (!tracking) return;
+      tracking = false;
+      const dx = e.clientX - sx;
+      if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(e.clientY - sy)) return;
+      swiped = true;
+      // LTR: swipe left (dx<0) → next. RTL: mirror so swipe right → next.
+      const forward = rtl ? dx > 0 : dx < 0;
+      cycle(forward ? 1 : -1);
+    });
+    nav.addEventListener("pointercancel", () => (tracking = false));
+    nav.addEventListener(
+      "click",
+      (e) => {
+        if (!swiped) return;
+        e.preventDefault();
+        e.stopPropagation();
+        swiped = false;
+      },
+      true
+    );
+  }
+
+  // Safety net: only if NOTHING has revealed a few seconds in (video 404 /
+  // autoplay blocked / missing clip) do we reveal everything. When the video
+  // works, the cards reveal one-by-one on their beats — so this must NOT fire
+  // just because later beats haven't arrived yet (that dumped 2 cards at once).
+  window.setTimeout(() => {
+    if (!document.querySelector("[data-beat].is-revealed")) {
+      BEAT_MAP.forEach((b) => reveal(byBeat(b.id)));
+    }
+  }, 4500);
+</script>

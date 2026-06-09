@@ -1,17 +1,26 @@
 ---
-/** Container that maps over the data-driven LINKS list. */
+/** Container that maps over the data-driven, locale-resolved LINKS list. */
 import LinkCard from "./LinkCard.astro";
-import { LINKS } from "../lib/links";
+import { localizedLinks } from "../lib/links";
+import { STRINGS, DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = DEFAULT_LOCALE } = Astro.props;
+const links = localizedLinks(locale);
+const t = STRINGS[locale];
 ---
 
-<nav class="link-cards" aria-label="Where to go next">
-  {LINKS.map((link) => <LinkCard link={link} />)}
+<nav class="link-cards" aria-label={t.navLabel}>
+  {links.map((link) => <LinkCard link={link} />)}
 
   <!-- Mobile-only pager: one dot per world. Shown when the cards collapse into
-       a swipeable deck (.is-deck, toggled by the inline script in index.astro). -->
-  <div class="deck-pager" role="tablist" aria-label="Choose a world">
+       a swipeable deck (.is-deck, toggled by the inline script in Welcome.astro). -->
+  <div class="deck-pager" role="tablist" aria-label={t.deckLabel}>
     {
-      LINKS.map((link) => (
+      links.map((link) => (
         <button
           class="deck-dot"
           type="button"

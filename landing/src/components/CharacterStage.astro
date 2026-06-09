@@ -12,9 +12,11 @@ interface Props {
   hevc?: string;
   mp4?: string;
   mode?: StageMode;
+  /** Localized accessible description of the looping character. */
+  label?: string;
 }
 
-const { poster, webm, hevc, mp4, mode = "framed" } = Astro.props;
+const { poster, webm, hevc, mp4, mode = "framed", label } = Astro.props;
 ---
 
 <div class="stage">
@@ -23,6 +25,7 @@ const { poster, webm, hevc, mp4, mode = "framed" } = Astro.props;
     poster={poster}
     sources={{ webm, hevc, mp4 }}
     mode={mode}
+    label={label}
   />
   <div class="stage__ground" aria-hidden="true"></div>
 </div>

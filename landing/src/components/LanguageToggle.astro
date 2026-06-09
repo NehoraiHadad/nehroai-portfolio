@@ -1,0 +1,73 @@
+---
+/**
+ * LanguageToggle — a small corner link to the OTHER language.
+ * Uses logical positioning so it sits top-end (top-right in LTR, top-left in
+ * RTL). Clicking persists the choice (localStorage.lang) so the auto-redirect
+ * in Base.astro respects it on future visits.
+ */
+import { STRINGS, otherLocale, localeUrl, type Locale } from "../lib/i18n";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const target = otherLocale(locale);
+const strings = STRINGS[locale];
+---
+
+<a
+  class="lang-toggle"
+  href={localeUrl(target)}
+  hreflang={target}
+  lang={target}
+  aria-label={strings.toggleAria}
+  data-lang={target}
+>
+  {strings.toggleLabel}
+</a>
+
+<script is:inline>
+  // Persist the explicit choice the moment the user opts in, before navigation.
+  document.querySelectorAll(".lang-toggle").forEach((el) =>
+    el.addEventListener("click", () => {
+      try {
+        localStorage.setItem("lang", el.getAttribute("data-lang") || "");
+      } catch (e) {}
+    })
+  );
+</script>
+
+<style>
+  .lang-toggle {
+    position: fixed;
+    inset-block-start: var(--s-4);
+    inset-inline-end: var(--s-4);
+    z-index: var(--z-overlay);
+    display: inline-flex;
+    align-items: center;
+    padding: var(--s-2) var(--s-4);
+    border-radius: var(--r-1);
+    border: 1px solid var(--line);
+    background: color-mix(in oklab, var(--bg-1) 70%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--fg-1);
+    font-family: var(--font-mono, var(--font-sans));
+    font-size: var(--t-14);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    line-height: 1;
+    transition: color var(--dur-2), border-color var(--dur-2),
+      box-shadow var(--dur-2), transform var(--dur-2);
+  }
+
+  .lang-toggle:hover,
+  .lang-toggle:focus-visible {
+    color: var(--fg-0);
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-glow-soft);
+    transform: translateY(-1px);
+  }
+</style>
