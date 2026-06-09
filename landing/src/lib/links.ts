@@ -42,16 +42,17 @@ export const LINKS: LinkTarget[] = [
     // git-branch
     icon: "M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6M15 6a9 9 0 0 1-9 9",
   },
-  // World 3 — the invitation. Presented by the anime incarnation. Swap the
-  // mailto for a LinkedIn URL if you'd rather route contact there.
+  // World 3 — the invitation. Presented by the anime incarnation. One direct,
+  // low-friction channel: WhatsApp (wa.me uses intl format, no +).
   {
     beat: "contact",
     kicker: "Say hello",
     label: "Let's talk",
-    description: "Got an idea or a role in mind? Reach me directly.",
-    href: "mailto:nehorai.hadad@gmail.com",
-    // mail
-    icon: "M2 4h20v16H2zM2 6l10 7 10-7",
+    description: "Got an idea or a role in mind? Message me on WhatsApp.",
+    href: "https://wa.me/972547401660",
+    external: true,
+    // message-circle — the "let's chat" world
+    icon: "M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z",
   },
   // Add more worlds here — give each a unique `beat`, add a matching row to
   // BEAT_MAP, and the card reveal wires up automatically.

@@ -351,9 +351,34 @@ body[data-world="contact"] {
 /* --- Active-card spotlight: the world the character is presenting pops;
        the others recede. Connection to the figure is carried by shared colour
        (--w-accent/--w-glow) + an upward light beam. --- */
-.link-cards:has(.link-card.is-active) .link-card.is-revealed:not(.is-active) {
+.link-cards:not(.is-deck):has(.link-card.is-active)
+  .link-card.is-revealed:not(.is-active) {
   opacity: 0.5;
   filter: saturate(0.65);
+}
+
+/* ---- Mobile DECK mode (.is-deck toggled by index.astro on <720px): the cards
+       collapse into ONE swipeable spot; only the active world's card shows.
+       These target .link-card from the CHILD component, so they MUST be global
+       (Astro scoped styles in LinkCards.astro can't reach them). ---- */
+.link-cards.is-deck .link-card {
+  grid-area: 1 / 1;
+  width: 100%;
+  opacity: 0;
+  transform: translateX(16px) scale(0.97);
+  pointer-events: none;
+  transition: opacity var(--dur-3) var(--ease-out),
+    transform var(--dur-3) var(--ease-out);
+}
+.link-cards.is-deck .link-card.is-revealed:not(.is-active) {
+  opacity: 0;
+  filter: none;
+  pointer-events: none;
+}
+.link-cards.is-deck .link-card.is-active {
+  opacity: 1;
+  transform: none; /* solo on screen — no scale-up, avoids edge overflow */
+  pointer-events: auto;
 }
 
 .link-card.is-active {

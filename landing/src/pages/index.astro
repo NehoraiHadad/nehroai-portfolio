@@ -125,13 +125,18 @@ const VIDEO = {
   const reveal = (card: HTMLElement | null) => {
     if (!card || card.classList.contains("is-revealed")) return;
     card.classList.add("is-revealed");
-    card.animate(
+    const anim = card.animate(
       [
         { opacity: 0, transform: "translateY(18px) scale(0.98)" },
         { opacity: 1, transform: "translateY(0) scale(1)" },
       ],
       { duration: 520, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", fill: "both" }
     );
+    // Hand the steady state back to CSS once the flourish ends. A `fill: both`
+    // animation would otherwise persist and pin opacity/transform at the final
+    // frame — which blocks the spotlight dim (desktop) and the deck's hide of
+    // inactive cards (mobile). Cancel on finish so the class rules win.
+    anim.addEventListener("finish", () => anim.cancel(), { once: true });
   };
 
   // Beat = "present this card" (cumulative reveal; also the fallback path used
@@ -220,6 +225,85 @@ const VIDEO = {
     };
     ["pointerenter", "pointerleave", "focusin", "focusout"].forEach((ev) =>
       nav.addEventListener(ev, evaluate, true)
+    );
+  }
+
+  // --- Mobile DECK: the row collapses into ONE swipeable card. Swipe L/R or tap
+  // a dot to change worlds — which drives the character (gotoWorld) too, so the
+  // deck and the figure stay in lockstep. Desktop keeps the 3-up row. ---
+  if (nav) {
+    const dots = Array.from(nav.querySelectorAll<HTMLElement>(".deck-dot"));
+    const mq = window.matchMedia("(max-width: 719px)");
+
+    const syncDots = (id: string) =>
+      dots.forEach((d) =>
+        d.setAttribute("aria-selected", String(d.dataset.world === id))
+      );
+    onWorld((id) => syncDots(id));
+
+    // Guarantee exactly one visible card in deck mode, even if the video never
+    // emitted a world (reduced-motion / 404 → emitAllBeats reveals all at once).
+    const ensureActive = () => {
+      const activeId =
+        nav.querySelector<HTMLElement>(".link-card.is-active")?.dataset.beat;
+      if (activeId) return syncDots(activeId);
+      const first = order[0];
+      document.body.dataset.world = first;
+      cards.forEach((c) => {
+        const on = c.dataset.beat === first;
+        c.classList.toggle("is-active", on);
+        if (on) reveal(c);
+      });
+      syncDots(first);
+    };
+
+    const applyDeck = () => {
+      nav.classList.toggle("is-deck", mq.matches);
+      if (mq.matches) ensureActive();
+    };
+    mq.addEventListener?.("change", applyDeck);
+    applyDeck();
+
+    // Move N worlds along the order (wraps). dir +1 = next, -1 = prev.
+    const cycle = (dir: number) => {
+      const cur = document.body.dataset.world || order[0];
+      const i = Math.max(0, order.indexOf(cur));
+      gotoWorld(order[(i + dir + order.length) % order.length]);
+    };
+
+    dots.forEach((d) =>
+      d.addEventListener(
+        "click",
+        () => d.dataset.world && gotoWorld(d.dataset.world)
+      )
+    );
+
+    // Horizontal swipe → change world. Vertical motion = page scroll (ignore);
+    // tiny motion = a tap (let the link through). A real swipe suppresses the
+    // click that would otherwise fire on the card link.
+    let sx = 0, sy = 0, tracking = false, swiped = false;
+    nav.addEventListener("pointerdown", (e) => {
+      if (!mq.matches) return;
+      sx = e.clientX; sy = e.clientY; tracking = true; swiped = false;
+    });
+    nav.addEventListener("pointerup", (e) => {
+      if (!tracking) return;
+      tracking = false;
+      const dx = e.clientX - sx;
+      if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(e.clientY - sy)) return;
+      swiped = true;
+      cycle(dx < 0 ? 1 : -1); // swipe left → next world
+    });
+    nav.addEventListener("pointercancel", () => (tracking = false));
+    nav.addEventListener(
+      "click",
+      (e) => {
+        if (!swiped) return;
+        e.preventDefault();
+        e.stopPropagation();
+        swiped = false;
+      },
+      true
     );
   }
 

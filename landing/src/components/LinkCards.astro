@@ -6,17 +6,85 @@ import { LINKS } from "../lib/links";
 
 <nav class="link-cards" aria-label="Where to go next">
   {LINKS.map((link) => <LinkCard link={link} />)}
+
+  <!-- Mobile-only pager: one dot per world. Shown when the cards collapse into
+       a swipeable deck (.is-deck, toggled by the inline script in index.astro). -->
+  <div class="deck-pager" role="tablist" aria-label="Choose a world">
+    {
+      LINKS.map((link) => (
+        <button
+          class="deck-dot"
+          type="button"
+          role="tab"
+          data-world={link.beat}
+          aria-label={link.label}
+        />
+      ))
+    }
+  </div>
 </nav>
 
 <style>
-  /* Mobile: a stack. Desktop: a row so all three worlds stay on-screen and
-     the active one can spotlight in place as the character cycles worlds. */
+  /* Mobile: a swipeable DECK — one card at a time in a single spot; swipe (or
+     tap a dot) to change worlds, which drives the character too. Desktop: a row
+     so all three worlds stay on-screen and the active one spotlights in place. */
   .link-cards {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--s-4);
-    width: min(94vw, 440px);
+    /* 100% of the (already padded) container — never wider than the screen. */
+    width: 100%;
+    max-width: 420px;
     margin-inline: auto;
+  }
+
+  /* The pager is hidden until deck mode turns on. */
+  .deck-pager {
+    display: none;
+  }
+
+  /* ---- DECK MODE (mobile). The .link-card visibility rules live in global.css
+         (they target the child component's elements, which Astro's scoped
+         styles here can't reach). These only touch elements LinkCards owns. ---- */
+  .link-cards.is-deck {
+    position: relative;
+    grid-template-rows: auto auto;
+    gap: 0;
+  }
+
+  .link-cards.is-deck .deck-pager {
+    display: flex;
+    grid-row: 2;
+    justify-content: center;
+    gap: var(--s-3);
+    margin-top: var(--s-5);
+  }
+
+  .deck-dot {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border-radius: 999px;
+    border: none;
+    background: var(--line-strong, rgba(255, 255, 255, 0.25));
+    cursor: pointer;
+    transition: background var(--dur-1), transform var(--dur-1),
+      box-shadow var(--dur-1);
+  }
+  /* Bigger tap target without bigger visual */
+  .deck-dot::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+  }
+  .deck-dot:hover {
+    background: var(--fg-2);
+  }
+  .deck-dot[aria-selected="true"] {
+    background: var(--w-accent);
+    transform: scale(1.25);
+    box-shadow: 0 0 12px -2px var(--w-glow);
   }
 
   @media (min-width: 720px) {
@@ -24,6 +92,7 @@ import { LINKS } from "../lib/links";
       grid-template-columns: repeat(3, 1fr);
       gap: var(--s-5);
       width: min(96vw, 960px);
+      max-width: none;
       align-items: stretch;
     }
   }
