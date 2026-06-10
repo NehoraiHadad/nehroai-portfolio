@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MotionConfig } from 'motion/react';
+import { LazyMotion, domAnimation, MotionConfig } from 'motion/react';
 import { TopNav } from './TopNav';
 import { Hero } from './Hero';
 import { ThePractice } from './ThePractice';
@@ -26,6 +26,7 @@ export default function HomePage() {
     // animations site-wide — respects the OS prefers-reduced-motion setting.
     // Hand-rolled loops (setInterval/setTimeout/rAF) are gated separately
     // via usePrefersReducedMotion in each component.
+    <LazyMotion features={domAnimation} strict>
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen bg-page text-fg-0 font-sans selection:bg-accent/30 relative">
         {/* 4.3: Skip-to-content — first focusable element on the page.
@@ -49,5 +50,6 @@ export default function HomePage() {
         <MobileAgent />
       </div>
     </MotionConfig>
+    </LazyMotion>
   );
 }

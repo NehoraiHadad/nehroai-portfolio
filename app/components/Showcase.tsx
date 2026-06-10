@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect, useRef, useId, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { X, Settings2, Play, Code2 } from 'lucide-react';
 import { CaseStudy } from '@/lib/types';
 import { useReveal } from '@/lib/useReveal';
@@ -236,7 +236,7 @@ export const Showcase = () => {
           {selectedStudy && (
             <>
               {/* Backdrop */}
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -246,7 +246,7 @@ export const Showcase = () => {
               />
 
               {/* Drawer — 4.1: dialog role, focus trap, Escape, focus restore */}
-              <motion.div
+              <m.div
                 ref={drawerTrapRef}
                 role="dialog"
                 aria-modal="true"
@@ -391,7 +391,7 @@ export const Showcase = () => {
                     </a>
                   )}
                 </div>
-              </motion.div>
+              </m.div>
             </>
           )}
         </AnimatePresence>,

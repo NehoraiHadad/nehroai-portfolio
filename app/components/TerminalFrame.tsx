@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 
 /**
@@ -31,6 +31,8 @@ export interface TerminalFrameProps {
   children: React.ReactNode;
   /** HTML dir attribute forwarded to the outer panel element */
   dir?: 'ltr' | 'rtl' | 'auto';
+  /** Forwarded data-* attributes — e.g. data-matrix for the matrix mode scoped token block */
+  'data-matrix'?: boolean | undefined;
 }
 
 type InkState = 'idle' | 'drawing' | 'done';
@@ -45,6 +47,7 @@ export const TerminalFrame = ({
   inkTrail = false,
   children,
   dir,
+  'data-matrix': dataMatrix,
 }: TerminalFrameProps) => {
   const prefersReduced = usePrefersReducedMotion();
   // motion's useReducedMotion is used by MotionConfig reducedMotion="user" —
@@ -102,8 +105,9 @@ export const TerminalFrame = ({
       className={`terminal-frame${className ? ` ${className}` : ''}`}
       style={showSvg ? { borderColor: 'transparent' } : undefined}
       dir={dir}
+      {...(dataMatrix ? { 'data-matrix': '' } : {})}
     >
-      {/* Ink-trail SVG border draw — only for inkTrail=true, skipped under reduced motion.
+      {/* Ink-trail SVG border draw — only for inkTrail=true, skipped under reduced m.
           Stroke is white (#eaf4ff), deliberately matching the landing's light-trail
           aesthetic — a hot-white leading edge that feels like laser-etching the border
           into existence. The drop-shadow filter mixes off var(--accent) for colour. */}
@@ -163,7 +167,7 @@ export const TerminalFrame = ({
 
 /* ── InkTrailSvg ──────────────────────────────────────────────────────── */
 /* Absolutely-positioned SVG overlay that draws the panel border.
-   Uses motion.rect with pathLength animated 0→1 (~2.1s linear) and a
+   Uses m.rect with pathLength animated 0→1 (~2.1s linear) and a
    leading-dot rect (strokeDasharray '0.006 0.994', animated via pathLength offset).
    Stroke: #eaf4ff (deliberate white — like the landing's light-trail, the hot
    leading edge that feels like the border being laser-etched into existence).
@@ -205,7 +209,7 @@ const InkTrailSvg = ({ rx, drawing }: { rx: number; drawing: boolean }) => {
       </defs>
 
       {/* Border trace — full perimeter draw */}
-      <motion.rect
+      <m.rect
         x="0.5"
         y="0.5"
         width="calc(100% - 1px)"
@@ -225,7 +229,7 @@ const InkTrailSvg = ({ rx, drawing }: { rx: number; drawing: boolean }) => {
           strokeDasharray '0.006 0.994' means 0.6% filled, 99.4% gap,
           creating a single bright point. It runs at the same speed as the
           trace so it always sits at the leading edge. */}
-      <motion.rect
+      <m.rect
         x="0.5"
         y="0.5"
         width="calc(100% - 1px)"

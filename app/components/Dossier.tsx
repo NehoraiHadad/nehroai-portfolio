@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { FileText, Send, Lock, Mail, Github, Linkedin } from 'lucide-react';
 import { useReveal } from '@/lib/useReveal';
 import { sendContact } from '@/app/lib/actions/contact';
@@ -148,7 +148,7 @@ export const Dossier = () => {
             </div>
 
             {/* CV */}
-            <motion.a
+            <m.a
               whileHover={{ x: isRtl ? -4 : 4 }}
               href={dossier.resumeFile}
               download={dossier.resumeDownloadName}
@@ -158,7 +158,7 @@ export const Dossier = () => {
                 <FileText className="w-3.5 h-3.5" />
               </span>
               {dossier.resumeCta}
-            </motion.a>
+            </m.a>
 
             {/* Direct contact chips */}
             <div className="flex flex-wrap gap-2 pt-2">
@@ -220,7 +220,7 @@ export const Dossier = () => {
 
                   {/* ① Init sequence */}
                   {!initialized && (
-                    <motion.div
+                    <m.div
                       key="init"
                       exit={{ opacity: 0 }}
                       className="flex-grow flex flex-col justify-center gap-2"
@@ -228,7 +228,7 @@ export const Dossier = () => {
                       {dossier.initLines.map((line, i) => (
                         <AnimatePresence key={i}>
                           {initStep >= i && (
-                            <motion.p
+                            <m.p
                               initial={{ opacity: 0, x: isRtl ? 6 : -6 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ duration: 0.25 }}
@@ -241,16 +241,16 @@ export const Dossier = () => {
                                   style={{ marginInlineStart: '0.25rem' }}
                                 />
                               )}
-                            </motion.p>
+                            </m.p>
                           )}
                         </AnimatePresence>
                       ))}
-                    </motion.div>
+                    </m.div>
                   )}
 
                   {/* ② Submitting */}
                   {initialized && isSubmitting && (
-                    <motion.div
+                    <m.div
                       key="submitting"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -261,7 +261,7 @@ export const Dossier = () => {
                         pct={submitPhase === 'encrypting' ? 55 : 100}
                         label={submitPhase === 'encrypting' ? dossier.progressLabels.encrypting : dossier.progressLabels.transmitting}
                       />
-                      <motion.p
+                      <m.p
                         animate={{ opacity: [0.4, 1, 0.4] }}
                         transition={{ duration: 1.2, repeat: Infinity }}
                         className="font-mono text-[10px] text-fg-2"
@@ -269,13 +269,13 @@ export const Dossier = () => {
                         {submitPhase === 'encrypting'
                           ? dossier.progressLabels.encryptingHint
                           : dossier.progressLabels.transmittingHint}
-                      </motion.p>
-                    </motion.div>
+                      </m.p>
+                    </m.div>
                   )}
 
                   {/* ③ Success */}
                   {initialized && !isSubmitting && isSubmitted && (
-                    <motion.div
+                    <m.div
                       key="success"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -288,12 +288,12 @@ export const Dossier = () => {
                       <p className="text-fg-2 pt-2">{dossier.success.title}</p>
                       <p className="text-fg-2">{dossier.success.description}</p>
                       <span className="inline-block w-[6px] h-[12px] bg-line-strong animate-pulse mt-1" />
-                    </motion.div>
+                    </m.div>
                   )}
 
                   {/* ④ Form */}
                   {initialized && !isSubmitting && !isSubmitted && (
-                    <motion.form
+                    <m.form
                       key="form"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -384,12 +384,12 @@ export const Dossier = () => {
                       <button
                         type="submit"
                         disabled={isSubmitting || !name || !email || !message}
-                        className="flex items-center justify-center gap-2 py-3 rounded-lg font-mono text-[11px] uppercase tracking-widest border border-accent/25 text-accent bg-accent/5 hover:bg-accent hover:text-[var(--fg-on-accent)] hover:border-accent transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center gap-2 py-3 rounded-lg font-mono text-[11px] uppercase tracking-widest border border-accent/25 text-accent bg-accent/5 hover:bg-accent hover:text-[var(--fg-on-accent)] hover:border-accent transition-[background-color,border-color,color] duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         <Send className="w-3.5 h-3.5" />
                         {dossier.form.submitLabel}
                       </button>
-                    </motion.form>
+                    </m.form>
                   )}
 
                 </AnimatePresence>

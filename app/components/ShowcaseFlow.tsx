@@ -89,18 +89,18 @@ const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
       tabIndex={0}
       aria-label={data.title}
       onKeyDown={handleKeyDown}
-      className={`bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-all duration-300 group cursor-pointer relative overflow-hidden focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none${data.isSpotlit ? ' is-spotlit beam-up' : ''}`}
+      className={`bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-[border-color,box-shadow] duration-300 group cursor-pointer relative overflow-hidden focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none${data.isSpotlit ? ' is-spotlit beam-up' : ''}`}
       dir={data.isRtl ? 'rtl' : 'ltr'}
       style={{ textAlign: 'start' }}
     >
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent/0 via-accent/0 to-accent/0 group-hover:from-accent/50 group-hover:via-accent-pale/50 group-hover:to-accent-ice/50 transition-all duration-500" />
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent/0 via-accent/0 to-accent/0 group-hover:from-accent/50 group-hover:via-accent-pale/50 group-hover:to-accent-ice/50 transition-[background-image,opacity] duration-500" />
       <Handle
         type="target"
         position={data.isMobile ? Position.Top : Position.Left}
         className="w-3 h-3 bg-line-strong border-2 border-page group-hover:bg-accent transition-colors"
       />
       <div className="flex items-start gap-3 sm:gap-4 mb-3">
-        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-raised/50 border border-line-strong/50 flex items-center justify-center text-fg-1 group-hover:text-accent group-hover:bg-accent/10 group-hover:border-accent/30 transition-all duration-300 shrink-0">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-raised/50 border border-line-strong/50 flex items-center justify-center text-fg-1 group-hover:text-accent group-hover:bg-accent/10 group-hover:border-accent/30 transition-[color,background-color,border-color] duration-300 shrink-0">
           <Icon className="w-5 h-5 sm:w-6 sm:h-6" aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-0">

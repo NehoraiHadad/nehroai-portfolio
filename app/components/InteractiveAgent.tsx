@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useId } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { Send, Terminal, Cpu, Bot, X } from 'lucide-react';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
 import { TerminalFrame } from '@/app/components/TerminalFrame';
@@ -142,32 +142,29 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
     }, 1500);
   };
 
-  // Custom header for InteractiveAgent — matrix mode has distinct colors.
-  // Passed as headerSlot to TerminalFrame so the shared panel shell is reused
-  // while preserving the exact existing look (3.3).
+  // Custom header for InteractiveAgent — token-driven via [data-matrix] on the panel root.
+  // Passed as headerSlot to TerminalFrame so the shared panel shell is reused (3.3).
   const agentHeader = (
-    <div className={`flex items-center justify-between px-4 py-3 border-b transition-colors duration-1000 ${
-      matrixMode ? 'border-green-900/50 bg-black/80' : 'border-line bg-surface/50'
-    }`}>
+    <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface/50 transition-[background-color,border-color] duration-1000">
       <div className="flex items-center gap-2">
-        <Cpu className={`w-4 h-4 transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-accent'}`} aria-hidden="true" />
+        <Cpu className="w-4 h-4 text-accent transition-colors duration-1000" aria-hidden="true" />
         {/* 4.2: title id used for aria-labelledby on the panel (when used as dialog) */}
-        <span id={titleId} className={`text-xs font-mono font-semibold tracking-wider transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-fg-1'}`}>
+        <span id={titleId} className="text-xs font-mono font-semibold tracking-wider text-fg-1 transition-colors duration-1000">
           {matrixMode ? assistant.matrixTitle : assistant.title}
         </span>
       </div>
       <div className="flex items-center gap-4">
         <div className="flex gap-1.5" aria-hidden="true">
-          <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-1000 ${matrixMode ? 'bg-green-900' : 'bg-line-strong'}`} />
-          <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-1000 ${matrixMode ? 'bg-green-900' : 'bg-line-strong'}`} />
-          <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+          <div className="w-2.5 h-2.5 rounded-full bg-line-strong transition-colors duration-1000" />
+          <div className="w-2.5 h-2.5 rounded-full bg-line-strong transition-colors duration-1000" />
+          <div className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse" />
         </div>
         {onClose && (
           // 4.2 + 4.6: localized aria-label, 44×44 touch target
           <button
             onClick={onClose}
             aria-label={a11y.closeDialog}
-            className={`inline-flex h-11 w-11 items-center justify-center rounded-[var(--r-1)] transition-colors focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${matrixMode ? 'text-green-700 hover:text-green-400' : 'text-fg-1 hover:text-fg-0'}`}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--r-1)] text-fg-1 hover:text-fg-0 transition-colors focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -179,13 +176,10 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
   return (
     <TerminalFrame
       headerSlot={agentHeader}
-      className={`relative w-full max-w-lg mx-auto lg:mx-0 backdrop-blur-xl shadow-2xl flex flex-col h-[500px] max-h-[80vh] transition-all duration-1000 ${
-        matrixMode
-          ? 'bg-black/95 border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.2)]'
-          : 'bg-page/80 border-line'
-      }`}
+      className="relative w-full max-w-lg mx-auto lg:mx-0 backdrop-blur-xl shadow-2xl flex flex-col h-[500px] max-h-[80vh] transition-[background-color,border-color,box-shadow] duration-1000 bg-page/80 border-line"
       bodyClassName="flex flex-col flex-1 overflow-hidden"
       dir={direction}
+      data-matrix={matrixMode || undefined}
     >
 
       {/* 4.4: role="log" so new chat messages are announced by screen readers */}
@@ -204,29 +198,25 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       >
         <AnimatePresence initial={false}>
           {messages.map((msg) => (
-            <motion.div
+            <m.div
               key={msg.id}
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
             >
               {msg.type === 'system' ? (
-                <div className={`text-[10px] font-mono my-1 flex items-center gap-1.5 transition-colors duration-1000 ${matrixMode ? 'text-green-600' : 'text-accent-text'}`}>
+                <div className="text-[10px] font-mono my-1 flex items-center gap-1.5 text-accent-text transition-colors duration-1000">
                   <Terminal className="w-3 h-3" />
                   {msg.content}
                 </div>
               ) : (
-                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 transition-all duration-1000 ${
-                  msg.type === 'user' 
-                    ? matrixMode 
-                      ? 'bg-green-950/50 text-green-400 border border-green-500/30 chat-bubble-user font-mono'
-                      : 'bg-accent text-[var(--fg-on-accent)] chat-bubble-user' 
-                    : matrixMode
-                      ? 'bg-black text-green-500 border border-green-500/30 chat-bubble-agent font-mono shadow-[0_0_15px_rgba(34,197,94,0.1)]'
-                      : 'bg-surface-raised/50 border border-line-strong/50 text-fg-0 chat-bubble-agent'
+                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 transition-[background-color,border-color,color,box-shadow] duration-1000 ${
+                  msg.type === 'user'
+                    ? 'bg-accent text-[var(--fg-on-accent)] chat-bubble-user'
+                    : 'bg-surface-raised/50 border border-line-strong/50 text-fg-0 chat-bubble-agent'
                 }`} style={{ textAlign: 'start' }}>
                   {msg.type === 'agent' && (
-                    <div className={`flex items-center gap-1.5 mb-1 text-[10px] font-mono uppercase tracking-wider transition-colors duration-1000 ${matrixMode ? 'text-green-600' : 'text-accent'}`}>
+                    <div className="flex items-center gap-1.5 mb-1 text-[10px] font-mono uppercase tracking-wider text-accent transition-colors duration-1000">
                       <Bot className="w-3 h-3" />
                       {msg.agentName}
                     </div>
@@ -234,22 +224,20 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
                   <p className="text-sm leading-relaxed bidi-plaintext" dir="auto">{msg.content}</p>
                 </div>
               )}
-            </motion.div>
+            </m.div>
           ))}
           {isTyping && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex items-start"
             >
-              <div className={`border rounded-2xl chat-bubble-agent px-4 py-3 flex items-center gap-1.5 transition-colors duration-1000 ${
-                matrixMode ? 'bg-black border-green-500/30' : 'bg-surface-raised/50 border-line-strong/50'
-              }`}>
-                <div className={`w-1.5 h-1.5 rounded-full animate-bounce transition-colors duration-1000 ${matrixMode ? 'bg-green-500' : 'bg-accent'}`} style={{ animationDelay: '0ms' }} />
-                <div className={`w-1.5 h-1.5 rounded-full animate-bounce transition-colors duration-1000 ${matrixMode ? 'bg-green-500' : 'bg-accent'}`} style={{ animationDelay: '150ms' }} />
-                <div className={`w-1.5 h-1.5 rounded-full animate-bounce transition-colors duration-1000 ${matrixMode ? 'bg-green-500' : 'bg-accent'}`} style={{ animationDelay: '300ms' }} />
+              <div className="border rounded-2xl chat-bubble-agent px-4 py-3 flex items-center gap-1.5 bg-surface-raised/50 border-line-strong/50 transition-[background-color,border-color] duration-1000">
+                <div className="w-1.5 h-1.5 rounded-full animate-bounce bg-accent transition-colors duration-1000" style={{ animationDelay: '0ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full animate-bounce bg-accent transition-colors duration-1000" style={{ animationDelay: '150ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full animate-bounce bg-accent transition-colors duration-1000" style={{ animationDelay: '300ms' }} />
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
         <div ref={messagesEndRef} />
@@ -262,11 +250,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
             key={i}
             onClick={() => handleSend(prompt)}
             disabled={isTyping}
-            className={`whitespace-nowrap text-xs font-medium px-3 py-2 rounded-full border transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${
-              matrixMode
-                ? 'bg-black border-green-900 text-green-700 hover:text-green-400 hover:border-green-500/50 font-mono'
-                : 'bg-surface border-line text-fg-1 hover:text-accent hover:border-accent/30'
-            }`}
+            className="whitespace-nowrap text-xs font-medium px-3 py-2 rounded-full border bg-surface border-line text-fg-1 hover:text-accent hover:border-accent/30 transition-[color,border-color,background-color] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none"
           >
             {prompt}
           </button>
@@ -274,9 +258,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       </div>
 
       {/* Input Area */}
-      <div className={`p-4 pt-2 border-t transition-colors duration-1000 ${
-        matrixMode ? 'border-green-900/50 bg-black/80' : 'border-line/50 bg-surface/30'
-      }`}>
+      <div className="p-4 pt-2 border-t border-line/50 bg-surface/30 transition-[background-color,border-color] duration-1000">
         <form
           onSubmit={(e) => { e.preventDefault(); handleSend(inputValue); }}
           className="relative flex items-center"
@@ -290,11 +272,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
             placeholder={matrixMode ? assistant.matrixInputPlaceholder : assistant.inputPlaceholder}
             aria-label={a11y.chatInput}
             dir={inputDirection}
-            className={`w-full border rounded-xl py-3 text-sm outline-none transition-colors disabled:opacity-50 ${
-              matrixMode
-                ? 'bg-black border-green-900/50 text-green-500 placeholder:text-green-900 focus-visible:border-green-500/50 font-mono'
-                : 'bg-page border-line text-fg-0 placeholder:text-fg-2 focus-visible:[box-shadow:var(--shadow-focus-ring)]'
-            }`}
+            className="w-full border rounded-xl py-3 text-sm outline-none bg-page border-line text-fg-0 placeholder:text-fg-2 focus-visible:[box-shadow:var(--shadow-focus-ring)] transition-[border-color,box-shadow,color,background-color] disabled:opacity-50"
             style={{ paddingInlineStart: '1rem', paddingInlineEnd: '3rem', textAlign: 'start' }}
           />
           {/* 4.2: localized aria-label; 4.6: h-11 w-11 inside the input — visually 36px, touch area padded */}
@@ -302,11 +280,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
             type="submit"
             disabled={!inputValue.trim() || isTyping}
             aria-label={a11y.sendMessage}
-            className={`absolute inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors disabled:opacity-50 focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${
-              matrixMode
-                ? 'bg-green-900/30 text-green-500 hover:bg-green-900/60 border border-green-500/30 disabled:hover:bg-green-900/30'
-                : 'bg-accent text-[var(--fg-on-accent)] hover:bg-accent disabled:hover:bg-accent'
-            }`}
+            className="absolute inline-flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-[var(--fg-on-accent)] hover:bg-accent-hover transition-[background-color] disabled:opacity-50 focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none"
             style={{ insetInlineEnd: '0.5rem' }}
           >
             <Send className="w-4 h-4" aria-hidden="true" />

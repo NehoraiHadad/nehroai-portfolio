@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { Briefcase, Menu, X } from 'lucide-react';
 import { locales } from '@/lib/i18n/config';
 import { useDictionary, useLocale } from '@/lib/i18n/provider';
 import { ThemeToggle } from './ThemeToggle';
 import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 import { useFocusTrap } from '@/lib/useFocusTrap';
+import { TIMELINE } from '@/lib/choreography';
 
 export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean, setMobileMenuOpen: (v: boolean) => void }) => {
   const prefersReduced = usePrefersReducedMotion();
@@ -37,18 +38,18 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
     }
     // Dot ignites after neon "ai" ignition stabilizes (~3.5s end + 0.3s buffer)
     // Flashlight-on CSS animation handles the white flash → cyan glow sequence
-    const dotTimer = setTimeout(() => setDotIgnited(true), 3800);
+    const dotTimer = setTimeout(() => setDotIgnited(true), TIMELINE.dotIgnite);
     return () => clearTimeout(dotTimer);
   }, [prefersReduced]);
 
   return (
-    <motion.nav 
+    <m.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
       className="fixed top-0 w-full z-50 bg-[color-mix(in_oklab,var(--bg-0)_70%,transparent)] backdrop-blur-[12px] border-b border-line"
     >
-      <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-6 h-[var(--header-h)] flex items-center justify-between">
         {/* Logo Area */}
         <div className="flex flex-col justify-center" style={{ textAlign: 'start' }}>
           <a
@@ -93,6 +94,9 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
               <Link
                 key={nextLocale}
                 href={`/${nextLocale}`}
+                hrefLang={nextLocale}
+                lang={nextLocale}
+                aria-current={locale === nextLocale ? 'true' : undefined}
                 className={`min-w-10 rounded-full px-3 py-1 text-center text-xs font-semibold transition-colors ${
                   locale === nextLocale ? 'bg-accent text-[var(--fg-on-accent)]' : 'text-fg-2 hover:text-fg-0'
                 }`}
@@ -102,15 +106,13 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
             ))}
           </div>
           <ThemeToggle />
-          <motion.a
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
+          <a
             href="#dossier"
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm hover:scale-[1.04] active:scale-[0.97] transition-transform duration-[var(--dur-1)]"
           >
             <Briefcase className="w-4 h-4 shrink-0" strokeWidth={1.5} />
             {navigation.contactCta}
-          </motion.a>
+          </a>
         </div>
 
         {/* Mobile Toggle — 4.6: min 44×44 tap target */}
@@ -132,7 +134,7 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
       {/* Mobile Menu — 4.1: dialog role, focus-trap, Escape to close */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div
+          <m.div
             id={menuPanelId}
             role="dialog"
             aria-modal="true"
@@ -150,6 +152,9 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
                   <Link
                     key={nextLocale}
                     href={`/${nextLocale}`}
+                    hrefLang={nextLocale}
+                    lang={nextLocale}
+                    aria-current={locale === nextLocale ? 'true' : undefined}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`min-h-[44px] flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${
                       locale === nextLocale
@@ -167,9 +172,9 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
                 {navigation.contactCta}
               </a>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </m.nav>
   );
 };

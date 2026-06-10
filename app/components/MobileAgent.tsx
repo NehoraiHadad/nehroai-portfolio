@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { MessageSquare } from 'lucide-react';
 import { InteractiveAgent } from './InteractiveAgent';
 import { useDictionary } from '@/lib/i18n/provider';
@@ -37,7 +37,7 @@ export const MobileAgent = () => {
       {/* Floating Action Button — 4.2: aria-label; already 56px = ✓ 4.6 */}
       <AnimatePresence>
         {!isOpen && (
-          <motion.button
+          <m.button
             ref={fabRef}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -48,7 +48,7 @@ export const MobileAgent = () => {
             style={{ insetInlineEnd: '1.5rem' }}
           >
             <MessageSquare className="w-6 h-6" aria-hidden="true" />
-          </motion.button>
+          </m.button>
         )}
       </AnimatePresence>
 
@@ -66,21 +66,21 @@ export const MobileAgent = () => {
             >
               {/* Hidden title for dialog label */}
               <span id={dialogTitleId} className="sr-only">Chat assistant</span>
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsOpen(false)}
                 className="absolute inset-0 bg-page/80 backdrop-blur-sm"
               />
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, y: 100, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 100, scale: 0.95 }}
                 className="relative w-full max-w-lg"
               >
                 <InteractiveAgent onClose={() => setIsOpen(false)} />
-              </motion.div>
+              </m.div>
             </div>
           )}
         </AnimatePresence>,

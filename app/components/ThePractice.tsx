@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { Layers } from 'lucide-react';
 import { useReveal } from '@/lib/useReveal';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
@@ -32,10 +32,10 @@ export const ThePractice = () => {
         </div>
 
         {/* spotlight-group: when a card is hovered (.is-spotlit), siblings recede
-            via the CSS rule in globals.css. Transform lift is gated for reduced-motion. */}
+            via the CSS rule in globals.css. Transform lift is gated for reduced-m. */}
         <div className="spotlight-group grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {skills.map((skillGroup, idx) => (
-            <motion.div
+            <m.div
               key={idx}
               className={`reveal-pop card p-6 transition-colors duration-200${hoveredIdx === idx ? ' is-spotlit' : ''}`}
               style={{ '--reveal-delay': `${idx * 100}ms` } as React.CSSProperties}
@@ -62,7 +62,7 @@ export const ThePractice = () => {
                   </li>
                 ))}
               </ul>
-            </motion.div>
+            </m.div>
           ))}
         </div>
       </div>

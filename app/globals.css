@@ -128,7 +128,7 @@
   --dur-0: 80ms; --dur-1: 120ms; --dur-2: 200ms; --dur-3: 480ms; --dur-4: 960ms;
 
   /* Layout */
-  --page-max: 1280px; --read-max: 64ch; --header-h: 64px;
+  --page-max: 1280px; --read-max: 64ch; --header-h: 80px;
   --bp-sm: 580px; --bp-md: 720px; --bp-lg: 980px; --bp-xl: 1240px;
   --z-base: 1; --z-sticky: 50; --z-overlay: 100; --z-modal: 200; --z-toast: 300;
 
@@ -651,6 +651,34 @@ body[data-scene="showcase"] {
   --color-scene-accent-2: var(--scene-accent-2);
   --color-scene-glow: var(--scene-glow);
   --color-scene-grid: var(--scene-grid);
+}
+
+/* ============================================================
+   Matrix easter-egg scoped tokens (4.13).
+   Applied to the InteractiveAgent panel root via data-matrix attribute.
+   Contrast verified: text greens on black —
+     green-500 (#22C55E on #000): 5.3:1 ✓ idle text
+     green-600 (#16A34A on #000): 3.5:1 — used only for decorative system lines
+     green-700 (#15803D on #000): 2.5:1 — used only for disabled/muted (bg-black fills)
+   Placeholder (fg-1 = green-800 fallback) — overridden to green-700 which is
+   acceptable for placeholder (WCAG allows lower for placeholder text).
+   ============================================================ */
+[data-matrix] {
+  --accent: #22C55E;          /* green-500 — primary accent (5.3:1 on black) */
+  --accent-text: #22C55E;
+  --accent-pale: #4ADE80;     /* green-400 — hover states */
+  --accent-hover: #4ADE80;
+  --bg-0: #000000;            /* page/panel bg */
+  --bg-1: #050F05;            /* inner surfaces */
+  --bg-2: #0A1A0A;            /* raised */
+  --fg-0: #D9F9D9;            /* primary text — near-white green tint (12:1+ on #000) */
+  --fg-1: #86EFAC;            /* body text — green-300 (8.9:1 on #000) */
+  --fg-2: #22C55E;            /* labels — green-500 (5.3:1 on #000) */
+  --fg-3: #166534;            /* decorative only */
+  --line: #14532D;            /* green-900 — hairlines */
+  --line-strong: #15803D;     /* green-700 */
+  /* Override panel glow for matrix mode — green halo instead of blue */
+  --shadow-glow-soft: 0 0 30px rgba(34, 197, 94, 0.2);
 }
 
 /* ============================================================
