@@ -272,7 +272,10 @@
     font-family: var(--font-sans-he);
   }
 
-  /* Hebrew display override — reach elements that set their own font-family */
+  /* Hebrew display override — reach elements that set their own font-family.
+     Rubik wants no negative tracking, so letter-spacing is reset to normal here.
+     The earlier `:lang(he) h1…{ letter-spacing: normal }` rule below is the
+     only other he-tracking rule — kept for non-.display headings. */
   html:lang(he) h1, html:lang(he) .h1,
   html:lang(he) h2, html:lang(he) .h2,
   html:lang(he) h3, html:lang(he) .h3,
@@ -284,7 +287,7 @@
   [dir="rtl"] h4, [dir="rtl"] .h4,
   [dir="rtl"] .display, [dir="rtl"] .hero-title {
     font-family: var(--font-display-he);
-    letter-spacing: -0.02em;
+    letter-spacing: normal;
   }
 
   body {
@@ -564,6 +567,19 @@ body[data-scene="showcase"] {
 .reveal.in-view { opacity: 1; transform: translateY(0); filter: blur(0px); }
 @keyframes reveal-fallback { to { opacity: 1; transform: translateY(0); filter: blur(0px); } }
 .reveal:not(.in-view) { animation: reveal-fallback 0s 4s forwards; }
+
+/* Spring-overshoot one-shot reveal — cards and drawer items */
+.reveal-pop {
+  opacity: 0;
+  transform: translateY(18px) scale(0.98);
+  transition:
+    opacity 0.52s var(--ease-spring),
+    transform 0.52s var(--ease-spring);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal-pop.in-view { opacity: 1; transform: none; }
+@keyframes reveal-pop-fallback { to { opacity: 1; transform: none; } }
+.reveal-pop:not(.in-view) { animation: reveal-pop-fallback 0s 4s forwards; }
 
 /* ============================================================
    Signature motion (kept, retinted electric-blue / ice)

@@ -20,7 +20,7 @@ export function useReveal<T extends HTMLElement = HTMLElement>() {
     const container = containerRef.current;
     if (!container) return;
 
-    const elements = container.querySelectorAll('.reveal');
+    const elements = container.querySelectorAll('.reveal, .reveal-pop');
     if (elements.length === 0) return;
 
     const observer = new IntersectionObserver(

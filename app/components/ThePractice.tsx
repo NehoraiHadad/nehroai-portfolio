@@ -32,7 +32,7 @@ export const ThePractice = () => {
           {skills.map((skillGroup, idx) => (
             <motion.div
               key={idx}
-              className="reveal card p-6 transition-colors duration-200"
+              className="reveal-pop card p-6 transition-colors duration-200"
               style={{ '--reveal-delay': `${idx * 100}ms` } as React.CSSProperties}
               whileHover={{ y: -4, borderColor: 'var(--accent)' }}
               dir={isRtl ? 'ltr' : undefined}

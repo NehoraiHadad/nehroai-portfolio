@@ -99,6 +99,8 @@ export const Showcase = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState<ShowcaseNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<ShowcaseEdge>([]);
   const ref = useReveal<HTMLElement>();
+  // 2.3: reveal-pop for drawer items — separate observer on the drawer scroll container
+  const drawerRef = useReveal<HTMLDivElement>();
   const caseStudies = useMemo<CaseStudy[]>(
     () =>
       rawCaseStudies.map((study) => ({
@@ -257,10 +259,16 @@ export const Showcase = () => {
                 </div>
 
                 {/* Drawer Content (Form-like) */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-[color:var(--line-strong)] scrollbar-track-transparent" style={{ textAlign: 'start' }}>
+                {/* 2.3: drawerRef enables reveal-pop on items; key resets observer on study change */}
+                <div
+                  key={selectedStudy.id}
+                  ref={drawerRef}
+                  className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-[color:var(--line-strong)] scrollbar-track-transparent"
+                  style={{ textAlign: 'start' }}
+                >
 
                   {/* Field: ID & Status */}
-                  <div className="flex gap-4">
+                  <div className="reveal-pop flex gap-4" style={{ '--reveal-delay': '40ms' } as React.CSSProperties}>
                     <div className="flex-1 space-y-2">
                       <label className="text-[10px] font-mono text-fg-2 uppercase">{showcase.fields.nodeId}</label>
                       <div className="bg-surface/50 border border-line/50 rounded-lg px-3 py-2 text-xs font-mono text-fg-1 bidi-ltr">
@@ -277,7 +285,7 @@ export const Showcase = () => {
                   </div>
 
                   {/* Field: Name */}
-                  <div className="space-y-2">
+                  <div className="reveal-pop space-y-2" style={{ '--reveal-delay': '100ms' } as React.CSSProperties}>
                     <label className="text-[10px] font-mono text-fg-2 uppercase">{showcase.fields.projectName}</label>
                     <div className="bg-surface/80 border border-line rounded-lg px-4 py-3 text-sm font-medium text-fg-0 flex items-center gap-3">
                       {selectedStudy.icon && <selectedStudy.icon className="w-4 h-4 text-accent" />}
@@ -286,7 +294,7 @@ export const Showcase = () => {
                   </div>
 
                   {/* Field: Description */}
-                  <div className="space-y-2">
+                  <div className="reveal-pop space-y-2" style={{ '--reveal-delay': '160ms' } as React.CSSProperties}>
                     <label className="text-[10px] font-mono text-fg-2 uppercase">{showcase.fields.description}</label>
                     <div className="bg-surface/50 border border-line/50 rounded-lg px-4 py-3 text-sm text-fg-1 leading-relaxed">
                       {selectedStudy.description}
@@ -295,7 +303,7 @@ export const Showcase = () => {
 
                   {/* Field: Challenge */}
                   {selectedStudy.details?.challenge && (
-                    <div className="space-y-2">
+                    <div className="reveal-pop space-y-2" style={{ '--reveal-delay': '220ms' } as React.CSSProperties}>
                       <label className="text-[10px] font-mono text-fg-2 uppercase">{showcase.fields.challenge}</label>
                       <div className="bg-surface/50 border border-line/50 rounded-lg px-4 py-3 text-sm text-fg-1 leading-relaxed">
                         {selectedStudy.details.challenge}
@@ -305,7 +313,7 @@ export const Showcase = () => {
 
                   {/* Field: Solution */}
                   {selectedStudy.details?.solution && (
-                    <div className="space-y-2">
+                    <div className="reveal-pop space-y-2" style={{ '--reveal-delay': '280ms' } as React.CSSProperties}>
                       <label className="text-[10px] font-mono text-accent-text uppercase">{showcase.fields.solution}</label>
                       <div className="bg-accent-dim/10 border border-accent/30 rounded-lg px-4 py-3 text-sm text-fg-0 leading-relaxed">
                         {selectedStudy.details.solution}
@@ -315,7 +323,7 @@ export const Showcase = () => {
 
                   {/* Field: Tech Stack */}
                   {selectedStudy.details?.architecture && (
-                    <div className="space-y-2">
+                    <div className="reveal-pop space-y-2" style={{ '--reveal-delay': '340ms' } as React.CSSProperties}>
                       <label className="text-[10px] font-mono text-fg-2 uppercase">{showcase.fields.dependencies}</label>
                       <div className="flex flex-wrap gap-2 pt-1">
                         {selectedStudy.details.architecture.map((tech, i) => (

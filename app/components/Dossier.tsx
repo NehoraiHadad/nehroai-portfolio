@@ -6,6 +6,7 @@ import { FileText, Send, Lock } from 'lucide-react';
 import { useReveal } from '@/lib/useReveal';
 import { sendContact } from '@/app/lib/actions/contact';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
+import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 
 type SubmitPhase = '' | 'encrypting' | 'transmitting';
 
@@ -24,6 +25,7 @@ const AsciiBar = ({ pct, label }: { pct: number; label: string }) => {
 };
 
 export const Dossier = () => {
+  const prefersReduced = usePrefersReducedMotion();
   const { dossier } = useDictionary();
   const direction = useDirection();
   const isRtl = direction === 'rtl';
@@ -39,6 +41,13 @@ export const Dossier = () => {
   const ref = useReveal<HTMLElement>();
 
   useEffect(() => {
+    // 2.1: Skip init theater for reduced-motion users — show form immediately
+    if (prefersReduced) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInitStep(dossier.initLines.length - 1);
+      setInitialized(true);
+      return;
+    }
     const timers = [
       setTimeout(() => setInitStep(0), 80),
       setTimeout(() => setInitStep(1), 500),
@@ -46,7 +55,7 @@ export const Dossier = () => {
       setTimeout(() => setInitialized(true), 1380),
     ];
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [prefersReduced, dossier.initLines.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
