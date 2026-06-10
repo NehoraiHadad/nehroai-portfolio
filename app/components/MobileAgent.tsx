@@ -44,8 +44,8 @@ export const MobileAgent = () => {
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
             aria-label={a11y.openChat}
-            className="fixed bottom-6 z-40 w-14 h-14 bg-accent text-[var(--fg-on-accent)] rounded-full flex items-center justify-center hover:scale-105 transition-transform focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none"
-            style={{ boxShadow: '0 0 20px color-mix(in oklab, var(--accent) 40%, transparent)', insetInlineEnd: '1.5rem' }}
+            className="fixed bottom-6 z-40 w-14 h-14 corner-chip bg-accent text-[var(--fg-on-accent)] rounded-full hover:scale-105 transition-transform focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none"
+            style={{ insetInlineEnd: '1.5rem' }}
           >
             <MessageSquare className="w-6 h-6" aria-hidden="true" />
           </motion.button>

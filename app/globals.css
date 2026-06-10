@@ -790,6 +790,124 @@ body[data-scene="showcase"] {
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--r-pill); }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
 
+/* ============================================================
+   2.7 — Per-scene display font (instant swap, NOT in body transition).
+   .display and .hero-title read var(--display-font) and var(--display-ls)
+   so each scene can override the display font without re-introducing
+   any hardcoded values.
+
+   RTL COMPOSE RULE: the html:lang(he) / [dir="rtl"] rules in @layer base
+   (line ~284) use `font-family: var(--font-display-he)` and `letter-spacing:
+   normal`. Those rules have HIGHER specificity (element + class + lang pseudo)
+   than these scene overrides, which target only .display/.hero-title without
+   a lang qualifier. Cascade order: lang rule wins for Hebrew in every scene —
+   the --display-font / --display-ls vars are only consumed by the fallback
+   path on EN pages. Verified: EN terminal → mono; HE any scene → Rubik.
+   ============================================================ */
+
+@property --display-font {
+  syntax: "*";
+  inherits: true;
+  /* no initial-value — falls back to var(--font-display) in the rule below */
+}
+@property --display-ls {
+  syntax: "*";
+  inherits: true;
+  /* no initial-value — falls back to var(--ls-display-tight) in the rule below */
+}
+
+/* Base: .display / .hero-title consume the per-scene vars with the existing
+   tokens as fallback. The body transition list intentionally EXCLUDES these
+   so the font family/tracking snaps (stepping into a different room). */
+@layer base {
+  .display, .hero-title {
+    font-family: var(--display-font, var(--font-display));
+    letter-spacing: var(--display-ls, var(--ls-display-tight));
+  }
+}
+
+/* Terminal scene: mono font, no negative tracking (mono needs room). */
+body[data-scene="terminal"] {
+  --display-font: var(--font-mono);
+  --display-ls: 0;
+}
+
+/* Default + showcase scenes: explicit reset so switching back from terminal
+   snaps cleanly (avoids inheriting stale --display-font from a parent). */
+body[data-scene="default"],
+body[data-scene="showcase"] {
+  --display-font: var(--font-display);
+  --display-ls: var(--ls-display-tight);
+}
+
+/* ============================================================
+   3.5 — .corner-chip quiet-glass recipe.
+   Applied to floating corner controls: MobileAgent FAB and ThemeToggle.
+   Opacity 0.62 at rest → 1 on hover/focus-within.  Touch target is
+   preserved at ≥44px by the component's own h-11 w-11 sizing.
+   backdrop-filter is progressive-enhancement only (ignored when not
+   supported — the bg-1 fallback is still legible).
+   ============================================================ */
+@layer components {
+  .corner-chip {
+    background: color-mix(in oklab, var(--bg-1) 78%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid color-mix(in oklab, var(--accent) 28%, transparent);
+    opacity: 0.62;
+    transition:
+      opacity var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out);
+    /* Ensure touch target is at least 44×44px per 4.6 */
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .corner-chip:hover,
+  .corner-chip:focus-within {
+    opacity: 1;
+    border-color: color-mix(in oklab, var(--accent) 50%, transparent);
+  }
+}
+
+/* ============================================================
+   3.7 — .beam-up connector pseudo-element.
+   A 2px-wide, 56px-tall linear-gradient line (accent → transparent)
+   positioned bottom-center of its element, pulsing at 1.8s.
+   Apply to the spotlit Showcase node via .is-spotlit.beam-up or
+   directly to a container. Pointer-events:none so it never intercepts
+   clicks. The CSS reduced-motion kill-switch (animation-duration:0.001ms)
+   auto-collapses beam-pulse to a still frame — element still shows at
+   full opacity (the gradient is always present; only the pulse animation
+   is killed, leaving a static beam).
+   ============================================================ */
+@layer components {
+  .beam-up {
+    position: relative;
+  }
+  .beam-up::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 56px;
+    background: linear-gradient(to top, var(--scene-accent, var(--accent)), transparent);
+    pointer-events: none;
+    animation: beam-pulse 1.8s var(--ease-out) infinite;
+    /* Don't let it overflow the node's rounded corners */
+    border-radius: 1px;
+  }
+}
+
+@keyframes beam-pulse {
+  0%, 100% { opacity: 0.65; transform: translateX(-50%) scaleY(1); }
+  50%       { opacity: 1;    transform: translateX(-50%) scaleY(1.08); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;

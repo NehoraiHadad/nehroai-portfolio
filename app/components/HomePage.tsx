@@ -11,10 +11,15 @@ import { Footer } from './Footer';
 import { BackgroundEffect } from './BackgroundEffect';
 import { MobileAgent } from './MobileAgent';
 import { useDictionary } from '@/lib/i18n/provider';
+import { useScene } from '@/lib/useScene';
 
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { a11y } = useDictionary();
+
+  // 3.6: mount scene driver — sets body[data-scene] from scroll position and
+  // hover/focus summons. One instance only; lives for the page lifetime.
+  useScene();
 
   return (
     // 2.1: MotionConfig with reducedMotion="user" gates all motion-library

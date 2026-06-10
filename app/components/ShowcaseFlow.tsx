@@ -89,7 +89,7 @@ const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
       tabIndex={0}
       aria-label={data.title}
       onKeyDown={handleKeyDown}
-      className={`bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-all duration-300 group cursor-pointer relative overflow-hidden focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none${data.isSpotlit ? ' is-spotlit' : ''}`}
+      className={`bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-all duration-300 group cursor-pointer relative overflow-hidden focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none${data.isSpotlit ? ' is-spotlit beam-up' : ''}`}
       dir={data.isRtl ? 'rtl' : 'ltr'}
       style={{ textAlign: 'start' }}
     >

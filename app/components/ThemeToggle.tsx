@@ -47,7 +47,7 @@ export const ThemeToggle = ({ className = '' }: { className?: string }) => {
       onClick={toggle}
       aria-label={a11y.themeToggle}
       title={isLight ? 'Dark' : 'Light'}
-      className={`inline-flex h-11 w-11 items-center justify-center rounded-[var(--r-1)] border border-line text-fg-1 transition-colors hover:bg-surface-raised hover:text-fg-0 focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${className}`}
+      className={`corner-chip rounded-[var(--r-1)] text-fg-1 hover:bg-surface-raised hover:text-fg-0 focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${className}`}
     >
       {isLight ? <Moon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" /> : <Sun className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />}
     </button>
