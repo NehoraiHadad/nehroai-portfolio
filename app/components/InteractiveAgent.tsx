@@ -4,7 +4,9 @@ import React, { useState, useRef, useEffect, useId } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { Send, Terminal, Cpu, Bot, X } from 'lucide-react';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
+import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 import { TerminalFrame } from '@/app/components/TerminalFrame';
+import { EASE_OUT } from '@/lib/motion';
 
 interface Message {
   id: string;
@@ -13,9 +15,58 @@ interface Message {
   agentName?: string;
 }
 
+// 3.8: Jittered per-character typewriter for agent message streaming.
+// base 26ms + rand(34ms); +40ms after space; +180ms after .!?
+// Uses visibility (not opacity) so the span width is preserved — no reflow.
+const JitteredTyping = ({
+  text,
+  reduced,
+}: {
+  text: string;
+  reduced: boolean;
+}) => {
+  const [revealed, setRevealed] = useState(reduced ? text.length : 0);
+
+  useEffect(() => {
+    if (reduced) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRevealed(text.length);
+      return;
+    }
+    setRevealed(0);
+    let cumulative = 0;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    for (let i = 0; i < text.length; i++) {
+      const prev = i > 0 ? text[i - 1] : '';
+      let delay = 26 + Math.random() * 34;
+      if (/[.!?]/.test(prev)) delay += 180;
+      else if (prev === ' ') delay += 40;
+      cumulative += delay;
+      const idx = i + 1;
+      timers.push(setTimeout(() => setRevealed(idx), cumulative));
+    }
+    return () => timers.forEach(clearTimeout);
+  }, [text, reduced]);
+
+  return (
+    <span aria-label={text}>
+      {text.split('').map((char, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          style={{ visibility: i < revealed ? 'visible' : 'hidden', display: 'inline' }}
+        >
+          {char}
+        </span>
+      ))}
+    </span>
+  );
+};
+
 export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => {
-  const { assistant, a11y } = useDictionary();
+  const { assistant, a11y, dossier } = useDictionary();
   const direction = useDirection();
+  const prefersReduced = usePrefersReducedMotion();
   const titleId = useId();
   const messageIdRef = useRef(assistant.initialMessages.length);
   const [messages, setMessages] = useState<Message[]>(
@@ -85,12 +136,20 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
 
     if (includesAnyKeyword(normalizedText, assistant.intentKeywords.commands.download)) {
       setTimeout(() => {
-        setMessages(prev => [...prev, { 
-          id: nextMessageId(), 
-          type: 'system', 
-          content: assistant.downloadMessage 
+        setMessages(prev => [...prev, {
+          id: nextMessageId(),
+          type: 'system',
+          content: assistant.downloadMessage
         }]);
         setIsTyping(false);
+        // 5.11: trigger the actual CV download — locale-aware PDF path from dictionary
+        const link = document.createElement('a');
+        link.href = dossier.resumeFile;
+        link.download = dossier.resumeDownloadName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }, 800);
       return;
     }
@@ -200,8 +259,22 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
           {messages.map((msg) => (
             <m.div
               key={msg.id}
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              // 3.8: agent/system messages pop in with y+scale variants; user messages use simpler entry
+              initial={
+                prefersReduced
+                  ? { opacity: 1 }
+                  : msg.type === 'agent'
+                    ? { opacity: 0, y: 8, scale: 0.96 }
+                    : { opacity: 0, y: 10, scale: 0.95 }
+              }
               animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={
+                prefersReduced
+                  ? { duration: 0 }
+                  : msg.type === 'agent'
+                    ? { duration: 0.42, ease: EASE_OUT }
+                    : { duration: 0.25 }
+              }
               className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
             >
               {msg.type === 'system' ? (
@@ -221,7 +294,14 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
                       {msg.agentName}
                     </div>
                   )}
-                  <p className="text-sm leading-relaxed bidi-plaintext" dir="auto">{msg.content}</p>
+                  {/* 3.8: jittered typing on agent messages; user/system render directly */}
+                  {msg.type === 'agent' ? (
+                    <p className="text-sm leading-relaxed bidi-plaintext" dir="auto">
+                      <JitteredTyping text={msg.content} reduced={prefersReduced} />
+                    </p>
+                  ) : (
+                    <p className="text-sm leading-relaxed bidi-plaintext" dir="auto">{msg.content}</p>
+                  )}
                 </div>
               )}
             </m.div>

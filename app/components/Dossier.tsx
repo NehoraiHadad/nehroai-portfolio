@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { m, AnimatePresence } from 'motion/react';
-import { FileText, Send, Lock, Mail, Github, Linkedin } from 'lucide-react';
+import { FileText, Send, Lock, Mail, Github, Linkedin, RefreshCw } from 'lucide-react';
 import { useReveal } from '@/lib/useReveal';
 import { sendContact } from '@/app/lib/actions/contact';
 import type { ContactErrorCode } from '@/app/lib/actions/contact';
@@ -17,6 +17,64 @@ function useErrorMessage(code: ContactErrorCode | null, errors: Record<string, s
   if (!code) return null;
   return errors[code] ?? errors.unknown ?? code;
 }
+
+// 3.8: Jittered per-character typewriter — base 26ms + rand(34ms),
+// +40ms after spaces, +180ms after sentence punctuation .!?
+// Space-holding spans keep the line width stable so the card never reflows.
+const JitteredText = ({
+  text,
+  reduced,
+  className,
+}: {
+  text: string;
+  reduced: boolean;
+  className?: string;
+}) => {
+  const [revealed, setRevealed] = useState(0);
+
+  useEffect(() => {
+    if (reduced) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRevealed(text.length);
+      return;
+    }
+    setRevealed(0);
+    let cumulative = 0;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    for (let i = 0; i < text.length; i++) {
+      const prev = i > 0 ? text[i - 1] : '';
+      let delay = 26 + Math.random() * 34;
+      if (/[.!?]/.test(prev)) delay += 180;
+      else if (prev === ' ') delay += 40;
+      cumulative += delay;
+      const idx = i + 1;
+      timers.push(setTimeout(() => setRevealed(idx), cumulative));
+    }
+    return () => timers.forEach(clearTimeout);
+  // text changes when the line appears (initStep changes) — restart the effect.
+  // prefersReduced intentionally tracked via `reduced` prop only.
+  }, [text, reduced]);
+
+  return (
+    <span className={className} aria-label={text}>
+      {text.split('').map((char, i) => (
+        // Space-holding: each char is a fixed-width inline-block.
+        // Invisible chars still take up space so the line never reflows.
+        <span
+          key={i}
+          aria-hidden="true"
+          style={{
+            visibility: i < revealed ? 'visible' : 'hidden',
+            // Preserve exact width even when hidden so line doesn't reflow
+            display: 'inline',
+          }}
+        >
+          {char}
+        </span>
+      ))}
+    </span>
+  );
+};
 
 const AsciiBar = ({ pct, label }: { pct: number; label: string }) => {
   const filled = Math.round(pct / 10);
@@ -47,24 +105,54 @@ export const Dossier = () => {
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>('');
   const [initStep, setInitStep] = useState(-1);
   const [initialized, setInitialized] = useState(false);
+  // 5.10: track whether the in-view trigger has already fired so we only run once
+  const initFiredRef = useRef(false);
   const ref = useReveal<HTMLElement>();
 
+  // 5.10: fire init theater when the section enters view (ref.current gets .in-view)
+  // We watch for the CSS class added by useReveal rather than duplicating IO logic.
   useEffect(() => {
-    // 2.1: Skip init theater for reduced-motion users — show form immediately
-    if (prefersReduced) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setInitStep(dossier.initLines.length - 1);
-      setInitialized(true);
-      return;
-    }
-    const timers = [
-      setTimeout(() => setInitStep(0), 80),
-      setTimeout(() => setInitStep(1), 500),
-      setTimeout(() => setInitStep(2), 920),
-      setTimeout(() => setInitialized(true), 1380),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [prefersReduced, dossier.initLines.length]);
+    const el = ref.current;
+    if (!el) return;
+
+    const run = () => {
+      if (initFiredRef.current) return;
+      initFiredRef.current = true;
+
+      // 2.1: Skip init theater for reduced-motion users — show form immediately
+      if (prefersReduced) {
+        setInitStep(dossier.initLines.length - 1);
+        setInitialized(true);
+        return;
+      }
+      // ~800ms total: lines at 0, 250ms, 500ms; form at 800ms
+      const timers = [
+        setTimeout(() => setInitStep(0), 0),
+        setTimeout(() => setInitStep(1), 250),
+        setTimeout(() => setInitStep(2), 500),
+        setTimeout(() => setInitialized(true), 800),
+      ];
+      return () => timers.forEach(clearTimeout);
+    };
+
+    // useReveal adds the .in-view class via IntersectionObserver on `el`.
+    // We watch for that class with our own IO so we piggy-back on the same
+    // threshold without duplicating the workaround logic.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          run();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '0px 0px -80px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  // prefersReduced is intentionally excluded: if reduced-motion changes mid-session
+  // we don't want to re-trigger the theater. eslint-disable-next-line is acceptable.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,11 +173,17 @@ export const Dossier = () => {
       setEmail('');
       setMessage('');
       setSubmitPhase('');
-      setTimeout(() => setIsSubmitted(false), 9000);
+      // 5.10: no auto-dismiss — recruiters screenshot the success state.
+      // Reset is manual via the "> NEW_TRANSMISSION" button.
     } else {
       setSubmitPhase('');
       setErrorCode(result.code);
     }
+  };
+
+  const handleReset = () => {
+    setIsSubmitted(false);
+    setErrorCode(null);
   };
 
   return (
@@ -234,7 +328,15 @@ export const Dossier = () => {
                               transition={{ duration: 0.25 }}
                               className={`font-mono text-xs ${i < initStep ? 'text-fg-2' : 'text-accent'}`}
                             >
-                              {line}
+                              {/* 3.8: jittered per-char typing on the active (last) line */}
+                              {i === initStep ? (
+                                <JitteredText
+                                  text={line}
+                                  reduced={prefersReduced}
+                                />
+                              ) : (
+                                line
+                              )}
                               {i === initStep && i < dossier.initLines.length - 1 && (
                                 <span
                                   className="inline-block w-[6px] h-[12px] bg-accent animate-pulse align-middle"
@@ -273,7 +375,7 @@ export const Dossier = () => {
                     </m.div>
                   )}
 
-                  {/* ③ Success */}
+                  {/* ③ Success — 5.10: persists until manual reset; recruiters can screenshot */}
                   {initialized && !isSubmitting && isSubmitted && (
                     <m.div
                       key="success"
@@ -288,6 +390,14 @@ export const Dossier = () => {
                       <p className="text-fg-2 pt-2">{dossier.success.title}</p>
                       <p className="text-fg-2">{dossier.success.description}</p>
                       <span className="inline-block w-[6px] h-[12px] bg-line-strong animate-pulse mt-1" />
+                      {/* 5.10: manual reset affordance — no auto-vanish */}
+                      <button
+                        onClick={handleReset}
+                        className="mt-4 flex items-center gap-2 text-fg-2 hover:text-accent transition-colors text-[10px] uppercase tracking-widest w-fit"
+                      >
+                        <RefreshCw className="w-3 h-3" aria-hidden="true" />
+                        &gt; NEW_TRANSMISSION
+                      </button>
                     </m.div>
                   )}
 
@@ -380,10 +490,10 @@ export const Dossier = () => {
                         ) : ' ' /* non-breaking space keeps layout height stable */}
                       </p>
 
-                      {/* Submit */}
+                      {/* Submit — 5.10: always enabled; inline terminal-voice hint shown when fields empty */}
                       <button
                         type="submit"
-                        disabled={isSubmitting || !name || !email || !message}
+                        disabled={isSubmitting}
                         className="flex items-center justify-center gap-2 py-3 rounded-lg font-mono text-[11px] uppercase tracking-widest border border-accent/25 text-accent bg-accent/5 hover:bg-accent hover:text-[var(--fg-on-accent)] hover:border-accent transition-[background-color,border-color,color] duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         <Send className="w-3.5 h-3.5" />

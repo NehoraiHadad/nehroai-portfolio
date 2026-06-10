@@ -16,9 +16,9 @@ export const enDictionary: AppDictionary = {
     skipToContent: 'Skip to main content',
   },
   meta: {
-    title: 'AI Solution Architect Portfolio',
+    title: 'Nehorai Hadad — AI Engineer',
     description:
-      'High-fidelity AI Solution Architect portfolio featuring agentic showcase, neural infrastructure monitoring, and strategic dossier',
+      'AI engineer with infrastructure depth — shipping agents, AWS pipelines, MCP orchestration, and full-stack web systems.',
   },
   navigation: {
     eyebrow: 'Nehorai Hadad // AI Engineer, Full-Stack Builder',
@@ -44,7 +44,7 @@ export const enDictionary: AppDictionary = {
   showcase: {
     sectionMarker: '02 — PROJECTS',
     title: 'Selected Projects',
-    description: 'Click any node for the build details, the live link, and the source.',
+    description: 'Five shipped systems — AI pipelines on AWS, agent orchestration over MCP, client sites in production.',
     hint: 'Click a node to open the project details',
     orchestratorLabel: 'Nehorai // Builder',
     shippingLabel: 'SHIPPING',
@@ -178,7 +178,7 @@ export const enDictionary: AppDictionary = {
     },
   },
   footer: {
-    copyrightTemplate: '© {year} Nehor.ai. All rights reserved.',
+    copyrightTemplate: '© {year} Nehorai Hadad.',
   },
   ownerContact: {
     email: 'nehorai.hadad@gmail.com',

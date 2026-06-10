@@ -16,9 +16,9 @@ export const heDictionary: AppDictionary = {
     skipToContent: 'דלג לתוכן הראשי',
   },
   meta: {
-    title: 'תיק עבודות של AI Solution Architect',
+    title: 'Nehorai Hadad — מהנדס AI',
     description:
-      'תיק עבודות ברמת גימור גבוהה של AI Solution Architect, עם תצוגת פרויקטים agentic, ניטור תשתיות neural ו-dossier מקצועי',
+      'מהנדס AI עם עומק תשתיתי — בונה agents, pipelines על AWS, תיאום MCP ומערכות Full-Stack.',
   },
   navigation: {
     eyebrow: 'Nehorai Hadad // מהנדס AI, מפתח Full-Stack',
@@ -44,7 +44,7 @@ export const heDictionary: AppDictionary = {
   showcase: {
     sectionMarker: '02 — PROJECTS',
     title: 'פרויקטים נבחרים',
-    description: 'לחץ על כל node כדי לראות את פרטי המימוש, הקישור החי וקוד המקור.',
+    description: 'חמישה מערכות שנמסרו — pipelines של AI על AWS, תיאום agents דרך MCP, אתרי לקוחות ב-production.',
     hint: 'לחץ על node כדי לפתוח את פרטי הפרויקט',
     orchestratorLabel: 'Nehorai // Builder',
     shippingLabel: 'באוויר',
@@ -178,7 +178,7 @@ export const heDictionary: AppDictionary = {
     },
   },
   footer: {
-    copyrightTemplate: '© {year} Nehor.ai. כל הזכויות שמורות.',
+    copyrightTemplate: '© {year} Nehorai Hadad.',
   },
   ownerContact: {
     email: 'nehorai.hadad@gmail.com',
