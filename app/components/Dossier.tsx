@@ -165,10 +165,13 @@ export const Dossier = () => {
                 </div>
               </div>
 
-              {/* Scanlines */}
+              {/* Scanlines — opacity driven by --scanline-opacity token (dark 0.03, light 0.04) */}
               <div
-                className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]"
-                style={{ backgroundImage: 'repeating-linear-gradient(0deg, #fff, #fff 1px, transparent 1px, transparent 4px)' }}
+                className="absolute inset-0 pointer-events-none z-10"
+                style={{
+                  backgroundImage: 'repeating-linear-gradient(0deg, #fff, #fff 1px, transparent 1px, transparent 4px)',
+                  opacity: 'var(--scanline-opacity)',
+                }}
               />
 
               {/* Terminal body */}

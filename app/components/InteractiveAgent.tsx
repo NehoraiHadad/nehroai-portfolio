@@ -181,7 +181,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
               className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
             >
               {msg.type === 'system' ? (
-                <div className={`text-[10px] font-mono my-1 flex items-center gap-1.5 transition-colors duration-1000 ${matrixMode ? 'text-green-600' : 'text-accent/70'}`}>
+                <div className={`text-[10px] font-mono my-1 flex items-center gap-1.5 transition-colors duration-1000 ${matrixMode ? 'text-green-600' : 'text-accent-text'}`}>
                   <Terminal className="w-3 h-3" />
                   {msg.content}
                 </div>

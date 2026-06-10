@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, FileText, Brain, Network, Database, Cpu, Sparkle
 import { OpenAILogo, AnthropicLogo, GeminiLogo, N8nLogo, MetaLogo, PythonLogo, VercelLogo, DockerLogo, HuggingFaceLogo } from './TechLogos';
 import { InteractiveAgent } from './InteractiveAgent';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
+import { EASE_OUT } from '@/lib/motion';
 
 const LATIN_SCRAMBLE_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789!<>-_\\/[]{}cxz=+*^?#';
 const HEBREW_SCRAMBLE_CHARS = 'אבגדהוזחטיכלמנסעפצקרשת0123456789!?@#$%';
@@ -105,7 +106,7 @@ const HeroStatusLabel = ({ labels }: { labels: string[] }) => {
           initial={{ opacity: 0, y: 2, filter: 'blur(4px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           exit={{ opacity: 0, y: -2, filter: 'blur(4px)' }}
-          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.24, ease: EASE_OUT }}
           className="col-start-1 row-start-1"
         >
           {activeLabel}
@@ -125,11 +126,11 @@ const container = {
 
 const item = {
   hidden: { opacity: 0, y: 30, filter: 'blur(8px)' },
-  show: { 
-    opacity: 1, 
-    y: 0, 
+  show: {
+    opacity: 1,
+    y: 0,
     filter: 'blur(0px)',
-    transition: { duration: 0.8, easings: [0.22, 1, 0.36, 1] } 
+    transition: { duration: 0.8, ease: EASE_OUT }
   }
 };
 
@@ -143,11 +144,11 @@ const wordVariants = {
 
 const charVariants = {
   hidden: { opacity: 0, y: 20, filter: 'blur(8px)' },
-  show: { 
-    opacity: 1, 
-    y: 0, 
-    filter: 'blur(0px)', 
-    transition: { duration: 0.8, easings: [0.22, 1, 0.36, 1] } 
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.8, ease: EASE_OUT }
   }
 };
 
@@ -299,10 +300,10 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile }: {
     const iconFilter = [
       // Bottom edge catches light (renders behind icon shape)
       `drop-shadow(0px 2px 2px rgba(255,255,255,${(0.03 + eff * 0.04).toFixed(3)}))`,
-      // Phosphorescent glow from within
+      // Phosphorescent glow from within — uses accent token so light theme stays correct
       ...(eff > 0.03 ? [
-        `drop-shadow(0 0 ${(eff * 3).toFixed(1)}px rgba(37,99,235,${(eff * 0.3).toFixed(3)}))`,
-        `drop-shadow(0 0 ${(eff * 8).toFixed(1)}px rgba(37,99,235,${(eff * 0.1).toFixed(3)}))`,
+        `drop-shadow(0 0 ${(eff * 3).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 30)}%, transparent))`,
+        `drop-shadow(0 0 ${(eff * 8).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 10)}%, transparent))`,
       ] : []),
     ].join(' ');
 
@@ -350,10 +351,11 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile }: {
     // Phosphorescent glow — emanates from within the groove
     // Because text-shadow is BEHIND the dark text body,
     // the glow peeks out at the edges = light inside the carved channel
+    // Uses accent token so light theme stays correct
     ...(eff > 0.03 ? [
-      `0 0 ${(eff * 2).toFixed(1)}px rgba(37,99,235,${(eff * 0.35).toFixed(3)})`,
-      `0 0 ${(eff * 6).toFixed(1)}px rgba(37,99,235,${(eff * 0.15).toFixed(3)})`,
-      `0 0 ${(eff * 14).toFixed(1)}px rgba(37,99,235,${(eff * 0.05).toFixed(3)})`,
+      `0 0 ${(eff * 2).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 35)}%, transparent)`,
+      `0 0 ${(eff * 6).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 15)}%, transparent)`,
+      `0 0 ${(eff * 14).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 5)}%, transparent)`,
     ] : []),
   ].join(', ');
 
@@ -527,7 +529,7 @@ const IlluminationBackground = () => {
             height: '150vh',
             x: '-50%',
             transformOrigin: 'top center',
-            background: 'linear-gradient(180deg, rgba(37,99,235,0.25) 0%, rgba(37,99,235,0.12) 15%, rgba(37,99,235,0.04) 40%, rgba(37,99,235,0.01) 60%, transparent 100%)',
+            background: 'linear-gradient(180deg, color-mix(in oklab, var(--accent) 25%, transparent) 0%, color-mix(in oklab, var(--accent) 12%, transparent) 15%, color-mix(in oklab, var(--accent) 4%, transparent) 40%, color-mix(in oklab, var(--accent) 1%, transparent) 60%, transparent 100%)',
             filter: 'blur(8px)',
           }}
           initial={{ opacity: 0, clipPath: 'polygon(50% 0%, 50% 0%, 50% 0%, 50% 0%)', rotate: 0 }}
@@ -544,7 +546,7 @@ const IlluminationBackground = () => {
           }}
           transition={{
             opacity: { duration: 0.5 },
-            clipPath: { duration: 1.2, ease: [0.22, 1, 0.36, 1] },
+            clipPath: { duration: 1.2, ease: EASE_OUT },
             rotate: { type: "spring", stiffness: 18, damping: 22 },
           }}
         />,
@@ -654,7 +656,7 @@ export const Hero = () => {
       <motion.div 
         initial={{ opacity: 0, x: isRtl ? -40 : 40, filter: 'blur(10px)' }}
         animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-        transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 1, delay: 0.4, ease: EASE_OUT }}
         className="relative hidden lg:block"
       >
         <div className="absolute inset-0 bg-accent/20 blur-[100px] rounded-full pointer-events-none" />

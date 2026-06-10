@@ -19,8 +19,8 @@ export const MobileAgent = () => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 z-40 w-14 h-14 bg-accent text-[var(--fg-on-accent)] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:scale-105 transition-transform"
-            style={{ insetInlineEnd: '1.5rem' }}
+            className="fixed bottom-6 z-40 w-14 h-14 bg-accent text-[var(--fg-on-accent)] rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+            style={{ boxShadow: '0 0 20px color-mix(in oklab, var(--accent) 40%, transparent)', insetInlineEnd: '1.5rem' }}
           >
             <MessageSquare className="w-6 h-6" />
           </motion.button>

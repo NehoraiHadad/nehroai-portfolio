@@ -36,7 +36,7 @@ type ShowcaseNode = Node<OrchestratorNodeData | ProjectNodeData>;
 type ShowcaseEdge = Edge;
 
 const OrchestratorNode = ({ data }: { data: OrchestratorNodeData }) => (
-  <div className="bg-page/90 backdrop-blur-xl border border-accent/30 rounded-2xl p-5 w-56 shadow-[0_0_30px_rgba(37,99,235,0.15)] flex flex-col items-center text-center relative overflow-hidden group">
+  <div className="bg-page/90 backdrop-blur-xl border border-accent/30 rounded-2xl p-5 w-56 flex flex-col items-center text-center relative overflow-hidden group" style={{ boxShadow: '0 0 30px color-mix(in oklab, var(--accent) 15%, transparent)' }}>
     <div className="absolute inset-0 bg-gradient-to-b from-accent/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
     <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent mb-3 relative">
       <div className="absolute inset-0 rounded-xl bg-accent/20 animate-ping opacity-20" />
@@ -59,7 +59,7 @@ const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
   const Icon = data.icon || Cpu;
   return (
     <div
-      className="bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 hover:shadow-[0_0_20px_rgba(37,99,235,0.1)] transition-all duration-300 group cursor-pointer relative overflow-hidden"
+      className="bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-all duration-300 group cursor-pointer relative overflow-hidden"
       dir={data.isRtl ? 'rtl' : 'ltr'}
       style={{ textAlign: 'start' }}
     >
@@ -77,7 +77,7 @@ const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
         </div>
         <div>
           <div className="text-sm font-bold text-fg-0 group-hover:text-accent-pale transition-colors leading-tight mb-1">{data.title}</div>
-          <div className="text-[9px] sm:text-[10px] font-mono text-accent/70 uppercase tracking-wider">{data.tags[0]}</div>
+          <div className="text-[9px] sm:text-[10px] font-mono text-accent-text uppercase tracking-wider">{data.tags[0]}</div>
         </div>
       </div>
       <div className="text-xs text-fg-1 leading-relaxed line-clamp-2">{data.description}</div>
@@ -154,10 +154,10 @@ export const Showcase = () => {
       source: 'orchestrator',
       target: study.id,
       animated: true,
-      style: { stroke: '#2563EB', strokeWidth: 2, opacity: 0.5 },
+      style: { stroke: 'var(--accent)', strokeWidth: 2, opacity: 0.5 },
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: '#2563EB',
+        color: 'var(--accent)',
       },
     }));
 
@@ -204,7 +204,7 @@ export const Showcase = () => {
           className="bg-page/50"
           proOptions={{ hideAttribution: true }}
         >
-          <Background color="#1A2A55" gap={20} size={1.5} />
+          <Background color="var(--line-strong)" gap={20} size={1.5} />
         </ReactFlow>
 
         {/* Overlay hint */}
@@ -306,7 +306,7 @@ export const Showcase = () => {
                   {/* Field: Solution */}
                   {selectedStudy.details?.solution && (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-mono text-accent/70 uppercase">{showcase.fields.solution}</label>
+                      <label className="text-[10px] font-mono text-accent-text uppercase">{showcase.fields.solution}</label>
                       <div className="bg-accent-dim/10 border border-accent/30 rounded-lg px-4 py-3 text-sm text-fg-0 leading-relaxed">
                         {selectedStudy.details.solution}
                       </div>

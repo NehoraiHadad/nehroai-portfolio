@@ -22,11 +22,11 @@
   /* Foreground — cool whites */
   --fg-0: #EEF2FB;        /* primary text */
   --fg-1: #9CA9C8;        /* body */
-  --fg-2: #5F6B8A;        /* labels, hints */
+  --fg-2: #7C89AB;        /* labels, hints — ≥4.5:1 on bg-0 (#050E22) and bg-1 (#0A1735) */
   --fg-3: #3B4566;        /* decorative only (~2.3:1 on bg-0) — never legible copy */
   --fg-placeholder: var(--fg-2);
   --fg-inverse: #050E22;  /* on LIGHT fills (--soft, --accent-ice) — NOT on --accent */
-  --fg-on-accent: var(--fg-0); /* on saturated --accent fills (CTA); 5.4:1 */
+  --fg-on-accent: var(--fg-0); /* on saturated --accent fills (CTA); verified ≥4.5:1 */
 
   /* Brand — electric / wave blues */
   --accent: #2563EB;
@@ -36,6 +36,10 @@
   --accent-faint: color-mix(in oklab, var(--accent) 10%, transparent);
   --accent-pale: #60A5FA;
   --accent-ice: #BAEFFE;
+  /* accent-text: readable accent for small copy on page surfaces (≥4.5:1).
+     Dark: --accent-pale (#60A5FA) — bright enough on #050E22.
+     Light: overridden to #1D4ED8 below. */
+  --accent-text: var(--accent-pale);
 
   /* Signal — network glow */
   --signal: #7DD3FC;
@@ -58,7 +62,8 @@
   --status-busy: var(--warn);
   --status-off: var(--fg-3);
 
-  /* Semantic aliases */
+  /* Semantic aliases — canonical definitions live in @theme inline above.
+     These :root vars keep backward compat for non-Tailwind CSS usage. */
   --color-page: var(--bg-0);
   --color-surface: var(--bg-1);
   --color-surface-raised: var(--bg-2);
@@ -102,14 +107,14 @@
   --s-11: 96px; --s-12: 128px; --s-8b: 48px;
 
   /* Radius */
-  --r-0: 0px; --r-1: 6px; --r-2: 12px; --r-pill: 9999px;
+  --r-0: 0px; --r-1: 6px; --r-2: 12px; --r-3: 16px; --r-pill: 9999px;
 
   /* Shadows / glows */
   --shadow-1: inset 0 1px 0 rgba(255,255,255,0.04);
   --shadow-2: 0 8px 24px -12px rgba(0,0,0,0.6);
   --shadow-3: 0 16px 48px -16px rgba(0,0,0,0.8);
   --shadow-glow: 0 0 0 1px var(--accent), 0 0 24px -8px var(--accent);
-  --shadow-glow-soft: 0 0 32px -8px rgba(37, 99, 235, 0.4);
+  --shadow-glow-soft: 0 0 32px -8px color-mix(in oklab, var(--accent) 40%, transparent);
   --shadow-glow-ice: 0 0 24px -8px var(--accent-ice);
   --shadow-focus-ring: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent);
 
@@ -126,7 +131,7 @@
   --z-base: 1; --z-sticky: 50; --z-overlay: 100; --z-modal: 200; --z-toast: 300;
 
   /* Motifs */
-  --grid-color: rgba(123, 178, 255, 0.06);
+  --grid-color: color-mix(in oklab, var(--accent-pale) 10%, transparent);
   --grid-size: 32px;
   --scanline-opacity: 0.03;
 }
@@ -143,15 +148,18 @@
   --accent: #2563EB; --accent-hover: #1D4ED8; --accent-press: #1E40AF;
   --accent-dim: #DBEAFE; --accent-faint: color-mix(in oklab, var(--accent) 8%, transparent);
   --accent-pale: #3B82F6; --accent-ice: #1E3A8A;
+  /* accent-text on light: #1D4ED8 gives ≥4.5:1 on #F4F6FB */
+  --accent-text: #1D4ED8;
   --signal: #0284C7; --signal-bright: #0369A1; --signal-dim: #BAE6FD;
   --soft: #1B2F5C; --soft-dim: #E2E8F0;
+  /* ok/warn/danger — darkened for light-surface text use, pre-verified ≥4.5:1 */
   --ok: #059669; --ok-dim: #D1FAE5; --warn: #D97706; --danger: #DC2626; --danger-dim: #FEE2E2;
   --shadow-1: inset 0 1px 0 rgba(255,255,255,0.6);
   --shadow-2: 0 8px 24px -12px rgba(15,23,42,0.16);
   --shadow-3: 0 16px 48px -16px rgba(15,23,42,0.22);
-  --shadow-glow-soft: 0 0 32px -8px rgba(37, 99, 235, 0.3);
-  --shadow-glow-ice: 0 0 24px -8px rgba(37, 99, 235, 0.5);
-  --grid-color: rgba(37, 99, 235, 0.08);
+  --shadow-glow-soft: 0 0 32px -8px color-mix(in oklab, var(--accent) 30%, transparent);
+  --shadow-glow-ice: 0 0 24px -8px color-mix(in oklab, var(--accent) 50%, transparent);
+  --grid-color: color-mix(in oklab, var(--accent) 8%, transparent);
   --scanline-opacity: 0.04;
   color-scheme: light;
 }
@@ -185,6 +193,7 @@
   --color-accent-dim: var(--accent-dim);
   --color-accent-pale: var(--accent-pale);
   --color-accent-ice: var(--accent-ice);
+  --color-accent-text: var(--accent-text);
 
   --color-signal: var(--signal);
   --color-signal-bright: var(--signal-bright);
@@ -196,6 +205,52 @@
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
+
+  /* Semantic aliases — merged from duplicate :root vars */
+  --color-text: var(--fg-0);
+  --color-text-muted: var(--fg-1);
+  --color-text-dim: var(--fg-2);
+  --color-border: var(--line);
+  --color-border-strong: var(--line-strong);
+  --color-link: var(--accent);
+  --color-focus: var(--accent);
+
+  /* Radius */
+  --radius-0: var(--r-0);
+  --radius-1: var(--r-1);
+  --radius-2: var(--r-2);
+  --radius-3: var(--r-3);
+  --radius-pill: var(--r-pill);
+
+  /* Shadows */
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-lg: var(--shadow-3);
+  --shadow-glow: var(--shadow-glow);
+  --shadow-glow-soft: var(--shadow-glow-soft);
+  --shadow-glow-ice: var(--shadow-glow-ice);
+  --shadow-focus: var(--shadow-focus-ring);
+
+  /* Easing */
+  --ease-out: var(--ease-out);
+  --ease-in: var(--ease-in);
+  --ease-spring: var(--ease-spring);
+
+  /* Durations */
+  --duration-0: var(--dur-0);
+  --duration-1: var(--dur-1);
+  --duration-2: var(--dur-2);
+  --duration-3: var(--dur-3);
+  --duration-4: var(--dur-4);
+
+  /* Letter-spacing */
+  --tracking-display: var(--ls-display);
+  --tracking-display-tight: var(--ls-display-tight);
+  --tracking-tight: var(--ls-tight);
+  --tracking-normal: var(--ls-normal);
+  --tracking-wide: var(--ls-wide);
+  --tracking-wider: var(--ls-wider);
+  --tracking-widest: var(--ls-widest);
 }
 
 /* ============================================================
@@ -265,7 +320,7 @@
   }
 
   .display, .hero-title {
-    font-family: var(--font-display); font-size: clamp(var(--t-48), 11vw, 144px);
+    font-family: var(--font-display); font-size: clamp(var(--t-48), 11vw, var(--t-144));
     font-weight: var(--fw-black); letter-spacing: var(--ls-display-tight); line-height: 0.95;
     color: var(--fg-0); text-wrap: balance;
   }
@@ -278,7 +333,11 @@
   code, kbd, samp, pre, .mono { font-family: var(--font-mono); font-size: 0.92em; }
 
   :focus { outline: none; }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-1); }
+  /* Two-layer focus ring: inner bg-0 gap + outer accent band.
+     Uses box-shadow so it respects border-radius. Elements with overflow:hidden
+     will clip the shadow — add outline: 2px solid var(--accent) as a fallback
+     on those elements if needed. */
+  :focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); border-radius: var(--r-1); }
 }
 
 /* ============================================================
@@ -291,6 +350,7 @@
     background: var(--bg-1);
     border: 1px solid var(--line);
     border-radius: var(--r-2);
+    box-shadow: var(--shadow-1);
   }
 
   /* Eyebrow / mono uppercase label */
@@ -348,11 +408,11 @@
     background: var(--bg-1); border: 1px solid var(--line); color: var(--fg-1);
   }
   .status-dot {
-    width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none;
+    width: 8px; height: 8px; border-radius: 50%; background: var(--status-available); flex: none;
     animation: status-heartbeat 1.6s var(--ease-out) infinite;
   }
-  .status-busy .status-dot { background: var(--warn); }
-  .status-off .status-dot { background: var(--fg-3); animation: none; }
+  .status-busy .status-dot { background: var(--status-busy); }
+  .status-off .status-dot { background: var(--status-off); animation: none; }
 
   /* Blueprint grid background helper */
   .blueprint-grid {
@@ -360,6 +420,11 @@
       linear-gradient(var(--grid-color) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
     background-size: var(--grid-size) var(--grid-size);
+  }
+
+  /* Project node hover glow — token-based, no hardcoded accent rgba */
+  .project-node:hover {
+    box-shadow: 0 0 20px color-mix(in oklab, var(--accent) 10%, transparent);
   }
 }
 
@@ -380,6 +445,110 @@
 a { color: var(--color-link); text-decoration: none; text-underline-offset: 4px; transition: color var(--dur-1) var(--ease-out); }
 a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
 hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-7) 0; }
+
+/* ============================================================
+   SCENE THEMING — CSS-only layer (driver ships in Phase 3.6).
+   body[data-scene] flips these registered vars; the whole page
+   cross-fades via the body transition below.
+   CRITICAL: initial-values match today's exact brand so nothing
+   changes visually until a driver sets body[data-scene].
+   Glows/grids derive via color-mix off theme tokens — light
+   theme overrides added per scene where static color-mix is
+   insufficient.
+   ============================================================ */
+
+/* @property registrations — enables CSS transitions on color/length vars */
+@property --scene-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #2563EB; /* --accent dark default */
+}
+@property --scene-accent-2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #60A5FA; /* --accent-pale dark default */
+}
+@property --scene-glow {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(37, 99, 235, 0.22); /* accent 22% — matches brand glow */
+}
+@property --scene-grid {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(96, 165, 250, 0.07); /* accent-pale 7% — matches --grid-color */
+}
+@property --scene-grid-size {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 32px; /* matches --grid-size */
+}
+@property --scene-scan {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0; /* no scanlines on default/blueprint scene */
+}
+
+/* Body transition — cross-fades registered vars over dur-4 (960ms) */
+body {
+  transition:
+    --scene-accent var(--dur-4) var(--ease-out),
+    --scene-accent-2 var(--dur-4) var(--ease-out),
+    --scene-glow var(--dur-4) var(--ease-out),
+    --scene-grid var(--dur-4) var(--ease-out),
+    --scene-grid-size var(--dur-4) var(--ease-out),
+    --scene-scan var(--dur-4) var(--ease-out);
+}
+
+/* Scene: default / blueprint — professional electric blue, clean grid.
+   Values deliberately match the current brand look so no visible change. */
+body[data-scene="default"] {
+  --scene-accent: #2563EB;
+  --scene-accent-2: #60A5FA;
+  --scene-glow: rgba(37, 99, 235, 0.22);
+  --scene-grid: rgba(96, 165, 250, 0.07);
+  --scene-grid-size: 32px;
+  --scene-scan: 0;
+}
+
+/* Scene: terminal / contact — green CRT; monospace density, dense grid, scanlines.
+   Activated when the contact/dossier section is in view (Phase 3.6). */
+body[data-scene="terminal"] {
+  --scene-accent: #34D399;
+  --scene-accent-2: #6EE7B7;
+  --scene-glow: rgba(52, 211, 153, 0.22);
+  --scene-grid: rgba(52, 211, 153, 0.10);
+  --scene-grid-size: 22px;
+  --scene-scan: 0.12;
+}
+/* Light-theme override for terminal scene — color-mix off static green doesn't
+   auto-adapt, so we provide explicit values. */
+:root[data-theme="light"] body[data-scene="terminal"],
+:root[data-theme="light"]:has(body[data-scene="terminal"]) body {
+  --scene-accent: #059669;
+  --scene-accent-2: #34D399;
+  --scene-glow: rgba(5, 150, 105, 0.15);
+  --scene-grid: rgba(5, 150, 105, 0.08);
+}
+
+/* Scene: showcase — neutral blueprint, slightly elevated grid density for the
+   React Flow canvas context. */
+body[data-scene="showcase"] {
+  --scene-accent: #2563EB;
+  --scene-accent-2: #60A5FA;
+  --scene-glow: rgba(37, 99, 235, 0.18);
+  --scene-grid: rgba(96, 165, 250, 0.09);
+  --scene-grid-size: 28px;
+  --scene-scan: 0;
+}
+
+/* Expose scene vars to @theme inline so Tailwind utilities can reference them */
+@theme inline {
+  --color-scene-accent: var(--scene-accent);
+  --color-scene-accent-2: var(--scene-accent-2);
+  --color-scene-glow: var(--scene-glow);
+  --color-scene-grid: var(--scene-grid);
+}
 
 /* ============================================================
    Scroll-reveal (CSS-driven, no JS animation library).
@@ -420,44 +589,51 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-7) 0; }
 }
 
 /* ── Neon ignition for logo "ai" (retinted to electric blue) ── */
+/* NOTE: The white-flash (#fff/#EEF2FB/#D1D8F2) and accent-dim (#1E3A8A) stops are
+   deliberate keyframe choreography for the ignition arc — they are not reusable
+   semantic tokens. The #3B4566 "dark" stops use var(--fg-3) so the unlit state
+   respects the theme. The "settled" blue stops use --accent / --accent-hover tokens. */
 @keyframes neon-ignition {
-  0%    { color: #3B4566; text-shadow: none; opacity: 0.4; filter: brightness(0.3); }
+  0%    { color: var(--fg-3); text-shadow: none; opacity: 0.4; filter: brightness(0.3); }
   4%    { color: #EEF2FB; text-shadow: 0 0 6px rgba(238,242,251,0.6); opacity: 1; filter: brightness(1.2); }
-  7%    { color: #3B4566; text-shadow: none; opacity: 0.15; filter: brightness(0.2); }
+  7%    { color: var(--fg-3); text-shadow: none; opacity: 0.15; filter: brightness(0.2); }
   9%    { color: #D1D8F2; text-shadow: 0 0 4px rgba(209,216,242,0.4); opacity: 0.9; filter: brightness(1); }
-  14%   { color: #3B4566; text-shadow: none; opacity: 0.1; filter: brightness(0.15); }
-  25%   { color: #1E3A8A; text-shadow: 0 0 6px rgba(37,99,235,0.3); opacity: 0.35; filter: brightness(0.5); }
-  45%   { color: #60A5FA; text-shadow: 0 0 10px rgba(96,165,250,0.4); opacity: 0.65; filter: brightness(0.8); }
-  70%   { color: #3B82F6; text-shadow: 0 0 14px rgba(59,130,246,0.6); opacity: 0.9; filter: brightness(1); }
-  85%   { color: #2563EB; text-shadow: 0 0 18px rgba(37,99,235,0.9); opacity: 1; filter: brightness(1.15); }
-  100%  { color: #3B82F6; text-shadow: 0 0 12px rgba(37,99,235,0.8); opacity: 1; filter: brightness(1); }
+  14%   { color: var(--fg-3); text-shadow: none; opacity: 0.1; filter: brightness(0.15); }
+  25%   { color: var(--accent-dim); text-shadow: 0 0 6px color-mix(in oklab, var(--accent) 30%, transparent); opacity: 0.35; filter: brightness(0.5); }
+  45%   { color: var(--accent-pale); text-shadow: 0 0 10px color-mix(in oklab, var(--accent-pale) 40%, transparent); opacity: 0.65; filter: brightness(0.8); }
+  70%   { color: var(--accent-hover); text-shadow: 0 0 14px color-mix(in oklab, var(--accent-hover) 60%, transparent); opacity: 0.9; filter: brightness(1); }
+  85%   { color: var(--accent); text-shadow: 0 0 18px color-mix(in oklab, var(--accent) 90%, transparent); opacity: 1; filter: brightness(1.15); }
+  100%  { color: var(--accent-hover); text-shadow: 0 0 12px color-mix(in oklab, var(--accent) 80%, transparent); opacity: 1; filter: brightness(1); }
 }
 @keyframes neon-buzz {
-  0%, 100% { text-shadow: 0 0 12px rgba(37,99,235,0.8); filter: brightness(1); }
-  50%      { text-shadow: 0 0 8px rgba(37,99,235,0.55); filter: brightness(0.97); }
+  0%, 100% { text-shadow: 0 0 12px color-mix(in oklab, var(--accent) 80%, transparent); filter: brightness(1); }
+  50%      { text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 55%, transparent); filter: brightness(0.97); }
 }
 .logo-ai-neon {
-  color: #3B4566; text-shadow: none; opacity: 0.4; filter: brightness(0.3);
+  color: var(--fg-3); text-shadow: none; opacity: 0.4; filter: brightness(0.3);
   animation:
     neon-ignition 2s var(--ease-out) 1.5s forwards,
     neon-buzz 3s ease-in-out 3.5s infinite;
 }
 
 /* ── Flashlight ignition for logo dot (retinted) ── */
+/* NOTE: The white-flash (#fff) and ice-blue (#BAEFFE) stops are deliberate
+   ignition choreography — hot white → cool blue → settled accent. They are
+   not reusable tokens. The settled state uses --accent / --accent-hover tokens. */
 @keyframes flashlight-on {
   0%   { opacity: 0; scale: 0; background: #fff; box-shadow: none; filter: brightness(1); }
   8%   { opacity: 1; scale: 1.8; background: #fff; box-shadow: 0 0 20px 8px rgba(255,255,255,0.95), 0 0 40px 16px rgba(186,239,254,0.4); filter: brightness(2); }
   15%  { opacity: 1; scale: 1.4; background: #fff; box-shadow: 0 0 24px 10px rgba(255,255,255,0.9), 0 0 50px 20px rgba(186,239,254,0.35); filter: brightness(1.8); }
-  35%  { opacity: 1; scale: 1.1; background: #BAEFFE; box-shadow: 0 0 14px 4px rgba(96,165,250,0.7), 0 0 30px 10px rgba(37,99,235,0.25); filter: brightness(1.2); }
-  60%  { opacity: 1; scale: 1; background: #3B82F6; box-shadow: 0 0 10px 3px rgba(37,99,235,0.8), 0 0 22px 8px rgba(37,99,235,0.3); filter: brightness(1.05); }
-  100% { opacity: 1; scale: 1; background: #2563EB; box-shadow: 0 0 8px 2px rgba(37,99,235,0.8), 0 0 18px 6px rgba(37,99,235,0.25); filter: brightness(1); }
+  35%  { opacity: 1; scale: 1.1; background: var(--accent-ice); box-shadow: 0 0 14px 4px color-mix(in oklab, var(--accent-pale) 70%, transparent), 0 0 30px 10px color-mix(in oklab, var(--accent) 25%, transparent); filter: brightness(1.2); }
+  60%  { opacity: 1; scale: 1; background: var(--accent-hover); box-shadow: 0 0 10px 3px color-mix(in oklab, var(--accent) 80%, transparent), 0 0 22px 8px color-mix(in oklab, var(--accent) 30%, transparent); filter: brightness(1.05); }
+  100% { opacity: 1; scale: 1; background: var(--accent); box-shadow: 0 0 8px 2px color-mix(in oklab, var(--accent) 80%, transparent), 0 0 18px 6px color-mix(in oklab, var(--accent) 25%, transparent); filter: brightness(1); }
 }
 @keyframes dot-pulse {
-  0%, 100% { box-shadow: 0 0 8px 2px rgba(37,99,235,0.8), 0 0 18px 6px rgba(37,99,235,0.25); }
-  50%      { box-shadow: 0 0 6px 2px rgba(37,99,235,0.6), 0 0 14px 4px rgba(37,99,235,0.15); }
+  0%, 100% { box-shadow: 0 0 8px 2px color-mix(in oklab, var(--accent) 80%, transparent), 0 0 18px 6px color-mix(in oklab, var(--accent) 25%, transparent); }
+  50%      { box-shadow: 0 0 6px 2px color-mix(in oklab, var(--accent) 60%, transparent), 0 0 14px 4px color-mix(in oklab, var(--accent) 15%, transparent); }
 }
 #logo-dot.flashlight-active {
-  background: #2563EB !important;
+  background: var(--accent) !important;
   animation:
     flashlight-on 0.6s var(--ease-out) forwards,
     dot-pulse 3s ease-in-out 0.6s infinite;
