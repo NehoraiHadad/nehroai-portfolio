@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { useDictionary } from '@/lib/i18n/provider';
 
 type Theme = 'dark' | 'light';
 
@@ -21,6 +22,7 @@ const getServerSnapshot = (): Theme => 'dark';
 
 export const ThemeToggle = ({ className = '' }: { className?: string }) => {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const { a11y } = useDictionary();
   const isLight = theme === 'light';
 
   const toggle = () => {
@@ -39,14 +41,15 @@ export const ThemeToggle = ({ className = '' }: { className?: string }) => {
   };
 
   return (
+    // 4.6: h-11 w-11 = 44px touch target; 4.2: localized aria-label from dictionary
     <button
       type="button"
       onClick={toggle}
-      aria-label={isLight ? 'Switch to dark theme' : 'Switch to light theme'}
+      aria-label={a11y.themeToggle}
       title={isLight ? 'Dark' : 'Light'}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-[var(--r-1)] border border-line text-fg-1 transition-colors hover:bg-surface-raised hover:text-fg-0 ${className}`}
+      className={`corner-chip rounded-[var(--r-1)] text-fg-1 hover:bg-surface-raised hover:text-fg-0 focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${className}`}
     >
-      {isLight ? <Moon className="h-4 w-4" strokeWidth={1.5} /> : <Sun className="h-4 w-4" strokeWidth={1.5} />}
+      {isLight ? <Moon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" /> : <Sun className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />}
     </button>
   );
 };

@@ -23,9 +23,12 @@ export const appMono = Geist_Mono({
 
 // Rubik (OFL) — covers Hebrew + Latin in one family; the documented Hebrew
 // display pair (Rubik Black). Variable font, so no weight pinning.
+// preload:false — English pages don't need the Hebrew woff2 preloaded; the
+// @font-face declaration is still emitted so /he works via CSS font-swap.
 export const appHebrew = Rubik({
   subsets: ['hebrew', 'latin'],
   display: 'swap',
+  preload: false,
   variable: '--font-rubik',
   fallback: ['Arial', 'system-ui', 'sans-serif'],
 });

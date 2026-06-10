@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { ArrowLeft, ArrowRight, FileText, Brain, Network, Database, Cpu, Sparkles } from 'lucide-react';
 import { OpenAILogo, AnthropicLogo, GeminiLogo, N8nLogo, MetaLogo, PythonLogo, VercelLogo, DockerLogo, HuggingFaceLogo } from './TechLogos';
 import { InteractiveAgent } from './InteractiveAgent';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
 import { EASE_OUT } from '@/lib/motion';
+import { TIMELINE } from '@/lib/choreography';
 import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 
 const LATIN_SCRAMBLE_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789!<>-_\\/[]{}cxz=+*^?#';
@@ -30,7 +31,6 @@ const ScrambleText = ({ words, isRtl, stopped }: { words: string[]; isRtl: boole
   useEffect(() => {
     // 2.1 + 2.4: render final state immediately when reduced motion or stopped
     if (prefersReduced || stopped) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setText(finalWord);
       setTargetWord(finalWord);
       return;
@@ -43,8 +43,15 @@ const ScrambleText = ({ words, isRtl, stopped }: { words: string[]; isRtl: boole
     let currentIndex = 0;
     let cycleCount = 0;
     let scrambleInterval: NodeJS.Timeout;
+    let cycleInterval: NodeJS.Timeout;
+    // 4.8: defer scramble start to requestIdleCallback (fallback: 200ms setTimeout)
+    // so it doesn't compete with first-paint work.
+    const ricHandle = typeof requestIdleCallback !== 'undefined'
+      ? requestIdleCallback(() => { startCycle(); }, { timeout: 2000 })
+      : setTimeout(() => { startCycle(); }, 200);
 
-    const cycleInterval = setInterval(() => {
+    function startCycle() {
+    cycleInterval = setInterval(() => {
       if (cycleCount >= MAX_CYCLES * words.length) {
         clearInterval(cycleInterval);
         clearInterval(scrambleInterval);
@@ -79,8 +86,14 @@ const ScrambleText = ({ words, isRtl, stopped }: { words: string[]; isRtl: boole
       }, 30);
 
     }, 4000);
+    } // end startCycle
 
     return () => {
+      if (typeof requestIdleCallback !== 'undefined') {
+        cancelIdleCallback(ricHandle as number);
+      } else {
+        clearTimeout(ricHandle as NodeJS.Timeout);
+      }
       clearInterval(cycleInterval);
       clearInterval(scrambleInterval);
     };
@@ -115,18 +128,33 @@ const HeroStatusLabel = ({ labels, stopped }: { labels: string[]; stopped: boole
     }
 
     let count = 0;
-    // 2.4: ~6s interval — synced to the 4s scramble + 2s buffer so only one
-    // attention event fires at a time.
-    const rotationTimer = setInterval(() => {
-      count++;
-      if (count >= MAX_CYCLES * labels.length) {
-        clearInterval(rotationTimer);
-        return;
-      }
-      setActiveIndex((currentIndex) => (currentIndex + 1) % labels.length);
-    }, 6000);
+    let rotationTimer: NodeJS.Timeout;
+    // 4.8: defer status rotator start to requestIdleCallback (fallback: 200ms setTimeout)
+    const ricHandle = typeof requestIdleCallback !== 'undefined'
+      ? requestIdleCallback(() => { startRotation(); }, { timeout: 2000 })
+      : setTimeout(() => { startRotation(); }, 200);
 
-    return () => clearInterval(rotationTimer);
+    function startRotation() {
+      // 2.4: ~6s interval — synced to the 4s scramble + 2s buffer so only one
+      // attention event fires at a time.
+      rotationTimer = setInterval(() => {
+        count++;
+        if (count >= MAX_CYCLES * labels.length) {
+          clearInterval(rotationTimer);
+          return;
+        }
+        setActiveIndex((currentIndex) => (currentIndex + 1) % labels.length);
+      }, 6000);
+    }
+
+    return () => {
+      if (typeof requestIdleCallback !== 'undefined') {
+        cancelIdleCallback(ricHandle as number);
+      } else {
+        clearTimeout(ricHandle as NodeJS.Timeout);
+      }
+      clearInterval(rotationTimer);
+    };
   }, [labels, prefersReduced, stopped]);
 
   const activeLabel = labels[activeIndex % labels.length] ?? longestLabel;
@@ -138,7 +166,7 @@ const HeroStatusLabel = ({ labels, stopped }: { labels: string[]; stopped: boole
       {/* Invisible sizer — keeps container width stable */}
       <span className="invisible col-start-1 row-start-1" aria-hidden="true">{longestLabel}</span>
       <AnimatePresence mode="wait" initial={false}>
-        <motion.span
+        <m.span
           key={activeLabel}
           initial={{ opacity: 0, y: 2, filter: 'blur(4px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -148,7 +176,7 @@ const HeroStatusLabel = ({ labels, stopped }: { labels: string[]; stopped: boole
           aria-hidden="true"
         >
           {activeLabel}
-        </motion.span>
+        </m.span>
       </AnimatePresence>
     </span>
   );
@@ -438,12 +466,26 @@ const IlluminationBackground = () => {
   const [isMoving, setIsMoving] = useState(false);
   const [justSettled, setJustSettled] = useState(false);
   const [beamState, setBeamState] = useState({ x: 0, y: 0, angle: 0, ready: false });
-  const [scrollY, setScrollY] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+
+  // 4.8: ref to the wrapper div for IO + direct style.opacity writes (no setState per scroll)
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  // 4.8: heroVisible tracks whether the hero section is in the viewport
+  const heroVisibleRef = useRef(true);
+  // 4.8: cached logo-dot rect — read once on mount + on resize, not every rAF frame
+  const dotRectRef = useRef<{ x: number; y: number } | null>(null);
 
   // Detect mobile (below lg breakpoint = 1024px)
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 1024);
+    const check = () => {
+      setIsMobile(window.innerWidth < 1024);
+      // Refresh cached dot rect on resize
+      const dot = document.getElementById('logo-dot');
+      if (dot) {
+        const r = dot.getBoundingClientRect();
+        dotRectRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }
+    };
     check();
     window.addEventListener('resize', check, { passive: true });
     return () => window.removeEventListener('resize', check);
@@ -464,6 +506,7 @@ const IlluminationBackground = () => {
     const ids = new Set([...must.map(e => e.id), ...rest]);
     // Client-only randomization, guarded to run once — keeps SSR markup stable
     // and avoids a hydration mismatch from Math.random differing server/client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleElements(STAGE_ELEMENTS.filter(e => ids.has(e.id)));
   }, []);
 
@@ -492,8 +535,8 @@ const IlluminationBackground = () => {
     }
     // Synced with logo-dot flashlight ignition:
     // Dot ignites at 3800ms, flash settles ~4400ms, then beam extends
-    const t1 = setTimeout(() => setBeamStage(1), 4400);
-    const t2 = setTimeout(() => setBeamStage(2), 5900);
+    const t1 = setTimeout(() => setBeamStage(1), TIMELINE.beamStage1);
+    const t2 = setTimeout(() => setBeamStage(2), TIMELINE.beamStage2);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [prefersReduced]);
 
@@ -525,22 +568,61 @@ const IlluminationBackground = () => {
     return () => clearTimeout(timeoutId);
   }, [beamStage, getNextTarget]);
 
-  // Beam angle tracking — 2.1: skip rAF loop entirely for reduced motion
+  // 4.8: IntersectionObserver to track hero visibility — rAF pauses when off-screen
+  useEffect(() => {
+    const el = wrapperRef.current?.closest('section');
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => { heroVisibleRef.current = entries[0]?.isIntersecting ?? true; },
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // 4.8: Beam angle tracking — gated on:
+  //   • beamStage >= 1 (beam is visible)
+  //   • heroVisible (hero section in viewport)
+  //   • !document.hidden (tab is active)
+  //   • !prefersReduced (reduced motion)
+  // 4.8: logo-dot rect read from cache (dotRectRef) rather than getBoundingClientRect every frame
   useEffect(() => {
     if (prefersReduced) return;
+    if (beamStage < 1) return;
 
     let raf: number;
     let lx = -999, ly = -999, la = -999;
 
+    const handleVisibilityChange = () => {
+      // No-op: the track loop already checks document.hidden each frame
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
+
     const track = () => {
-      const dot = document.getElementById('logo-dot');
+      // Pause the loop when hero is off-screen or tab is hidden
+      if (!heroVisibleRef.current || document.hidden) {
+        raf = requestAnimationFrame(track);
+        return;
+      }
+
+      // 4.8: use cached dot rect; fall back to live getBoundingClientRect only if cache is empty
+      let ox: number, oy: number;
+      if (dotRectRef.current) {
+        ox = dotRectRef.current.x;
+        oy = dotRectRef.current.y;
+      } else {
+        const dot = document.getElementById('logo-dot');
+        if (!dot) { raf = requestAnimationFrame(track); return; }
+        const dr = dot.getBoundingClientRect();
+        ox = dr.left + dr.width / 2;
+        oy = dr.top + dr.height / 2;
+        dotRectRef.current = { x: ox, y: oy };
+      }
+
       const targetEl = visibleElements[activeTarget];
       const el = targetEl ? document.getElementById(`target-${targetEl.id}`) : null;
-      if (dot && el) {
-        const dr = dot.getBoundingClientRect();
+      if (el) {
         const er = el.getBoundingClientRect();
-        const ox = dr.left + dr.width / 2;
-        const oy = dr.top + dr.height / 2;
         const dx = (er.left + er.width / 2) - ox;
         const dy = (er.top + er.height / 2) - oy;
         const a = Math.atan2(dx, dy) * (180 / Math.PI);
@@ -553,24 +635,35 @@ const IlluminationBackground = () => {
     };
 
     track();
-    return () => cancelAnimationFrame(raf);
-  }, [activeTarget, visibleElements, prefersReduced]);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [activeTarget, visibleElements, prefersReduced, beamStage]);
 
-  // Scroll fade
+  // 4.8: Scroll fade — direct style mutation, no setState per scroll event (avoids re-renders)
   useEffect(() => {
-    const h = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', h, { passive: true });
-    return () => window.removeEventListener('scroll', h);
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    let ticking = false;
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const opacity = Math.max(0, 1 - window.scrollY / 400);
+        wrapper.style.opacity = String(opacity);
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const globalOpacity = Math.max(0, 1 - scrollY / 400);
-  if (globalOpacity === 0) return null;
-
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" style={{ opacity: globalOpacity }}>
+    <div ref={wrapperRef} className="absolute inset-0 overflow-hidden pointer-events-none z-0">
       {/* Beam — softer, more atmospheric */}
       {beamState.ready && createPortal(
-        <motion.div
+        <m.div
           className="fixed pointer-events-none z-[60]"
           style={{
             top: beamState.y,
@@ -584,7 +677,7 @@ const IlluminationBackground = () => {
           }}
           initial={{ opacity: 0, clipPath: 'polygon(50% 0%, 50% 0%, 50% 0%, 50% 0%)', rotate: 0 }}
           animate={{
-            opacity: beamStage > 0 ? globalOpacity * 0.75 : 0,
+            opacity: beamStage > 0 ? 0.75 : 0,
             clipPath: beamStage === 0
               ? 'polygon(50% 0%, 50% 0%, 50% 0%, 50% 0%)'
               : beamStage === 1
@@ -637,6 +730,7 @@ const IlluminationBackground = () => {
 
 export const Hero = () => {
   const { hero, dossier } = useDictionary();
+  // hero.name is used for the eyebrow identity line (5.2)
   const direction = useDirection();
   const isRtl = direction === 'rtl';
   const CtaArrow = isRtl ? ArrowLeft : ArrowRight;
@@ -657,67 +751,72 @@ export const Hero = () => {
     <section className="pt-32 pb-24 px-6 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10 min-h-[90vh]">
       <IlluminationBackground />
       {/* Text Content */}
-      <motion.div
+      <m.div
         variants={container}
         initial="hidden"
         animate="show"
         className="flex flex-col items-start"
         style={{ textAlign: 'start' }}
       >
-        <motion.div variants={item} className="status-badge mb-6">
+        {/* 5.2: Name eyebrow — renders before the title so a 30-sec scan yields name + role */}
+        <m.p
+          variants={item}
+          className="font-mono text-[11px] text-fg-2 uppercase tracking-[0.22em] mb-3 bidi-ltr"
+          dir="ltr"
+        >
+          {hero.name}
+        </m.p>
+
+        <m.div variants={item} className="status-badge mb-6">
           <span className="status-dot" />
           <span className="text-accent">
             <HeroStatusLabel labels={hero.statusLabels} stopped={animStopped} />
           </span>
-        </motion.div>
+        </m.div>
 
-        <div className="display text-5xl md:text-7xl text-fg-0 mb-6 leading-tight">
-          <motion.div variants={wordVariants} initial="hidden" animate="show" className="inline-block overflow-hidden pb-2">
+        <h1 className="display text-5xl md:text-7xl text-fg-0 mb-6 leading-tight">
+          <m.div variants={wordVariants} initial="hidden" animate="show" className="inline-block overflow-hidden pb-2">
             {hero.titlePrefix.split('').map((char, i) => (
-              <motion.span key={i} variants={charVariants} className="inline-block">
+              <m.span key={i} variants={charVariants} className="inline-block">
                 {char}
-              </motion.span>
+              </m.span>
             ))}
-          </motion.div>
+          </m.div>
           <br />
           {/* 2.4: sr-only span gives screen readers the static first word */}
           <span className="sr-only">{hero.rotatingWords[0]}</span>
-          <motion.div variants={item} className="inline-block overflow-hidden pb-2" aria-hidden="true">
+          <m.div variants={item} className="inline-block overflow-hidden pb-2" aria-hidden="true">
             <ScrambleText words={hero.rotatingWords} isRtl={isRtl} stopped={animStopped} />
-          </motion.div>
-        </div>
-        
-        <motion.h2 variants={item} className="text-xl md:text-2xl text-fg-1 mb-6 font-normal leading-relaxed">
-          {hero.subtitle}
-        </motion.h2>
+          </m.div>
+        </h1>
 
-        <motion.div
+        <m.p variants={item} className="lead text-xl md:text-2xl text-fg-1 mb-6 font-normal leading-relaxed">
+          {hero.subtitle}
+        </m.p>
+
+        <m.div
           variants={item}
           className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
         >
-          <motion.a
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <a
             href="#showcase"
-            className="btn btn-primary w-full sm:w-auto px-8 py-3.5"
+            className="btn btn-primary w-full sm:w-auto px-8 py-3.5 hover:scale-[1.05] active:scale-[0.95] transition-transform duration-[var(--dur-1)]"
           >
             {hero.primaryCta} <CtaArrow className="w-4 h-4" strokeWidth={1.5} />
-          </motion.a>
-          <motion.a
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          </a>
+          <a
             href={dossier.resumeFile}
             download={dossier.resumeDownloadName}
-            className="btn btn-secondary w-full sm:w-auto px-8 py-3.5"
+            className="btn btn-secondary w-full sm:w-auto px-8 py-3.5 hover:scale-[1.05] active:scale-[0.95] transition-transform duration-[var(--dur-1)]"
           >
             <FileText className="w-4 h-4" strokeWidth={1.5} />
             {hero.secondaryCta}
-          </motion.a>
-        </motion.div>
-      </motion.div>
+          </a>
+        </m.div>
+      </m.div>
 
       {/* Interactive Agent Visual */}
-      <motion.div 
+      <m.div 
         initial={{ opacity: 0, x: isRtl ? -40 : 40, filter: 'blur(10px)' }}
         animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
         transition={{ duration: 1, delay: 0.4, ease: EASE_OUT }}
@@ -725,7 +824,7 @@ export const Hero = () => {
       >
         <div className="absolute inset-0 bg-accent/20 blur-[100px] rounded-full pointer-events-none" />
         <InteractiveAgent />
-      </motion.div>
+      </m.div>
     </section>
   );
 };

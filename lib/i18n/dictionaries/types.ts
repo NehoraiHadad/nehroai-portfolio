@@ -1,3 +1,13 @@
+/**
+ * BIDI RULE — Terminal-voice & identifier strings:
+ * Protocol tokens, file names, agent identifiers, version numbers, and status
+ * codes (e.g. "STATUS: DELIVERED ✓", "TLS 1.3", "secure_channel.sh") stay
+ * English-LTR in both locales and are wrapped in a .bidi-ltr island when
+ * rendered inside an RTL context.  Human-readable sentences localize fully.
+ * Examples of what stays LTR:   "NODE_CONFIGURATION", "TRANSMIT", "STATUS: DELIVERED ✓"
+ * Examples of what localizes:   form labels, section descriptions, human confirmations.
+ */
+
 export type CaseStudyIconKey = 'podcast' | 'dashboard' | 'globe' | 'map' | 'book';
 
 export interface CaseStudyContent {
@@ -32,6 +42,16 @@ export interface AppDictionary {
     code: 'en' | 'he';
     direction: 'ltr' | 'rtl';
   };
+  a11y: {
+    openMenu: string;
+    closeMenu: string;
+    closeDialog: string;
+    chatInput: string;
+    sendMessage: string;
+    openChat: string;
+    themeToggle: string;
+    skipToContent: string;
+  };
   meta: {
     title: string;
     description: string;
@@ -45,6 +65,7 @@ export interface AppDictionary {
     contactCta: string;
   };
   hero: {
+    name: string;
     rotatingWords: string[];
     statusLabels: string[];
     titlePrefix: string;
@@ -53,9 +74,11 @@ export interface AppDictionary {
     secondaryCta: string;
   };
   practice: {
+    sectionMarker: string;
     title: string;
   };
   showcase: {
+    sectionMarker: string;
     title: string;
     description: string;
     hint: string;
@@ -70,6 +93,7 @@ export interface AppDictionary {
       description: string;
       challenge: string;
       solution: string;
+      impact: string;
       dependencies: string;
     };
     actions: {
@@ -78,6 +102,7 @@ export interface AppDictionary {
     };
   };
   dossier: {
+    sectionMarker: string;
     sectionLabel: string;
     availability: string;
     titleLines: [string, string];
@@ -90,6 +115,14 @@ export interface AppDictionary {
     resumeCta: string;
     resumeFile: string;
     resumeDownloadName: string;
+    contact: {
+      emailLabel: string;
+      githubLabel: string;
+      linkedinLabel: string;
+      emailUrl: string;
+      githubUrl: string;
+      linkedinUrl: string;
+    };
     terminalFileName: string;
     securityLabel: string;
     initLines: string[];
@@ -114,6 +147,15 @@ export interface AppDictionary {
       messagePlaceholder: string;
       submitLabel: string;
       errorPrefix: string;
+      errors: {
+        invalid_name: string;
+        invalid_email: string;
+        message_too_long: string;
+        not_configured: string;
+        send_failed: string;
+        rate_limited: string;
+        unknown: string;
+      };
     };
   };
   assistant: {
@@ -157,6 +199,14 @@ export interface AppDictionary {
   };
   footer: {
     copyrightTemplate: string;
+  };
+  /** Owner contact constants — same shape used in Dossier & Footer chips */
+  ownerContact: {
+    email: string;
+    /** https://github.com/NehoraiHadad */
+    githubUrl: string;
+    /** TODO: confirm LinkedIn slug — currently a placeholder */
+    linkedinUrl: string;
   };
   caseStudies: CaseStudyContent[];
   skills: SkillGroupContent[];
