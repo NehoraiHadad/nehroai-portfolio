@@ -25,17 +25,28 @@ const t = STRINGS[locale];
 */
 // Bump on every re-encode of the character clip so browsers (and the CDN)
 // fetch the new file instead of a stale cached copy.
-const V = "7";
-const VIDEO = {
-  // alpha = transparent character floats over the grid background (VP9-alpha
-  // webm). mp4 is an opaque navy-baked fallback for engines without VP9 alpha
-  // (e.g. Safari, which would need an HEVC-alpha .mov for true transparency).
-  mode: "alpha" as const,
-  poster: `/video/character.poster.png?v=${V}`,
-  mp4: `/video/character.mp4?v=${V}`,
-  webm: `/video/character.webm?v=${V}`,
-  // hevc: "/video/character.mov",   // add for transparent Safari support
-};
+// Two character clips are kept live so visitors can A/B them (see the vote
+// strip below): v1 = the original 3-clip metamorphosis loop, v2 = the newer
+// "agency" loop (writes/types/texts to author each card). Both are alpha
+// (transparent character floats over the grid); mp4 is the navy-baked fallback.
+const V1 = "7";
+const V2 = "9-v2";
+const VIDEOS = {
+  v1: {
+    poster: `/video/character.poster.png?v=${V1}`,
+    mp4: `/video/character.mp4?v=${V1}`,
+    webm: `/video/character.webm?v=${V1}`,
+  },
+  v2: {
+    poster: `/video/character-v2.poster.png?v=${V2}`,
+    mp4: `/video/character-v2.mp4?v=${V2}`,
+    webm: `/video/character-v2.webm?v=${V2}`,
+  },
+} as const;
+// Which clip renders on first paint (the client script may override from a
+// saved preference). v2 is the newer one we want eyes on.
+const DEFAULT_VER: "v1" | "v2" = "v2";
+const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
 ---
 
 <main class="welcome u-container">
@@ -63,6 +74,44 @@ const VIDEO = {
 
     <LinkCards locale={locale} />
   </div>
+
+  {/* A/B vote — a small pill tucked in the corner; click it to open the panel that
+      toggles the character clip (v1 original ↔ v2 "agency") and casts a vote.
+      Counts persist in Cloudflare KV via /api/vote. Collapsed by default so it
+      doesn't compete with the hero. */}
+  <aside
+    class="vote"
+    data-vote
+    data-default={DEFAULT_VER}
+    data-v1-webm={VIDEOS.v1.webm}
+    data-v1-mp4={VIDEOS.v1.mp4}
+    data-v1-poster={VIDEOS.v1.poster}
+    data-v2-webm={VIDEOS.v2.webm}
+    data-v2-mp4={VIDEOS.v2.mp4}
+    data-v2-poster={VIDEOS.v2.poster}
+  >
+    <button
+      type="button"
+      class="vote__toggle"
+      data-vote-toggle
+      aria-expanded="false"
+      aria-controls="vote-panel"
+    >
+      <span class="vote__toggle-dot" aria-hidden="true"></span>
+      A/B intro
+    </button>
+    <div class="vote__panel" id="vote-panel" data-vote-panel hidden>
+      <p class="vote__q">Two takes on the intro — which do you prefer?</p>
+      <div class="vote__row">
+        <div class="vote__seg" role="group" aria-label="Choose intro version">
+          <button type="button" class="vote__opt" data-ver="v1">v1</button>
+          <button type="button" class="vote__opt is-on" data-ver="v2">v2</button>
+        </div>
+        <button type="button" class="vote__cast" data-cast>Vote for this</button>
+      </div>
+      <p class="vote__tally" data-tally hidden aria-live="polite"></p>
+    </div>
+  </aside>
 </main>
 
 <style>
@@ -113,6 +162,156 @@ const VIDEO = {
     color: var(--fg-1);
   }
 
+  /* A/B vote — a small pill pinned in the corner; clicking it opens the panel
+     above. Fixed so it never competes with the hero; picks up the active world
+     accent. inset-inline-end keeps it corner-correct in RTL. */
+  .vote {
+    position: fixed;
+    inset-block-end: var(--s-4);
+    inset-inline-end: var(--s-4);
+    z-index: 60;
+    display: flex;
+    /* toggle pinned at the bottom, panel expands upward */
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: var(--s-2);
+    color: var(--fg-2);
+  }
+  .vote__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: inherit;
+    font-size: var(--t-13, 0.8rem);
+    font-weight: 600;
+    color: var(--fg-2);
+    padding: 6px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: color-mix(in oklab, var(--bg-1) 78%, transparent);
+    border: 1px solid color-mix(in oklab, var(--w-accent, #6ea8fe) 28%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    opacity: 0.62;
+    transition: opacity var(--dur-2) var(--ease-out), color var(--dur-2),
+      border-color var(--dur-2);
+  }
+  .vote__toggle:hover,
+  .vote.is-open .vote__toggle {
+    opacity: 1;
+    color: var(--fg-1);
+    border-color: color-mix(in oklab, var(--w-accent, #6ea8fe) 50%, transparent);
+  }
+  .vote__toggle-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--w-accent, #6ea8fe);
+    box-shadow: 0 0 9px -1px var(--w-glow, rgba(110, 168, 254, 0.8));
+  }
+  .vote__panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s-2);
+    max-width: 260px;
+    padding: var(--s-4) var(--s-5);
+    border-radius: 16px;
+    background: color-mix(in oklab, var(--bg-1) 90%, transparent);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-2);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    text-align: center;
+    animation: vote-pop 0.22s var(--ease-out) both;
+  }
+  .vote__panel[hidden] {
+    display: none;
+  }
+  @keyframes vote-pop {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vote__panel {
+      animation: none;
+    }
+  }
+  .vote__q {
+    font-size: var(--t-13, 0.8rem);
+    letter-spacing: 0.01em;
+    color: var(--fg-2);
+  }
+  .vote__row {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+  }
+  .vote__seg {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--bg-1);
+    border: 1px solid color-mix(in oklab, var(--w-accent, #6ea8fe) 30%, transparent);
+  }
+  .vote__opt {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--fg-2);
+    font: inherit;
+    font-size: var(--t-13, 0.8rem);
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background var(--dur-2) var(--ease-out), color var(--dur-2);
+  }
+  .vote__opt.is-on {
+    background: var(--w-accent, #6ea8fe);
+    color: #04111f;
+  }
+  .vote__cast {
+    appearance: none;
+    font: inherit;
+    font-size: var(--t-13, 0.8rem);
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--fg-1);
+    background: transparent;
+    border: 1px solid color-mix(in oklab, var(--w-accent, #6ea8fe) 55%, transparent);
+    transition: background var(--dur-2) var(--ease-out), color var(--dur-2),
+      opacity var(--dur-2);
+  }
+  .vote__cast:hover {
+    background: color-mix(in oklab, var(--w-accent, #6ea8fe) 18%, transparent);
+  }
+  .vote__cast:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  .vote__tally {
+    font-size: var(--t-13, 0.8rem);
+    color: var(--fg-2);
+    min-height: 1.2em;
+  }
+  .vote__tally b {
+    color: var(--w-accent, #6ea8fe);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vote__opt,
+    .vote__cast {
+      transition: none;
+    }
+  }
 </style>
 
 <script>
@@ -148,17 +347,317 @@ const VIDEO = {
     anim.addEventListener("finish", () => anim.cancel(), { once: true });
   };
 
+  const reduced = window.matchMedia?.(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+
+  // Pending fx timeout per card (typewriter / chat sequence), so a version
+  // switch mid-animation can stop the chain (otherwise a stale step keeps
+  // resurrecting injected nodes).
+  const fxTimers = new WeakMap<HTMLElement, number>();
+  // Pending rAF per card (the video-synced ink-trail draw loop), cancelled the
+  // same way on reset.
+  const fxRafs = new WeakMap<HTMLElement, number>();
+
+  // --- TYPEWRITER reveal: the GitHub "Terminal" card is TYPED in, char by char,
+  // with a live green caret — the character "writes" his own card instead of it
+  // fading in. POC for the wider "agency" direction (each world authors its card
+  // in its own medium). Runs ONCE per session (dataset.typed guard), then stays
+  // filled — re-typing every ~14s loop would read as a glitch, not authorship. ---
+  const typewriter = (card: HTMLElement | null) => {
+    if (!card || card.dataset.typed) return;
+    card.dataset.typed = "1";
+    card.classList.add("is-revealed", "is-typewriter");
+
+    // Type the card's copy top-to-bottom (kicker → label → description) as one
+    // continuous stream, the way it would scroll out of a terminal.
+    const parts = [
+      card.querySelector<HTMLElement>(".link-card__kicker"),
+      card.querySelector<HTMLElement>(".link-card__label"),
+      card.querySelector<HTMLElement>(".link-card__desc"),
+    ].filter(Boolean) as HTMLElement[];
+
+    // Split each line into per-char spans (all present but invisible, so the
+    // card's box is laid out at full size from the first frame — no reflow as it
+    // fills). Collect them in a flat ordered queue to reveal one at a time.
+    const queue: { ch: HTMLElement; text: string }[] = [];
+    for (const el of parts) {
+      const text = el.textContent ?? "";
+      el.dataset.twText = text; // remember the original so a version switch can restore it
+      el.textContent = "";
+      for (const c of text) {
+        const ch = document.createElement("span");
+        ch.className = "tw-ch";
+        ch.textContent = c;
+        el.appendChild(ch);
+        queue.push({ ch, text: c });
+      }
+    }
+
+    const caret = document.createElement("span");
+    caret.className = "tw-caret";
+    caret.setAttribute("aria-hidden", "true");
+    if (parts[0]) parts[0].prepend(caret);
+
+    let i = 0;
+    const step = () => {
+      if (i >= queue.length) return; // done — caret parks at the end, blinking
+      const { ch, text } = queue[i++];
+      ch.classList.add("on");
+      ch.after(caret); // caret rides just past the last typed character
+      // Terminal cadence: a small base with jitter, a touch slower on spaces and
+      // a brief pause after sentence punctuation so it reads as real typing.
+      let delay = 26 + Math.random() * 34;
+      if (text === " ") delay += 40;
+      if (text === "." || text === "·") delay += 180;
+      fxTimers.set(card, window.setTimeout(step, delay));
+    };
+    step();
+  };
+
+  // --- INK-TRAIL reveal (Portfolio / the realistic "air-writing" world): a
+  // glowing point traces the card's border into existence — echoing the figure
+  // writing in the air with a light-trail — and the copy rises in behind it.
+  // The SVG border is sized to the card in px so corners stay crisp, then the
+  // draw is a pure CSS stroke-dashoffset animation. Runs once (dataset.fx). ---
+  const inkTrail = (card: HTMLElement | null) => {
+    if (!card || card.dataset.fx) return;
+    card.dataset.fx = "ink";
+    // is-drawing suppresses the card's OWN border while the point draws, so the
+    // point appears to author the frame instead of tracing one that's already
+    // there. Dropped on handoff (timer below).
+    card.classList.add("is-revealed", "is-inktrail", "is-drawing");
+
+    const r = card.getBoundingClientRect();
+    const w = Math.max(1, Math.round(r.width));
+    const h = Math.max(1, Math.round(r.height));
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "ink-trail v2fx");
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("aria-hidden", "true");
+    // Two rects share one draw animation: __line paints the frame that builds
+    // BEHIND the point; __point is the bright leading dot doing the drawing.
+    for (const cls of ["ink-trail__line", "ink-trail__point"]) {
+      const rect = document.createElementNS(NS, "rect");
+      rect.setAttribute("class", cls);
+      rect.setAttribute("x", "1");
+      rect.setAttribute("y", "1");
+      rect.setAttribute("width", String(w - 2));
+      rect.setAttribute("height", String(h - 2));
+      rect.setAttribute("rx", "14");
+      rect.setAttribute("pathLength", "100"); // normalize perimeter
+      svg.appendChild(rect);
+    }
+    card.appendChild(svg);
+
+    // Handoff: drop is-drawing (trail fades, the card's own border takes over —
+    // no permanent double border / re-tint) and add is-drawn (the copy rises in).
+    const finish = () => {
+      card.classList.remove("is-drawing");
+      card.classList.add("is-drawn");
+    };
+
+    // Drive the draw off the VIDEO's own clock and a FIXED gesture window so the
+    // light-trail traces the border in lockstep with the figure's air-writing —
+    // empty until he raises his hand (~WRITE_START), closing the loop exactly as
+    // he finishes the stroke (~WRITE_END). Measured frame-by-frame in the v2 clip
+    // (tweak here). inkTrail() actually fires at the first frame (the portfolio
+    // world emits at ct≈0), so a window keyed to the invoke time would draw too
+    // early — the clip's OWN timeline is the only thing that stays in sync. Falls
+    // back to the CSS keyframe draw when there's no usable video (reduced clip /
+    // 404 / paused / autoplay blocked).
+    const WRITE_START = 1.5;
+    const WRITE_END = 4.3;
+    const video = document.querySelector<HTMLVideoElement>(
+      "video.character__media"
+    );
+
+    if (!video || video.paused || video.readyState < 2) {
+      // No usable clock — let CSS draw it on a fixed timeline, then hand off.
+      fxTimers.set(card, window.setTimeout(finish, 2500));
+      return;
+    }
+
+    // Video-synced: suppress the CSS draw (.is-video-driven) and set the offset
+    // from currentTime each frame so the bright point traces the border in
+    // lockstep with the gesture; reveal the copy once it closes the loop.
+    // is-predraw keeps the whole trail hidden through the 0→WRITE_START wait —
+    // otherwise the leading point sits as a lone glowing dot at the start corner
+    // before he's even raised his hand. The tick drops it the instant p crosses 0.
+    card.classList.add("is-video-driven", "is-predraw");
+    const line = svg.querySelector<SVGRectElement>(".ink-trail__line");
+    const point = svg.querySelector<SVGRectElement>(".ink-trail__point");
+    const span = WRITE_END - WRITE_START;
+    const tick = () => {
+      const p = Math.max(
+        0,
+        Math.min(1, (video.currentTime - WRITE_START) / span)
+      );
+      if (p > 0) card.classList.remove("is-predraw");
+      const off = String(100 * (1 - p));
+      if (line) line.style.strokeDashoffset = off;
+      if (point) point.style.strokeDashoffset = off;
+      if (p >= 1 || card.dataset.fx !== "ink") {
+        fxRafs.delete(card);
+        finish();
+        return;
+      }
+      fxRafs.set(card, requestAnimationFrame(tick));
+    };
+    fxRafs.set(card, requestAnimationFrame(tick));
+  };
+
+  // --- CHAT reveal (Contact / the anime "texting" world): a brief "typing…"
+  // bubble, then the lines pop in as incoming message bubbles that STAY (the
+  // card must remain readable + clickable). The bubbles are the card's own
+  // label/desc restyled via .is-chat; only the typing indicator is injected.
+  // Sequenced through fxTimers so a version switch mid-sequence stops cleanly. ---
+  const chat = (card: HTMLElement | null) => {
+    if (!card || card.dataset.fx) return;
+    card.dataset.fx = "chat";
+    card.classList.add("is-revealed", "is-chat");
+
+    const body = card.querySelector<HTMLElement>(".link-card__body");
+    const label = card.querySelector<HTMLElement>(".link-card__label");
+    const desc = card.querySelector<HTMLElement>(".link-card__desc");
+
+    // A "typing…" bubble shown before each incoming message, so it reads like a
+    // real conversation arriving (typing → message → typing → message).
+    const makeTyping = (before: HTMLElement | null) => {
+      const t = document.createElement("span");
+      t.className = "chat-typing v2fx";
+      t.setAttribute("aria-hidden", "true");
+      t.innerHTML = "<span></span><span></span><span></span>";
+      if (body && before) body.insertBefore(t, before);
+      else body?.appendChild(t);
+      return t;
+    };
+
+    let typing = makeTyping(label);
+    // [delay-before, action]: dwell on "typing…", pop a bubble, type the next…
+    const steps: [number, () => void][] = [
+      [950, () => { typing.remove(); label?.classList.add("pop"); }],
+      [550, () => { typing = makeTyping(desc); }],
+      [850, () => { typing.remove(); desc?.classList.add("pop"); }],
+    ];
+    let i = 0;
+    const run = () => {
+      if (i >= steps.length) return;
+      const [delay, act] = steps[i++];
+      fxTimers.set(
+        card,
+        window.setTimeout(() => {
+          act();
+          run();
+        }, delay)
+      );
+    };
+    run();
+  };
+
+  // The active intro version drives HOW a card is presented. The A/B toggle
+  // (second script) writes "introVer" to localStorage and fires "introver:change"
+  // when the visitor flips it; we read the same key here so the cards match the
+  // clip on screen. v1 = every card uses the plain bouncy fade (the original
+  // design). v2 = each world "authors" its card in its own medium.
+  const activeVer = (): "v1" | "v2" =>
+    localStorage.getItem("introVer") === "v1" ? "v1" : "v2";
+
+  // Mirror the active version onto <body> so CSS can reserve card height only in
+  // v2 (where the Contact card becomes chat bubbles and would otherwise grow the
+  // row). v1 cards stay compact. Kept in sync on the A/B toggle below.
+  const syncVerAttr = () => {
+    document.body.dataset.ver = activeVer();
+  };
+  syncVerAttr();
+
+  // v2 per-world authoring reveals — each world "writes" its card in its own
+  // medium: Portfolio traces it with a light-trail, GitHub types it in a
+  // terminal, Contact texts it in as chat bubbles.
+  const v2Reveal: Record<string, (c: HTMLElement | null) => void> = {
+    portfolio: inkTrail,
+    github: typewriter,
+    contact: chat,
+  };
+
+  // Present a card "the way its world authors it". In v2 a world with a custom
+  // reveal uses it; otherwise (v1, or any world without one) the bouncy fade.
+  // Under reduced motion, always fall back to the plain reveal.
+  const present = (card: HTMLElement | null) => {
+    if (!card) return;
+    const custom =
+      activeVer() === "v2" && !reduced
+        ? v2Reveal[card.dataset.beat ?? ""]
+        : undefined;
+    if (custom) custom(card);
+    else reveal(card);
+  };
+
+  // Undo a v2 custom treatment so the card can be re-presented in the other
+  // version's style. Returns whether it had been revealed (so the caller can
+  // re-present an on-screen card and leave a not-yet-shown one for its beat).
+  const resetCard = (card: HTMLElement | null): boolean => {
+    if (!card) return false;
+    const wasShown = card.classList.contains("is-revealed");
+    const tm = fxTimers.get(card);
+    if (tm !== undefined) {
+      window.clearTimeout(tm);
+      fxTimers.delete(card);
+    }
+    const rf = fxRafs.get(card);
+    if (rf !== undefined) {
+      cancelAnimationFrame(rf);
+      fxRafs.delete(card);
+    }
+    // Restore any text the typewriter split into per-char spans.
+    if (card.dataset.typed) {
+      card.querySelectorAll<HTMLElement>("[data-tw-text]").forEach((el) => {
+        el.textContent = el.dataset.twText ?? "";
+        delete el.dataset.twText;
+      });
+      delete card.dataset.typed;
+    }
+    // Remove every injected fx node (caret, ink-trail SVG, typing bubble) and
+    // any fx skin/state so the card can be re-presented from a clean slate.
+    card.querySelectorAll(".tw-caret, .v2fx").forEach((n) => n.remove());
+    card
+      .querySelectorAll(".pop")
+      .forEach((n) => n.classList.remove("pop"));
+    card.classList.remove(
+      "is-typewriter",
+      "is-inktrail",
+      "is-drawing",
+      "is-drawn",
+      "is-video-driven",
+      "is-predraw",
+      "is-chat"
+    );
+    delete card.dataset.fx;
+    card.getAnimations?.().forEach((a) => a.cancel());
+    card.classList.remove("is-revealed");
+    return wasShown;
+  };
+
+  // Visitor flipped the A/B toggle → re-skin the per-version cards in place so
+  // each matches the clip they're now watching (v1 plain ↔ v2 authored).
+  document.addEventListener("introver:change", () => {
+    syncVerAttr();
+    Object.keys(v2Reveal).forEach((beat) => {
+      const card = byBeat(beat);
+      if (resetCard(card)) present(card); // was on screen → re-present in new style
+    });
+  });
+
   // Beat = "present this card" (cumulative reveal; also the fallback path used
   // by emitAllBeats on reduced-motion / no-video).
-  cards.forEach((card) => card.dataset.beat && onBeat(card.dataset.beat, () => reveal(card)));
+  cards.forEach((card) => card.dataset.beat && onBeat(card.dataset.beat, () => present(card)));
 
   // World = "the character now inhabits this world": theme the whole page +
   // spotlight that world's card (exclusive) + make sure it's revealed.
   const rotor = document.querySelector<HTMLElement>("[data-rotor]");
   const order = BEAT_MAP.map((b) => b.id);
-  const reduced = window.matchMedia?.(
-    "(prefers-reduced-motion: reduce)"
-  ).matches;
   let prevIdx = order.indexOf("portfolio");
 
   onWorld((id) => {
@@ -166,7 +665,7 @@ const VIDEO = {
     cards.forEach((card) => {
       const active = card.dataset.beat === id;
       card.classList.toggle("is-active", active);
-      if (active) reveal(card);
+      if (active) present(card);
     });
 
     // Perspective swing: the content "turns toward" the new world. Direction
@@ -199,11 +698,17 @@ const VIDEO = {
     // The world currently summoned by the user (null = none → auto-cycle).
     let current: string | null = null;
     // Which card the pointer/keyboard is currently on, if any.
+    // Only an already-AUTHORED (revealed) card can summon its world — hovering
+    // or tabbing to a card that hasn't reached its beat yet must not reveal it.
     const summonedCard = (): HTMLElement | null => {
-      const hovered = nav.querySelector<HTMLElement>(".link-card:hover");
+      const hovered = nav.querySelector<HTMLElement>(
+        ".link-card.is-revealed:hover"
+      );
       if (hovered) return hovered;
       const focused = document.activeElement as HTMLElement | null;
-      return focused?.classList.contains("link-card") && nav.contains(focused)
+      return focused?.classList.contains("link-card") &&
+        focused.classList.contains("is-revealed") &&
+        nav.contains(focused)
         ? focused
         : null;
     };
@@ -261,7 +766,7 @@ const VIDEO = {
       cards.forEach((c) => {
         const on = c.dataset.beat === first;
         c.classList.toggle("is-active", on);
-        if (on) reveal(c);
+        if (on) present(c);
       });
       syncDots(first);
     };
@@ -326,7 +831,366 @@ const VIDEO = {
   // just because later beats haven't arrived yet (that dumped 2 cards at once).
   window.setTimeout(() => {
     if (!document.querySelector("[data-beat].is-revealed")) {
-      BEAT_MAP.forEach((b) => reveal(byBeat(b.id)));
+      BEAT_MAP.forEach((b) => present(byBeat(b.id)));
     }
   }, 4500);
+</script>
+
+<script>
+  /* ---------------------------------------------------------------
+     A/B vote: toggle the character clip (v1 ↔ v2) by swapping the
+     <video>'s <source> srcs in place (same element → the beat rVFC
+     loop and world cycling carry over), and POST a vote to the KV-
+     backed /api. One vote per browser (localStorage guard). The /api
+     only exists under the Cloudflare Worker (wrangler dev / prod);
+     under `astro dev` the fetches fail gracefully and the toggle
+     still works. --------------------------------------------------- */
+  (() => {
+    const root = document.querySelector<HTMLElement>("[data-vote]");
+    if (!root) return;
+    const video = document.querySelector<HTMLVideoElement>("video.character__media");
+    const opts = [...root.querySelectorAll<HTMLButtonElement>("[data-ver]")];
+    const cast = root.querySelector<HTMLButtonElement>("[data-cast]");
+    const tally = root.querySelector<HTMLElement>("[data-tally]");
+    if (!cast || !tally) return;
+    const d = root.dataset;
+
+    // Collapsed-by-default corner control: the pill opens/closes the panel; a
+    // click outside or Escape closes it.
+    const toggle = root.querySelector<HTMLButtonElement>("[data-vote-toggle]");
+    const panel = root.querySelector<HTMLElement>("[data-vote-panel]");
+    const setOpen = (open: boolean) => {
+      root.classList.toggle("is-open", open);
+      toggle?.setAttribute("aria-expanded", String(open));
+      if (panel) panel.hidden = !open;
+    };
+    toggle?.addEventListener("click", () => setOpen(!!panel?.hidden));
+    document.addEventListener("click", (e) => {
+      if (!root.contains(e.target as Node)) setOpen(false);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setOpen(false);
+    });
+
+    type Ver = "v1" | "v2";
+    const SRC: Record<Ver, { webm?: string; mp4?: string; poster?: string }> = {
+      v1: { webm: d.v1Webm, mp4: d.v1Mp4, poster: d.v1Poster },
+      v2: { webm: d.v2Webm, mp4: d.v2Mp4, poster: d.v2Poster },
+    };
+    const ssrDefault = (d.default === "v1" ? "v1" : "v2") as Ver;
+    const norm = (x: string | null): Ver => (x === "v1" ? "v1" : "v2");
+    let current: Ver = norm(localStorage.getItem("introVer") ?? ssrDefault);
+
+    const applyShown = (ver: Ver) =>
+      opts.forEach((b) => b.classList.toggle("is-on", b.dataset.ver === ver));
+
+    const swapVideo = (ver: Ver) => {
+      if (!video) return;
+      const s = SRC[ver];
+      video.querySelectorAll("source").forEach((node) => {
+        if (node.type.includes("webm") && s.webm) node.src = s.webm;
+        else if (node.type === "video/mp4" && s.mp4) node.src = s.mp4;
+      });
+      if (s.poster) video.poster = s.poster;
+      try {
+        video.load();
+        void video.play().catch(() => {});
+      } catch {
+        /* autoplay/seek may reject; harmless */
+      }
+    };
+
+    const select = (ver: Ver) => {
+      current = ver;
+      localStorage.setItem("introVer", ver);
+      applyShown(ver);
+      swapVideo(ver);
+      // Tell the presentation script to re-skin the per-version cards.
+      document.dispatchEvent(new CustomEvent("introver:change", { detail: ver }));
+    };
+
+    opts.forEach((b) =>
+      b.addEventListener("click", () => select(norm(b.dataset.ver ?? null)))
+    );
+
+    // First paint already shows ssrDefault; only swap if the saved pref differs.
+    applyShown(current); // button state only — safe before hydration.
+    if (current !== ssrDefault) {
+      // Swap the source only AFTER the client:load island has hydrated.
+      // Mutating the <video>/<source> before hydration makes React see a DOM
+      // that doesn't match its render of the SSR default and log a mismatch it
+      // "won't patch up" (rAF timing is unreliable — the island can hydrate
+      // late). The island fires "character:hydrated" from its mount effect,
+      // which runs strictly after hydration; we swap then (or immediately if it
+      // already fired). User-triggered swaps are always post-hydration anyway.
+      const w = window as unknown as { __characterHydrated?: boolean };
+      if (w.__characterHydrated) swapVideo(current);
+      else
+        document.addEventListener(
+          "character:hydrated",
+          () => swapVideo(current),
+          { once: true }
+        );
+    }
+
+    const renderTally = (
+      data: { v1?: number; v2?: number } | null,
+      justVoted: boolean
+    ) => {
+      if (!data) return;
+      const v1 = data.v1 ?? 0;
+      const v2 = data.v2 ?? 0;
+      const total = v1 + v2;
+      const pct = (n: number) => (total ? Math.round((n / total) * 100) : 0);
+      tally.hidden = false;
+      tally.innerHTML =
+        (justVoted ? "Thanks! " : "") +
+        `v1 <b>${pct(v1)}%</b> · v2 <b>${pct(v2)}%</b> ` +
+        `<span style="opacity:.55">(${total})</span>`;
+    };
+
+    const lockVoted = () => {
+      cast.disabled = true;
+      cast.textContent = "Voted ✓";
+    };
+
+    // Show the running tally (no-op if the API isn't there, e.g. astro dev).
+    fetch("/api/votes")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => renderTally(data, false))
+      .catch(() => {});
+    if (localStorage.getItem("introVoted")) lockVoted();
+
+    cast.addEventListener("click", async () => {
+      if (cast.disabled) return;
+      cast.disabled = true;
+      try {
+        const r = await fetch("/api/vote?v=" + (current === "v2" ? "2" : "1"), {
+          method: "POST",
+        });
+        if (!r.ok) throw new Error("vote failed");
+        const data = await r.json();
+        localStorage.setItem("introVoted", current);
+        lockVoted();
+        renderTally(data, true);
+      } catch {
+        cast.disabled = false; // network/API error — let them retry
+      }
+    });
+  })();
+</script>
+
+<script>
+  /* ---------------------------------------------------------------
+     Ambient per-world background: a SUBTLE falling-particle field on one
+     canvas behind the content. The one-shot card reveals don't repeat, so this
+     keeps each world alive while it dwells. Only the ACTIVE world's mode runs;
+     it pauses when the tab is hidden and stays off under reduced-motion.
+       portfolio → 'dots'   — glowing dots fall in loose vertical streaks
+       github    → 'matrix' — columns of mono glyphs rain down (bright head)
+       contact   → 'typing' — little "•••" typing groups drift down
+     Colour follows the world accent (--w-accent), sampled as it cross-fades.
+     --------------------------------------------------------------- */
+  import { onWorld } from "../lib/beats";
+
+  (() => {
+    const canvas =
+      document.querySelector<HTMLCanvasElement>("canvas[data-ambient]");
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+    type Mode = "dots" | "matrix" | "typing";
+    const MODE: Record<string, Mode> = {
+      portfolio: "dots",
+      github: "matrix",
+      contact: "typing",
+    };
+    let mode: Mode = MODE[document.body.dataset.world ?? ""] ?? "dots";
+    let worldId = document.body.dataset.world ?? "portfolio";
+    let accent = "#3b82f6";
+    let color = "#eaf4ff";
+    const refreshColour = () => {
+      const v = getComputedStyle(document.body)
+        .getPropertyValue("--w-accent")
+        .trim();
+      if (v) accent = v;
+      // Portfolio's falling dots are bright white to match its light-trail; the
+      // other worlds keep their accent (green matrix / magenta typing dots).
+      color = mode === "dots" ? "#eaf4ff" : accent;
+    };
+
+    const rnd = (min: number, max: number) => min + Math.random() * (max - min);
+    const CHARS = "01<>/{}[]=$#*+-".split("");
+
+    let W = 0,
+      H = 0;
+    // Spawn band: particles fall FROM the active card (x within it, from its top)
+    // DOWN to the bottom of the screen — not across the whole page. The canvas
+    // sits behind the card, so the stream is occluded over the card and emerges
+    // below it.
+    let band = { x0: 0, x1: 0, top: 0 };
+    const bandW = () => Math.max(1, band.x1 - band.x0);
+    const computeBand = () => {
+      const card = document.querySelector<HTMLElement>(
+        `.link-card[data-beat="${worldId}"]`
+      );
+      const r = card?.getBoundingClientRect();
+      // Spawn from the card's BOTTOM edge so particles emerge from the card and
+      // fall down to the bottom of the screen (nothing over/above the card).
+      if (r && r.width > 0) band = { x0: r.left, x1: r.right, top: r.bottom };
+      else band = { x0: W * 0.32, x1: W * 0.68, top: H * 0.62 };
+    };
+
+    type Dot = { x: number; y: number; v: number; r: number; a: number };
+    type Col = { x: number; y: number; v: number; len: number };
+    let dots: Dot[] = [];
+    let cols: Col[] = [];
+    let typers: Dot[] = [];
+
+    const build = () => {
+      const w = bandW();
+      const span = Math.max(1, H - band.top);
+      const nDots = Math.round(Math.min(28, (w * span) / 13000));
+      const nCols = Math.round(Math.min(16, w / 26));
+      const nTyp = Math.round(Math.min(12, (w * span) / 24000));
+      dots = Array.from({ length: nDots }, () => ({
+        x: rnd(band.x0, band.x1), y: rnd(band.top, H), v: rnd(26, 60), r: rnd(1.2, 2.6), a: rnd(0.25, 0.6),
+      }));
+      const step = w / Math.max(1, nCols);
+      cols = Array.from({ length: nCols }, (_, i) => ({
+        x: Math.round(band.x0 + i * step + step / 2), y: rnd(band.top, H), v: rnd(60, 130), len: Math.round(rnd(5, 12)),
+      }));
+      typers = Array.from({ length: nTyp }, () => ({
+        x: rnd(band.x0, band.x1), y: rnd(band.top, H), v: rnd(28, 58), r: rnd(2, 3.2), a: rnd(0.25, 0.55),
+      }));
+    };
+
+    const resize = () => {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      computeBand();
+      build();
+    };
+
+    // Portfolio: thin WHITE glowing light-STREAKS falling — the same air-writing
+    // light-trail vocabulary as the card's SVG, not round dots. Each streak is a
+    // short vertical line with a comet fade (transparent tail → bright head) and
+    // a white glow. Length scales with speed so faster ones read as longer trails.
+    const drawDots = (dt: number) => {
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 9;
+      ctx.lineCap = "round";
+      for (const d of dots) {
+        d.y += d.v * dt;
+        const len = Math.min(30, Math.max(12, d.v * 0.34));
+        if (d.y - len > H) {
+          d.y = band.top - rnd(0, 40);
+          d.x = rnd(band.x0, band.x1);
+        }
+        const grad = ctx.createLinearGradient(d.x, d.y - len, d.x, d.y);
+        grad.addColorStop(0, "rgba(234,244,255,0)");
+        grad.addColorStop(1, color);
+        ctx.strokeStyle = grad;
+        ctx.globalAlpha = d.a;
+        ctx.lineWidth = d.r;
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y - len);
+        ctx.lineTo(d.x, d.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+
+    const drawMatrix = (dt: number) => {
+      ctx.save();
+      ctx.font = '13px "Geist Mono", ui-monospace, monospace';
+      ctx.textAlign = "center";
+      const cell = 15;
+      for (const c of cols) {
+        c.y += c.v * dt;
+        for (let k = 0; k < c.len; k++) {
+          const yy = c.y - k * cell;
+          if (yy < band.top - cell || yy > H + cell) continue;
+          const ch = CHARS[(Math.floor(yy / cell) + c.x) % CHARS.length] ?? "0";
+          ctx.globalAlpha = Math.max(0, (1 - k / c.len) * 0.5);
+          ctx.fillStyle = k === 0 ? "#dfffe9" : accent;
+          ctx.fillText(ch, c.x, yy);
+        }
+        if (c.y - c.len * cell > H) {
+          c.y = band.top - rnd(0, H * 0.25);
+          c.v = rnd(60, 130);
+          c.len = Math.round(rnd(5, 12));
+        }
+      }
+      ctx.restore();
+    };
+
+    const drawTyping = (dt: number) => {
+      ctx.save();
+      ctx.fillStyle = accent;
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = 5;
+      for (const t of typers) {
+        t.y += t.v * dt;
+        if (t.y - t.r > H) { t.y = band.top - rnd(0, 24); t.x = rnd(band.x0, band.x1); }
+        ctx.globalAlpha = t.a;
+        for (let k = 0; k < 3; k++) {
+          ctx.beginPath();
+          ctx.arc(t.x + k * (t.r * 2.4), t.y, t.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    };
+
+    let last = 0,
+      raf = 0,
+      running = false,
+      frames = 0;
+    const frame = (ts: number) => {
+      if (!running) return;
+      const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
+      last = ts;
+      if ((frames++ & 7) === 0) refreshColour(); // follow the cross-fade, cheaply
+      ctx.clearRect(0, 0, W, H);
+      if (mode === "dots") drawDots(dt);
+      else if (mode === "matrix") drawMatrix(dt);
+      else drawTyping(dt);
+      raf = requestAnimationFrame(frame);
+    };
+    const start = () => {
+      if (running) return;
+      running = true;
+      last = 0;
+      raf = requestAnimationFrame(frame);
+    };
+    const stop = () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, W, H);
+    };
+
+    onWorld((id) => {
+      const m = MODE[id];
+      if (m) mode = m;
+      worldId = id;
+      refreshColour();
+      computeBand(); // particles now fall from THIS world's card
+      build();
+    });
+    document.addEventListener("visibilitychange", () =>
+      document.hidden ? stop() : start()
+    );
+    window.addEventListener("resize", resize, { passive: true });
+
+    refreshColour();
+    resize();
+    if (!document.hidden) start();
+  })();
 </script>

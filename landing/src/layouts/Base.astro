@@ -69,6 +69,9 @@ const heUrl = new URL(localeUrl("he"), Astro.site ?? "https://nehoraihadad.com")
   <body data-world="portfolio">
     <div class="bg-glow" aria-hidden="true"></div>
     <div class="bg-grid" aria-hidden="true"></div>
+    {/* Ambient per-world falling-particle field (driven by the script in
+        Welcome.astro). Background layer, behind the content. */}
+    <canvas class="ambient" data-ambient aria-hidden="true"></canvas>
     <slot />
   </body>
 </html>

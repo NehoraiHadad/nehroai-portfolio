@@ -185,6 +185,23 @@ svg {
   animation: glow-breathe 9s var(--ease-out) infinite;
 }
 
+/* Ambient per-world falling-particle field (dots / matrix / typing-dots). Sits
+   with the other background layers, kept subtle and edge-masked so it reads as
+   atmosphere, not foreground. The canvas is sized + drawn by the script in
+   Welcome.astro; only the active world's mode runs. */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.6;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient {
+    display: none;
+  }
+}
+
 /* Halftone dots — the "vibe / anime" world's texture. Hidden elsewhere
    (--w-dots = 0); drifts slowly upward so the world feels alive. */
 .bg-grid::before {
@@ -431,6 +448,254 @@ body[data-world="contact"] {
   50% {
     opacity: 0.7;
     height: 60px;
+  }
+}
+
+/* ============================================================
+   TYPEWRITER reveal — the GitHub "Terminal" card isn't faded in, it is TYPED
+   in as green-terminal text with a live caret, synced to the video's pixel/code
+   dwell. Sells "the character typed this card" (agency) instead of a passive
+   fade. The char spans + caret are created at runtime by the script in
+   Welcome.astro, so these rules MUST be global (Astro scoped styles can't reach
+   runtime nodes). Fires once per session, then stays filled (see typewriter()).
+   ============================================================ */
+.link-card.is-typewriter :is(.link-card__kicker, .link-card__label, .link-card__desc) {
+  /* In the terminal world the typed copy is monospace — reads as code. */
+  font-family: var(--font-mono);
+}
+
+/* Each character starts invisible (but holds its space, so the card never
+   reflows as it types) and snaps on when the caret passes it. */
+.tw-ch {
+  opacity: 0;
+}
+.tw-ch.on {
+  opacity: 1;
+  transition: opacity 28ms linear;
+}
+
+/* The blinking block caret — a TERMINAL cursor, so it is fixed green (the
+   GitHub world's colour) rather than var(--w-accent): the type takes ~5s but a
+   world only dwells ~4.6s, so a world-tracked caret would cross-fade to blue/
+   pink as the auto-cycle moves on. It rides just after the last typed character
+   and parks at the end when done. */
+.tw-caret {
+  display: inline-block;
+  width: 0.55ch;
+  height: 1em;
+  margin-inline-start: 1px;
+  translate: 0 0.12em;
+  background: #34d399;
+  box-shadow: 0 0 8px -1px rgba(52, 211, 153, 0.6);
+  animation: tw-blink 1.05s steps(1) infinite;
+}
+
+@keyframes tw-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   INK-TRAIL reveal — the Portfolio "Studio" card is drawn into being by a
+   glowing point that traces its border (echoing the realistic figure writing
+   in the air with a light-trail), then the copy rises in behind the stroke.
+   The SVG is injected at runtime by inkTrail() in Welcome.astro and sized to
+   the card, so these rules are global. Border colour tracks the world accent.
+   ============================================================ */
+.link-card.is-inktrail {
+  position: relative;
+}
+/* While the point is drawing, the SVG IS the frame — suppress the card's own
+   border + active glow so the point appears to DRAW the frame rather than trace
+   one that already exists. (.is-inktrail.is-drawing = 3 classes, so it outranks
+   the .link-card.is-active border/shadow rules without !important.) */
+.link-card.is-inktrail.is-drawing {
+  border-color: transparent;
+  box-shadow: none;
+}
+.ink-trail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.4s var(--ease-out);
+}
+/* Handoff: once drawn, fade the trail out so the card's own border takes over.
+   It must NOT persist — a lingering stroke would double the border AND re-tint
+   on every world change (its colour is the global --w-accent). */
+.link-card.is-inktrail:not(.is-drawing) .ink-trail {
+  opacity: 0;
+}
+/* Before the gesture starts (video-synced draw waits for ct ≥ WRITE_START): keep
+   the whole trail hidden so the leading point doesn't sit as a lone glowing dot
+   at the start corner during the wait. Dropped by the tick the instant it draws. */
+.link-card.is-inktrail.is-predraw .ink-trail {
+  opacity: 0;
+}
+.ink-trail__line,
+.ink-trail__point {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dashoffset: 100;
+  /* Fallback timeline (no usable video): a touch after the beat, drawn slowly so
+     it ends nearer where the figure finishes the air-writing stroke. */
+  animation: ink-draw 2.1s linear 0.4s forwards;
+}
+/* Video-synced draw: inkTrail() sets stroke-dashoffset from video.currentTime
+   each frame, so the CSS keyframe must NOT also run (it would fight the JS). */
+.link-card.is-video-driven .ink-trail__line,
+.link-card.is-video-driven .ink-trail__point {
+  animation: none;
+}
+@keyframes ink-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+/* The drawn line is WHITE + glowing — the figure's air-writing light-trail in
+   the clip — NOT the accent. It "locks" to blue only at handoff, when this white
+   trail fades out and the card's own (accent) border takes over underneath. */
+.ink-trail__line {
+  stroke: #eaf4ff;
+  stroke-width: 2.2px;
+  stroke-dasharray: 100; /* whole perimeter, drawn as the offset runs 100→0 */
+  filter: drop-shadow(0 0 3px #fff)
+    drop-shadow(0 0 9px var(--w-glow, rgba(123, 178, 255, 0.7)));
+}
+/* The bright leading point doing the "writing" — a hot white core + white halo. */
+.ink-trail__point {
+  stroke: #ffffff;
+  stroke-width: 3.6px;
+  stroke-dasharray: 0.6 99.4; /* a single glowing dot riding the leading edge */
+  filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 9px #fff)
+    drop-shadow(0 0 15px var(--w-glow, rgba(123, 178, 255, 0.85)));
+}
+/* Content arrives AFTER the frame is drawn, not during it: the icon + copy stay
+   hidden through the draw, then rise in when inkTrail() adds .is-drawn (fired the
+   moment the trail closes the loop — video-synced or fallback). */
+.link-card.is-inktrail .link-card__icon,
+.link-card.is-inktrail .link-card__body {
+  opacity: 0;
+}
+.link-card.is-inktrail.is-drawn .link-card__icon,
+.link-card.is-inktrail.is-drawn .link-card__body {
+  animation: fx-rise 0.55s var(--ease-out) both;
+}
+@keyframes fx-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ============================================================
+   CHAT reveal — the Contact "Vibe" card is texted in: a "typing…" bubble, then
+   the label + description pop in as incoming message bubbles that STAY (the
+   card must stay readable + clickable). The lines are the card's own elements
+   restyled as bubbles; only the typing indicator is injected (.chat-typing).
+   Bubble colour tracks the world accent (magenta in the Contact world).
+   ============================================================ */
+.link-card.is-chat .link-card__body {
+  gap: var(--s-2);
+}
+.link-card.is-chat :is(.link-card__label, .link-card__desc),
+.chat-typing {
+  align-self: flex-start;
+  max-width: 100%;
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  padding: 6px 12px;
+}
+.link-card.is-chat :is(.link-card__label, .link-card__desc) {
+  background: color-mix(in oklab, var(--w-accent, #f472b6) 16%, var(--bg-2));
+  border: 1px solid color-mix(in oklab, var(--w-accent, #f472b6) 32%, transparent);
+  /* Start hidden; .pop (added in sequence by chat()) animates them in + stays. */
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+}
+/* A bubble that hasn't arrived yet takes NO space — the "typing…" indicator
+   stands in for it — so the card's height grows monotonically to its final size
+   instead of overshooting while a typing bubble and a hidden message coexist.
+   Paired with the v2 height reserve below, the row never reflows. */
+.link-card.is-chat :is(.link-card__label, .link-card__desc):not(.pop) {
+  display: none;
+}
+.link-card.is-chat .link-card__label.pop,
+.link-card.is-chat .link-card__desc.pop {
+  animation: chat-pop 0.42s var(--ease-out) forwards;
+}
+@keyframes chat-pop {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* v2's Contact card is chat bubbles — taller than plain copy. Keep ALL cards a
+   UNIFORM height (no per-card difference) by reserving the chat card's height: the
+   row is then stable and never resizes as the chat types in. With the corner-icon
+   compact layout the reserve is modest (~11rem), so Portfolio/GitHub gain only a
+   little bottom space. v1 has no chat card, so it stays at its natural (already
+   equal) plain height — no reserve needed there. data-ver is set by the
+   presentation script; default stretch + LinkCards' `height:100%` then fill the
+   reserve. */
+@media (min-width: 720px) {
+  body[data-ver="v2"] .link-card {
+    min-height: 11.25rem;
+  }
+  /* The reserve gives the plain cards a little spare height — distribute their copy
+     to fill it (eyebrow stays at top by the corner icon, title + description breathe
+     downward) instead of bunching at the top with dead space below. The chat card is
+     already ~full and its bubbles must stay adjacent (a real conversation), so it's
+     excluded. */
+  body[data-ver="v2"] .link-card:not(.is-chat) .link-card__body {
+    flex: 1;
+    justify-content: space-between;
+  }
+}
+
+/* The "typing…" bubble: three bouncing dots in a bubble matching the messages. */
+.chat-typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+.chat-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--w-accent, #f472b6);
+  animation: chat-dot 1s ease-in-out infinite;
+}
+.chat-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.chat-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes chat-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
   }
 }
 

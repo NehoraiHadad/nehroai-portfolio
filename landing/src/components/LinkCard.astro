@@ -51,11 +51,15 @@ const target = link.external ? "_blank" : undefined;
     /* Hidden initial state — revealed by .is-revealed (beat fires) */
     opacity: 0;
     transform: translateY(18px) scale(0.98);
+    /* Not yet authored → not hoverable: stops a hover over an empty card slot
+       from summoning that world and revealing the card before its beat. */
+    pointer-events: none;
   }
 
   .link-card.is-revealed {
     opacity: 1;
     transform: translateY(0) scale(1);
+    pointer-events: auto;
   }
 
   .link-card:hover {
@@ -64,13 +68,29 @@ const target = link.external ? "_blank" : undefined;
     box-shadow: var(--shadow-2), var(--shadow-glow-soft);
   }
 
-  /* Row mode (desktop): stack icon over text so 3 cards sit comfortably abreast. */
+  /* Row mode (desktop): the copy is a single full-width block; the icon floats in
+     the TOP CORNER opposite the (start-aligned) text — a "links out" affordance —
+     so the card needs no dedicated icon row and sits more compact. inset-inline-end
+     keeps it mirrored correctly in RTL (Hebrew). */
   @media (min-width: 720px) {
     .link-card {
       flex-direction: column;
       align-items: flex-start;
       gap: var(--s-3);
       height: 100%;
+      /* keep the top line clear of the corner icon */
+      padding-block-start: var(--s-6);
+    }
+    .link-card__icon {
+      position: absolute;
+      inset-block-start: var(--s-5);
+      inset-inline-end: var(--s-6);
+    }
+    /* only the top rows sit at the icon's level — keep them clear of it; the
+       description is below the icon and keeps full width (no extra wrapping). */
+    .link-card__kicker,
+    .link-card__label {
+      padding-inline-end: calc(44px + var(--s-3));
     }
   }
 

@@ -1,16 +1,23 @@
 {
-  // Static-assets Worker for the nehoraihadad.com landing page.
-  // This is an ASSETS-ONLY Worker (no server script): `wrangler deploy` uploads
-  // the Astro build output in ./dist and Cloudflare serves it directly.
+  // Static-assets Worker for the nehoraihadad.com landing page + a tiny vote API.
+  // `wrangler deploy` bundles the `main` Worker script and uploads the Astro
+  // build output in ./dist; the Worker serves /api/* itself and falls through to
+  // the static assets (ASSETS binding) for everything else.
   //
   // The Worker's Git build (Root directory = landing) runs:
   //   build:  pnpm run build      -> produces ./dist
-  //   deploy: npx wrangler deploy  -> reads this file, uploads ./dist
+  //   deploy: npx wrangler deploy  -> reads this file, bundles worker/, uploads ./dist
   //
   // `name` MUST match the existing Worker created in the dashboard.
   "name": "nehroai-portfolio",
   "compatibility_date": "2026-06-09",
+  "main": "worker/index.ts",
   "assets": {
-    "directory": "./dist"
-  }
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  // v1-vs-v2 character-video poll counters (keys: v1, v2).
+  "kv_namespaces": [
+    { "binding": "VOTES", "id": "13dc5c8e36ce41d081f335e5301a7a22" }
+  ]
 }

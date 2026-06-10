@@ -54,6 +54,14 @@ export default function CharacterVideo({
   const [staticOnly, setStaticOnly] = useState(false);
 
   useEffect(() => {
+    // Mount effect runs strictly AFTER hydration → signal sibling scripts (the
+    // A/B vote) that it's now safe to mutate the <video> sources without
+    // tripping a hydration mismatch against the SSR default. Flag covers late
+    // listeners; the event covers listeners already attached.
+    (window as unknown as { __characterHydrated?: boolean }).__characterHydrated =
+      true;
+    document.dispatchEvent(new CustomEvent("character:hydrated"));
+
     const video = videoRef.current;
     if (!video) return;
 
