@@ -117,6 +117,8 @@
   --shadow-glow-soft: 0 0 32px -8px color-mix(in oklab, var(--accent) 40%, transparent);
   --shadow-glow-ice: 0 0 24px -8px var(--accent-ice);
   --shadow-focus-ring: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent);
+  /* Spotlight: tight border + soft accent halo + elevation shadow (3.2) */
+  --shadow-spotlight: 0 0 0 1px var(--accent), 0 0 48px -10px color-mix(in oklab, var(--accent) 30%, transparent), var(--shadow-3);
 
   /* Motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -230,6 +232,7 @@
   --shadow-glow-soft: var(--shadow-glow-soft);
   --shadow-glow-ice: var(--shadow-glow-ice);
   --shadow-focus: var(--shadow-focus-ring);
+  --shadow-spotlight: var(--shadow-spotlight);
 
   /* Easing */
   --ease-out: var(--ease-out);
@@ -377,7 +380,7 @@
     display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
     font-family: var(--font-sans); font-weight: var(--fw-semibold); font-size: var(--t-14);
     padding: 10px 20px; border-radius: var(--r-1); border: 1px solid transparent;
-    cursor: pointer; white-space: nowrap; line-height: 1;
+    cursor: pointer; white-space: nowrap; line-height: 1; text-decoration: none;
     transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out),
       border-color var(--dur-1) var(--ease-out), transform var(--dur-0) var(--ease-out);
   }
@@ -429,6 +432,98 @@
   .project-node:hover {
     box-shadow: 0 0 20px color-mix(in oklab, var(--accent) 10%, transparent);
   }
+
+  /* ── Scanline veil — shared reusable overlay (3.1) ──────────────────── */
+  /* Fixed layer; opacity driven by var(--scene-scan) so the terminal scene
+     activates it; mix-blend-mode:overlay keeps it subtle on both themes. */
+  .scanline-veil {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.5) 3px
+    );
+    opacity: var(--scene-scan, var(--scanline-opacity));
+    mix-blend-mode: overlay;
+    /* CSS kill-switch auto-pauses animations; this has none, so it renders
+       as static at whatever opacity the scene sets (or 0 on default). */
+  }
+
+  /* ── Living background: glow breathe helpers (3.1) ─────────────────── */
+  /* Both classes render the same radial gradient; only .bg-glow-breathe
+     runs the keyframe animation. The CSS reduced-motion kill-switch
+     (animation-duration: 0.001ms) at the bottom of this file collapses
+     the breathe to a single still frame automatically. */
+  .bg-glow-static {
+    opacity: 0.78;
+  }
+  .bg-glow-breathe {
+    animation: glow-breathe 9s var(--ease-out) infinite;
+  }
+
+  /* ── Spotlight group + sibling recede (3.2) ─────────────────────────── */
+  /* When any child carries .is-spotlit, its siblings fade and desaturate.
+     The transition on all direct children means the recede is smooth.
+     Reduced-motion kill-switch collapses transition to 0.001ms — children
+     will still snap to the reduced state, which is fine (no layout shift). */
+  /* ── Terminal frame panel (3.3) ──────────────────────────────────────── */
+  /* Base shell used by TerminalFrame.tsx; keep it minimal so the component
+     controls the specific layout/padding via className props. */
+  .terminal-frame {
+    position: relative;
+    border-radius: var(--r-3);
+    border: 1px solid var(--line);
+    background: var(--bg-1);
+    overflow: hidden;
+  }
+  .terminal-frame__chrome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--s-3) var(--s-4);
+    background: var(--bg-1);
+    border-bottom: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
+  }
+  .terminal-frame__lights {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .terminal-frame__light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--line-strong);
+    cursor: default;
+    transition: background var(--dur-1) var(--ease-out);
+  }
+  .terminal-frame__light:nth-child(1):hover { background: var(--danger); }
+  .terminal-frame__light:nth-child(2):hover { background: var(--warn); }
+  .terminal-frame__light:nth-child(3):hover { background: var(--ok); }
+  .terminal-frame__body {
+    position: relative;
+  }
+
+  /* Panel-level scanline overlay — a separate class from .scanline-veil
+     because panel scanlines are absolute (not fixed) and use z-10. */
+  .panel-scanline {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    background: repeating-linear-gradient(
+      0deg,
+      #fff,
+      #fff 1px,
+      transparent 1px,
+      transparent 4px
+    );
+    opacity: var(--scanline-opacity);
+    mix-blend-mode: overlay;
+  }
 }
 
 /* ============================================================
@@ -445,9 +540,14 @@
 }
 
 /* ── Links ── */
-a { color: var(--color-link); text-decoration: none; text-underline-offset: 4px; transition: color var(--dur-1) var(--ease-out); }
-a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
-hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-7) 0; }
+/* In @layer base so component classes (.btn-primary) and utilities can
+   override link color — unlayered, this rule beat .btn-primary's
+   color and rendered CTA labels accent-on-accent (invisible). */
+@layer base {
+  a { color: var(--color-link); text-decoration: none; text-underline-offset: 4px; transition: color var(--dur-1) var(--ease-out); }
+  a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-7) 0; }
+}
 
 /* ============================================================
    SCENE THEMING — CSS-only layer (driver ships in Phase 3.6).
@@ -554,6 +654,26 @@ body[data-scene="showcase"] {
 }
 
 /* ============================================================
+   Spotlight + sibling recede (3.2). UNLAYERED on purpose: the
+   recede opacity must beat `.reveal-pop.in-view { opacity: 1 }`
+   (also unlayered) — inside @layer components it always loses.
+   ============================================================ */
+.spotlight-group > * {
+  transition:
+    opacity var(--dur-3) var(--ease-out),
+    filter var(--dur-3) var(--ease-out),
+    transform var(--dur-3) var(--ease-out);
+}
+.spotlight-group:has(.is-spotlit) > *:not(.is-spotlit) {
+  opacity: 0.5;
+  filter: saturate(0.65);
+}
+.is-spotlit {
+  box-shadow: var(--shadow-spotlight);
+  transform: translateY(-3px) scale(1.02);
+}
+
+/* ============================================================
    Scroll-reveal (CSS-driven, no JS animation library).
    ============================================================ */
 .reveal {
@@ -577,13 +697,22 @@ body[data-scene="showcase"] {
     transform 0.52s var(--ease-spring);
   transition-delay: var(--reveal-delay, 0ms);
 }
-.reveal-pop.in-view { opacity: 1; transform: none; }
+/* Once revealed, drop the stagger delay so later transitions on the same
+   element (e.g. spotlight recede) respond immediately. */
+.reveal-pop.in-view { opacity: 1; transform: none; transition-delay: 0ms; }
 @keyframes reveal-pop-fallback { to { opacity: 1; transform: none; } }
 .reveal-pop:not(.in-view) { animation: reveal-pop-fallback 0s 4s forwards; }
 
 /* ============================================================
    Signature motion (kept, retinted electric-blue / ice)
    ============================================================ */
+/* Centre glow breathe — opacity-only, compositor-only (3.1).
+   CSS reduced-motion kill-switch collapses this to 0.001ms automatically. */
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.78; }
+  50%       { opacity: 1; }
+}
+
 /* Status dot heartbeat */
 @keyframes status-heartbeat {
   0%, 100% { transform: scale(1); }

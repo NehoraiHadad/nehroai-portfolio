@@ -30,6 +30,7 @@ type OrchestratorNodeData = Record<string, unknown> & {
 type ProjectNodeData = Record<string, unknown> & CaseStudy & {
   isMobile: boolean;
   isRtl: boolean;
+  isSpotlit: boolean;
 };
 
 type ShowcaseNode = Node<OrchestratorNodeData | ProjectNodeData>;
@@ -59,7 +60,7 @@ const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
   const Icon = data.icon || Cpu;
   return (
     <div
-      className="bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-all duration-300 group cursor-pointer relative overflow-hidden"
+      className={`bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-all duration-300 group cursor-pointer relative overflow-hidden${data.isSpotlit ? ' is-spotlit' : ''}`}
       dir={data.isRtl ? 'rtl' : 'ltr'}
       style={{ textAlign: 'start' }}
     >
@@ -147,7 +148,7 @@ export const Showcase = () => {
         position: isMobile
           ? { x: 0, y: projectStartY + idx * projectGap }
           : { x: idx % 2 === 0 ? 360 : 610, y: projectStartY + idx * projectGap },
-        data: { ...study, isMobile, isRtl },
+        data: { ...study, isMobile, isRtl, isSpotlit: selectedStudy?.id === study.id },
       }))
     ];
 
@@ -165,7 +166,7 @@ export const Showcase = () => {
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [caseStudies, isMobile, isRtl, setNodes, setEdges, showcase.orchestratorLabel, showcase.shippingLabel]);
+  }, [caseStudies, isMobile, isRtl, selectedStudy, setNodes, setEdges, showcase.orchestratorLabel, showcase.shippingLabel]);
 
   return (
     <section id="showcase" ref={ref} className="py-24 px-4 sm:px-6 max-w-7xl mx-auto relative z-10">
