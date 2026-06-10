@@ -24,7 +24,7 @@ export const ThePractice = () => {
       <div className="max-w-6xl mx-auto">
         <div className="reveal mb-16" style={{ textAlign: isRtl ? 'start' : 'center' }}>
           <span className="section-marker mb-4" style={{ justifyContent: isRtl ? 'flex-start' : 'center' }} dir="ltr">
-            01 — STACK
+            {practice.sectionMarker}
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-fg-0 mt-4 tracking-tight">
             {practice.title}

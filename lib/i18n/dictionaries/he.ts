@@ -29,23 +29,26 @@ export const heDictionary: AppDictionary = {
     contactCta: 'צור קשר',
   },
   hero: {
+    name: 'Nehorai Hadad',
     rotatingWords: ['סוכנים.', 'תהליכי עבודה.', 'ממשקים.', 'מערכות.'],
     statusLabels: ['זמין לעבודה', 'זמין לפרויקטים'],
     titlePrefix: 'בונה',
-    subtitle: 'מפתח Full-Stack עם התמחות ב-AI. אני בונה agents, workflows ומערכות web.',
+    subtitle: 'מהנדס AI עם עומק תשתיתי. אני בונה agents, workflows ומערכות Full-Stack.',
     primaryCta: 'לראות מה בניתי',
     secondaryCta: 'הורד קורות חיים',
   },
   practice: {
+    sectionMarker: '01 — STACK',
     title: 'סטאק',
   },
   showcase: {
+    sectionMarker: '02 — PROJECTS',
     title: 'פרויקטים נבחרים',
     description: 'לחץ על כל node כדי לראות את פרטי המימוש, הקישור החי וקוד המקור.',
     hint: 'לחץ על node כדי לפתוח את פרטי הפרויקט',
     orchestratorLabel: 'Nehorai // Builder',
     shippingLabel: 'באוויר',
-    drawerTitle: 'תצורת Node',
+    drawerTitle: 'NODE_CONFIGURATION',
     fields: {
       nodeId: 'מזהה Node',
       status: 'סטטוס',
@@ -54,6 +57,7 @@ export const heDictionary: AppDictionary = {
       description: 'תיאור',
       challenge: 'אתגר',
       solution: 'פתרון',
+      impact: 'Parameters.Impact',
       dependencies: 'תלויות',
     },
     actions: {
@@ -62,7 +66,8 @@ export const heDictionary: AppDictionary = {
     },
   },
   dossier: {
-    sectionLabel: '04 — יצירת קשר',
+    sectionMarker: '03 — CONTACT',
+    sectionLabel: '03 — CONTACT',
     availability: 'זמין · היברידי / Remote',
     titleLines: ['פתוח', 'להזדמנויות'],
     titleHighlight: 'הנכונות.',
@@ -75,6 +80,14 @@ export const heDictionary: AppDictionary = {
     resumeCta: 'הורד קורות חיים',
     resumeFile: '/Nehorai Hadad CV - SW (HE).pdf',
     resumeDownloadName: 'Nehorai Hadad CV - SW (HE).pdf',
+    contact: {
+      emailLabel: 'אימייל',
+      githubLabel: 'GitHub',
+      linkedinLabel: 'LinkedIn',
+      emailUrl: 'mailto:nehorai.hadad@gmail.com',
+      githubUrl: 'https://github.com/NehoraiHadad',
+      linkedinUrl: 'https://linkedin.com/in/nehorai-hadad', // TODO: confirm LinkedIn slug
+    },
     terminalFileName: 'secure_channel.sh',
     securityLabel: 'TLS 1.3',
     initLines: [
@@ -89,24 +102,33 @@ export const heDictionary: AppDictionary = {
       transmittingHint: '  מנתב אל nehoraihadad.com...',
     },
     success: {
-      delivered: 'STATUS: נמסר ✓',
+      delivered: 'STATUS: DELIVERED ✓',
       eta: 'RESPONSE_ETA: 24–48H',
-      title: 'תודה, ההודעה התקבלה.',
+      title: 'תודה — ההודעה התקבלה.',
       description: 'אחזור אליך בתוך יום או יומיים.',
     },
     form: {
-      nameLabel: 'שם_השולח',
-      emailLabel: 'אימייל_השולח',
-      messageLabel: 'גוף_ההודעה',
+      nameLabel: 'SENDER_NAME',
+      emailLabel: 'SENDER_EMAIL',
+      messageLabel: 'MESSAGE_BODY',
       namePlaceholder: 'השם שלך',
       emailPlaceholder: 'you@company.com',
       messagePlaceholder: 'כתוב הודעה...',
-      submitLabel: 'שגר',
-      errorPrefix: '> שגיאה: ',
+      submitLabel: 'TRANSMIT',
+      errorPrefix: '> ERR: ',
+      errors: {
+        invalid_name: 'נא להזין שם.',
+        invalid_email: 'נא להזין כתובת אימייל תקינה.',
+        message_too_long: 'ההודעה נדרשת (עד 5000 תווים).',
+        not_configured: 'שירות האימייל אינו מוגדר — ניתן לפנות ישירות: nehorai.hadad@gmail.com',
+        send_failed: 'השידור נכשל — אנא נסה שנית, או שלח ל-nehorai.hadad@gmail.com',
+        rate_limited: 'יותר מדי בקשות — אנא המתן רגע ונסה שנית.',
+        unknown: 'שגיאה בלתי צפויה — אנא שלח ל-nehorai.hadad@gmail.com',
+      },
     },
   },
   assistant: {
-    title: 'NEHORAI // עוזר',
+    title: 'NEHORAI // ASSISTANT',
     matrixTitle: 'MATRIX // UPLINK',
     quickPrompts: ['מה הסטאק הטכנולוגי שלך?', 'הצג לי את הפרויקטים שלך', 'איך אפשר לעבוד יחד?'],
     initialMessages: [
@@ -157,6 +179,11 @@ export const heDictionary: AppDictionary = {
   },
   footer: {
     copyrightTemplate: '© {year} Nehor.ai. כל הזכויות שמורות.',
+  },
+  ownerContact: {
+    email: 'nehorai.hadad@gmail.com',
+    githubUrl: 'https://github.com/NehoraiHadad',
+    linkedinUrl: 'https://linkedin.com/in/nehorai-hadad', // TODO: confirm LinkedIn slug
   },
   caseStudies: [
     {

@@ -729,6 +729,7 @@ const IlluminationBackground = () => {
 
 export const Hero = () => {
   const { hero, dossier } = useDictionary();
+  // hero.name is used for the eyebrow identity line (5.2)
   const direction = useDirection();
   const isRtl = direction === 'rtl';
   const CtaArrow = isRtl ? ArrowLeft : ArrowRight;
@@ -756,6 +757,15 @@ export const Hero = () => {
         className="flex flex-col items-start"
         style={{ textAlign: 'start' }}
       >
+        {/* 5.2: Name eyebrow — renders before the title so a 30-sec scan yields name + role */}
+        <motion.p
+          variants={item}
+          className="font-mono text-[11px] text-fg-2 uppercase tracking-[0.22em] mb-3 bidi-ltr"
+          dir="ltr"
+        >
+          {hero.name}
+        </motion.p>
+
         <motion.div variants={item} className="status-badge mb-6">
           <span className="status-dot" />
           <span className="text-accent">

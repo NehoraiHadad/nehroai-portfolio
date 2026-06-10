@@ -29,6 +29,7 @@ export const enDictionary: AppDictionary = {
     contactCta: 'Contact',
   },
   hero: {
+    name: 'Nehorai Hadad',
     rotatingWords: ['Agents.', 'Workflows.', 'Interfaces.', 'Systems.'],
     statusLabels: ['Open to Work', 'Available for Projects'],
     titlePrefix: 'Engineering',
@@ -37,9 +38,11 @@ export const enDictionary: AppDictionary = {
     secondaryCta: 'Download Resume',
   },
   practice: {
+    sectionMarker: '01 — STACK',
     title: 'Stack',
   },
   showcase: {
+    sectionMarker: '02 — PROJECTS',
     title: 'Selected Projects',
     description: 'Click any node for the build details, the live link, and the source.',
     hint: 'Click a node to open the project details',
@@ -54,6 +57,7 @@ export const enDictionary: AppDictionary = {
       description: 'Description',
       challenge: 'Parameters.Challenge',
       solution: 'Parameters.Solution',
+      impact: 'Parameters.Impact',
       dependencies: 'Dependencies',
     },
     actions: {
@@ -62,7 +66,8 @@ export const enDictionary: AppDictionary = {
     },
   },
   dossier: {
-    sectionLabel: '04 — CONTACT',
+    sectionMarker: '03 — CONTACT',
+    sectionLabel: '03 — CONTACT',
     availability: 'Available · Hybrid / Remote',
     titleLines: ['Open to', 'the right'],
     titleHighlight: 'opportunity.',
@@ -75,6 +80,14 @@ export const enDictionary: AppDictionary = {
     resumeCta: 'Download Resume',
     resumeFile: '/Nehorai Hadad CV - SW.pdf',
     resumeDownloadName: 'Nehorai Hadad CV - SW.pdf',
+    contact: {
+      emailLabel: 'Email',
+      githubLabel: 'GitHub',
+      linkedinLabel: 'LinkedIn',
+      emailUrl: 'mailto:nehorai.hadad@gmail.com',
+      githubUrl: 'https://github.com/NehoraiHadad',
+      linkedinUrl: 'https://linkedin.com/in/nehorai-hadad', // TODO: confirm LinkedIn slug
+    },
     terminalFileName: 'secure_channel.sh',
     securityLabel: 'TLS 1.3',
     initLines: [
@@ -103,6 +116,15 @@ export const enDictionary: AppDictionary = {
       messagePlaceholder: 'Enter transmission data...',
       submitLabel: 'TRANSMIT',
       errorPrefix: '> ERR: ',
+      errors: {
+        invalid_name: 'Please enter your name.',
+        invalid_email: 'Please enter a valid email address.',
+        message_too_long: 'Message is required (max 5000 characters).',
+        not_configured: 'Email service not configured — reach me directly at nehorai.hadad@gmail.com',
+        send_failed: 'Could not send right now. Please try again or email nehorai.hadad@gmail.com',
+        rate_limited: 'Too many requests — please wait a moment and try again.',
+        unknown: 'An unexpected error occurred. Please email nehorai.hadad@gmail.com',
+      },
     },
   },
   assistant: {
@@ -157,6 +179,11 @@ export const enDictionary: AppDictionary = {
   },
   footer: {
     copyrightTemplate: '© {year} Nehor.ai. All rights reserved.',
+  },
+  ownerContact: {
+    email: 'nehorai.hadad@gmail.com',
+    githubUrl: 'https://github.com/NehoraiHadad',
+    linkedinUrl: 'https://linkedin.com/in/nehorai-hadad', // TODO: confirm LinkedIn slug
   },
   caseStudies: [
     {

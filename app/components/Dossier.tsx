@@ -2,14 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Send, Lock } from 'lucide-react';
+import { FileText, Send, Lock, Mail, Github, Linkedin } from 'lucide-react';
 import { useReveal } from '@/lib/useReveal';
 import { sendContact } from '@/app/lib/actions/contact';
+import type { ContactErrorCode } from '@/app/lib/actions/contact';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
 import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 import { TerminalFrame } from '@/app/components/TerminalFrame';
 
 type SubmitPhase = '' | 'encrypting' | 'transmitting';
+
+// Maps stable server-action error codes to dictionary keys
+function useErrorMessage(code: ContactErrorCode | null, errors: Record<string, string>): string | null {
+  if (!code) return null;
+  return errors[code] ?? errors.unknown ?? code;
+}
 
 const AsciiBar = ({ pct, label }: { pct: number; label: string }) => {
   const filled = Math.round(pct / 10);
@@ -35,7 +42,8 @@ export const Dossier = () => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<ContactErrorCode | null>(null);
+  const errorMessage = useErrorMessage(errorCode, dossier.form.errors);
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>('');
   const [initStep, setInitStep] = useState(-1);
   const [initialized, setInitialized] = useState(false);
@@ -62,7 +70,7 @@ export const Dossier = () => {
     e.preventDefault();
     if (!email || !message) return;
 
-    setError(null);
+    setErrorCode(null);
     setIsSubmitting(true);
     setSubmitPhase('encrypting');
     await new Promise(r => setTimeout(r, 700));
@@ -80,7 +88,7 @@ export const Dossier = () => {
       setTimeout(() => setIsSubmitted(false), 9000);
     } else {
       setSubmitPhase('');
-      setError(result.error);
+      setErrorCode(result.code);
     }
   };
 
@@ -97,7 +105,7 @@ export const Dossier = () => {
 
           {/* Section label */}
           <div className="flex items-center gap-4 mb-16">
-          <span className="font-mono text-[10px] text-fg-2 uppercase tracking-[0.2em]">{dossier.sectionLabel}</span>
+          <span className="font-mono text-[10px] text-fg-2 uppercase tracking-[0.2em] bidi-ltr" dir="ltr">{dossier.sectionMarker}</span>
           <div className="h-px flex-1 bg-line" />
         </div>
 
@@ -151,6 +159,40 @@ export const Dossier = () => {
               </span>
               {dossier.resumeCta}
             </motion.a>
+
+            {/* Direct contact chips */}
+            <div className="flex flex-wrap gap-2 pt-2">
+              <a
+                href={dossier.contact.emailUrl}
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded border border-line text-fg-2 hover:text-accent hover:border-accent/50 transition-colors bidi-ltr"
+                target="_blank"
+                rel="noopener noreferrer"
+                dir="ltr"
+              >
+                <Mail className="w-3 h-3 shrink-0" aria-hidden="true" />
+                {dossier.contact.emailLabel}
+              </a>
+              <a
+                href={dossier.contact.githubUrl}
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded border border-line text-fg-2 hover:text-accent hover:border-accent/50 transition-colors bidi-ltr"
+                target="_blank"
+                rel="noopener noreferrer"
+                dir="ltr"
+              >
+                <Github className="w-3 h-3 shrink-0" aria-hidden="true" />
+                {dossier.contact.githubLabel}
+              </a>
+              <a
+                href={dossier.contact.linkedinUrl}
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded border border-line text-fg-2 hover:text-accent hover:border-accent/50 transition-colors bidi-ltr"
+                target="_blank"
+                rel="noopener noreferrer"
+                dir="ltr"
+              >
+                <Linkedin className="w-3 h-3 shrink-0" aria-hidden="true" />
+                {dossier.contact.linkedinLabel}
+              </a>
+            </div>
           </div>
 
           <div className="relative" style={{ textAlign: 'start' }}>
@@ -272,7 +314,7 @@ export const Dossier = () => {
                           id="name"
                           required
                           value={name}
-                          onChange={(e) => { setName(e.target.value); setError(null); }}
+                          onChange={(e) => { setName(e.target.value); setErrorCode(null); }}
                           disabled={isSubmitting}
                           placeholder={dossier.form.namePlaceholder}
                           dir={isRtl ? 'rtl' : 'ltr'}
@@ -294,7 +336,7 @@ export const Dossier = () => {
                           id="email"
                           required
                           value={email}
-                          onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                          onChange={(e) => { setEmail(e.target.value); setErrorCode(null); }}
                           disabled={isSubmitting}
                           placeholder={dossier.form.emailPlaceholder}
                           dir="ltr"
@@ -315,7 +357,7 @@ export const Dossier = () => {
                           id="message"
                           required
                           value={message}
-                          onChange={(e) => { setMessage(e.target.value); setError(null); }}
+                          onChange={(e) => { setMessage(e.target.value); setErrorCode(null); }}
                           disabled={isSubmitting}
                           placeholder={dossier.form.messagePlaceholder}
                           dir={isRtl ? 'rtl' : 'ltr'}
@@ -324,12 +366,19 @@ export const Dossier = () => {
                         />
                       </div>
 
-                      {/* Error */}
-                      {error && (
-                        <p className="font-mono text-[11px] text-danger" aria-live="polite">
-                          <span className="text-fg-2">{dossier.form.errorPrefix}</span>{error}
-                        </p>
-                      )}
+                      {/* Error — always mounted for live-region continuity (Phase 4 requirement) */}
+                      <p
+                        role="status"
+                        aria-live="polite"
+                        className={`font-mono text-[11px] text-danger transition-opacity${errorMessage ? '' : ' opacity-0 pointer-events-none select-none'}`}
+                        aria-hidden={!errorMessage}
+                      >
+                        {errorMessage ? (
+                          <>
+                            <span className="text-fg-2">{dossier.form.errorPrefix}</span>{errorMessage}
+                          </>
+                        ) : ' ' /* non-breaking space keeps layout height stable */}
+                      </p>
 
                       {/* Submit */}
                       <button

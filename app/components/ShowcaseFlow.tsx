@@ -103,7 +103,7 @@ const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-raised/50 border border-line-strong/50 flex items-center justify-center text-fg-1 group-hover:text-accent group-hover:bg-accent/10 group-hover:border-accent/30 transition-all duration-300 shrink-0">
           <Icon className="w-5 h-5 sm:w-6 sm:h-6" aria-hidden="true" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <div className="text-sm font-bold text-fg-0 group-hover:text-accent-pale transition-colors leading-tight mb-1">
             {data.title}
           </div>
@@ -112,7 +112,13 @@ const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
           </div>
         </div>
       </div>
-      <div className="text-xs text-fg-1 leading-relaxed line-clamp-2">{data.description}</div>
+      <div className="text-xs text-fg-1 leading-relaxed line-clamp-2 mb-3">{data.description}</div>
+      {/* 5.1: impact headline chip */}
+      {data.impact && (
+        <div className="font-mono text-[9px] text-ok bg-ok/5 border border-ok/20 rounded px-2 py-1 line-clamp-2 leading-relaxed">
+          ✓ {data.impact}
+        </div>
+      )}
     </div>
   );
 };

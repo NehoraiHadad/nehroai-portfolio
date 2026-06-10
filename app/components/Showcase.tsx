@@ -169,7 +169,7 @@ export const Showcase = () => {
   return (
     <section id="showcase" ref={ref} className="py-24 px-4 sm:px-6 max-w-7xl mx-auto relative z-10">
       <div className="reveal mb-12" style={{ textAlign: 'start' }}>
-        <span className="section-marker mb-4" dir="ltr">02 — SHOWCASE</span>
+        <span className="section-marker mb-4" dir="ltr">{showcase.sectionMarker}</span>
         <h2 className="text-3xl md:text-4xl font-extrabold text-fg-0 mt-4 mb-4 tracking-tight">{showcase.title}</h2>
         <p className="text-fg-1 text-lg max-w-2xl">
           {showcase.description}
@@ -336,6 +336,17 @@ export const Showcase = () => {
                       <label className="text-[10px] font-mono text-accent-text uppercase">{showcase.fields.solution}</label>
                       <div className="bg-accent-dim/10 border border-accent/30 rounded-lg px-4 py-3 text-sm text-fg-0 leading-relaxed">
                         {selectedStudy.details.solution}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Field: Impact — accent-tinted stat block */}
+                  {selectedStudy.impact && (
+                    <div className="reveal-pop space-y-2" style={{ '--reveal-delay': '320ms' } as React.CSSProperties}>
+                      <label className="text-[10px] font-mono text-ok uppercase tracking-wider">{showcase.fields.impact}</label>
+                      <div className="bg-ok/5 border border-ok/25 rounded-lg px-4 py-3 flex items-start gap-3">
+                        <span className="text-ok shrink-0 mt-0.5 font-mono text-sm" aria-hidden="true">✓</span>
+                        <p className="font-mono text-xs text-fg-0 leading-relaxed">{selectedStudy.impact}</p>
                       </div>
                     </div>
                   )}

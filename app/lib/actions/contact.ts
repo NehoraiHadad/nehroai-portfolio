@@ -3,7 +3,19 @@
 import { Resend } from 'resend';
 
 type ContactInput = { name: string; email: string; message: string };
-type ContactResult = { ok: true } | { ok: false; error: string };
+
+export type ContactErrorCode =
+  | 'invalid_name'
+  | 'invalid_email'
+  | 'message_too_long'
+  | 'not_configured'
+  | 'send_failed'
+  | 'rate_limited'
+  | 'unknown';
+
+export type ContactResult =
+  | { ok: true }
+  | { ok: false; code: ContactErrorCode };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -13,19 +25,19 @@ export async function sendContact(input: ContactInput): Promise<ContactResult> {
   const message = (input.message ?? '').trim();
 
   if (!name || name.length > 100) {
-    return { ok: false, error: 'Please enter your name.' };
+    return { ok: false, code: 'invalid_name' };
   }
   if (!email || !EMAIL_RE.test(email) || email.length > 254) {
-    return { ok: false, error: 'Please enter a valid email address.' };
+    return { ok: false, code: 'invalid_email' };
   }
   if (!message || message.length > 5000) {
-    return { ok: false, error: 'Message is required (max 5000 characters).' };
+    return { ok: false, code: 'message_too_long' };
   }
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.error('[contact] RESEND_API_KEY is not set');
-    return { ok: false, error: 'Email is not configured. Please email me directly.' };
+    return { ok: false, code: 'not_configured' };
   }
 
   const from = process.env.CONTACT_FROM_EMAIL ?? 'Portfolio Contact <onboarding@resend.dev>';
@@ -73,11 +85,11 @@ export async function sendContact(input: ContactInput): Promise<ContactResult> {
     });
     if (error) {
       console.error('[contact] Resend error', error);
-      return { ok: false, error: 'Could not send right now. Please try again in a moment.' };
+      return { ok: false, code: 'send_failed' };
     }
     return { ok: true };
   } catch (err) {
     console.error('[contact] Unexpected error', err);
-    return { ok: false, error: 'Could not send right now. Please try again in a moment.' };
+    return { ok: false, code: 'unknown' };
   }
 }
