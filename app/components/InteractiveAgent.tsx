@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Terminal, Cpu, Bot, X } from 'lucide-react';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
+import { TerminalFrame } from '@/app/components/TerminalFrame';
 
 interface Message {
   id: string;
@@ -140,35 +141,45 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
     }, 1500);
   };
 
-  return (
-    <div className={`relative w-full max-w-lg mx-auto lg:mx-0 backdrop-blur-xl border rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[500px] max-h-[80vh] transition-all duration-1000 ${
-      matrixMode 
-        ? 'bg-black/95 border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.2)]' 
-        : 'bg-page/80 border-line'
-    }`} dir={direction}>
-      {/* Header */}
-      <div className={`flex items-center justify-between px-4 py-3 border-b transition-colors duration-1000 ${
-        matrixMode ? 'border-green-900/50 bg-black/80' : 'border-line bg-surface/50'
-      }`}>
-        <div className="flex items-center gap-2">
-          <Cpu className={`w-4 h-4 transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-accent'}`} />
-          <span className={`text-xs font-mono font-semibold tracking-wider transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-fg-1'}`}>
-            {matrixMode ? assistant.matrixTitle : assistant.title}
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex gap-1.5">
-            <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-1000 ${matrixMode ? 'bg-green-900' : 'bg-line-strong'}`} />
-            <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-1000 ${matrixMode ? 'bg-green-900' : 'bg-line-strong'}`} />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-          </div>
-          {onClose && (
-            <button onClick={onClose} className={`transition-colors ${matrixMode ? 'text-green-700 hover:text-green-400' : 'text-fg-1 hover:text-fg-0'}`}>
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+  // Custom header for InteractiveAgent — matrix mode has distinct colors.
+  // Passed as headerSlot to TerminalFrame so the shared panel shell is reused
+  // while preserving the exact existing look (3.3).
+  const agentHeader = (
+    <div className={`flex items-center justify-between px-4 py-3 border-b transition-colors duration-1000 ${
+      matrixMode ? 'border-green-900/50 bg-black/80' : 'border-line bg-surface/50'
+    }`}>
+      <div className="flex items-center gap-2">
+        <Cpu className={`w-4 h-4 transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-accent'}`} />
+        <span className={`text-xs font-mono font-semibold tracking-wider transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-fg-1'}`}>
+          {matrixMode ? assistant.matrixTitle : assistant.title}
+        </span>
       </div>
+      <div className="flex items-center gap-4">
+        <div className="flex gap-1.5">
+          <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-1000 ${matrixMode ? 'bg-green-900' : 'bg-line-strong'}`} />
+          <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-1000 ${matrixMode ? 'bg-green-900' : 'bg-line-strong'}`} />
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+        </div>
+        {onClose && (
+          <button onClick={onClose} className={`transition-colors ${matrixMode ? 'text-green-700 hover:text-green-400' : 'text-fg-1 hover:text-fg-0'}`}>
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <TerminalFrame
+      headerSlot={agentHeader}
+      className={`relative w-full max-w-lg mx-auto lg:mx-0 backdrop-blur-xl shadow-2xl flex flex-col h-[500px] max-h-[80vh] transition-all duration-1000 ${
+        matrixMode
+          ? 'bg-black/95 border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.2)]'
+          : 'bg-page/80 border-line'
+      }`}
+      bodyClassName="flex flex-col flex-1 overflow-hidden"
+      dir={direction}
+    >
 
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-[color:var(--line-strong)] scrollbar-track-transparent">
@@ -181,7 +192,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
               className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
             >
               {msg.type === 'system' ? (
-                <div className={`text-[10px] font-mono my-1 flex items-center gap-1.5 transition-colors duration-1000 ${matrixMode ? 'text-green-600' : 'text-accent/70'}`}>
+                <div className={`text-[10px] font-mono my-1 flex items-center gap-1.5 transition-colors duration-1000 ${matrixMode ? 'text-green-600' : 'text-accent-text'}`}>
                   <Terminal className="w-3 h-3" />
                   {msg.content}
                 </div>
@@ -279,6 +290,6 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
           </button>
         </form>
       </div>
-    </div>
+    </TerminalFrame>
   );
 };

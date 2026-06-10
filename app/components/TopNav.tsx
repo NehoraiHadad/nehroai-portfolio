@@ -7,8 +7,10 @@ import { Briefcase, Menu, X } from 'lucide-react';
 import { locales } from '@/lib/i18n/config';
 import { useDictionary, useLocale } from '@/lib/i18n/provider';
 import { ThemeToggle } from './ThemeToggle';
+import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 
 export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean, setMobileMenuOpen: (v: boolean) => void }) => {
+  const prefersReduced = usePrefersReducedMotion();
   const [dotIgnited, setDotIgnited] = useState(false);
   const { navigation } = useDictionary();
   const locale = useLocale();
@@ -18,11 +20,17 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
   };
 
   useEffect(() => {
+    // 2.1: Skip ignition delay for reduced-motion users — dot appears immediately
+    if (prefersReduced) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDotIgnited(true);
+      return;
+    }
     // Dot ignites after neon "ai" ignition stabilizes (~3.5s end + 0.3s buffer)
     // Flashlight-on CSS animation handles the white flash → cyan glow sequence
     const dotTimer = setTimeout(() => setDotIgnited(true), 3800);
     return () => clearTimeout(dotTimer);
-  }, []);
+  }, [prefersReduced]);
 
   return (
     <motion.nav 

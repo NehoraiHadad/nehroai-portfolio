@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The landing/ directory is a separate Astro/Workers project with its own
+    // toolchain — exclude its generated dist/, .astro/, .wrangler/ artifacts
+    // so they don't pollute the portfolio's lint run.
+    "landing/**",
   ]),
 ]);
 

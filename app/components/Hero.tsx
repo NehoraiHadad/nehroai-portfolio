@@ -7,6 +7,8 @@ import { ArrowLeft, ArrowRight, FileText, Brain, Network, Database, Cpu, Sparkle
 import { OpenAILogo, AnthropicLogo, GeminiLogo, N8nLogo, MetaLogo, PythonLogo, VercelLogo, DockerLogo, HuggingFaceLogo } from './TechLogos';
 import { InteractiveAgent } from './InteractiveAgent';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
+import { EASE_OUT } from '@/lib/motion';
+import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 
 const LATIN_SCRAMBLE_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789!<>-_\\/[]{}cxz=+*^?#';
 const HEBREW_SCRAMBLE_CHARS = 'אבגדהוזחטיכלמנסעפצקרשת0123456789!?@#$%';
@@ -15,28 +17,51 @@ const HEBREW_CHAR_PATTERN = /[\u0590-\u05FF]/;
 const getScrambleChars = (word: string) =>
   HEBREW_CHAR_PATTERN.test(word) ? HEBREW_SCRAMBLE_CHARS : LATIN_SCRAMBLE_CHARS;
 
-const ScrambleText = ({ words, isRtl }: { words: string[]; isRtl: boolean }) => {
+// Max full cycles before the scramble & rotator go quiet (2.4)
+const MAX_CYCLES = 3;
+
+const ScrambleText = ({ words, isRtl, stopped }: { words: string[]; isRtl: boolean; stopped: boolean }) => {
+  const prefersReduced = usePrefersReducedMotion();
+  const finalWord = words[words.length - 1] ?? words[0] ?? '';
   const initialWord = words[0] ?? '';
   const [text, setText] = useState(initialWord);
   const [targetWord, setTargetWord] = useState(initialWord);
 
   useEffect(() => {
+    // 2.1 + 2.4: render final state immediately when reduced motion or stopped
+    if (prefersReduced || stopped) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setText(finalWord);
+      setTargetWord(finalWord);
+      return;
+    }
+
     if (words.length === 0) {
       return;
     }
 
     let currentIndex = 0;
+    let cycleCount = 0;
     let scrambleInterval: NodeJS.Timeout;
 
     const cycleInterval = setInterval(() => {
+      if (cycleCount >= MAX_CYCLES * words.length) {
+        clearInterval(cycleInterval);
+        clearInterval(scrambleInterval);
+        setText(finalWord);
+        setTargetWord(finalWord);
+        return;
+      }
+
       currentIndex = (currentIndex + 1) % words.length;
+      cycleCount++;
       const nextWord = words[currentIndex];
       setTargetWord(nextWord);
       let iteration = 0;
 
       clearInterval(scrambleInterval);
       const scrambleChars = getScrambleChars(nextWord);
-      
+
       scrambleInterval = setInterval(() => {
         setText(nextWord.split('').map((char, index) => {
           if (index < Math.floor(iteration)) {
@@ -49,7 +74,7 @@ const ScrambleText = ({ words, isRtl }: { words: string[]; isRtl: boolean }) => 
           clearInterval(scrambleInterval);
           setText(nextWord);
         }
-        
+
         iteration += 1 / 3;
       }, 30);
 
@@ -59,10 +84,10 @@ const ScrambleText = ({ words, isRtl }: { words: string[]; isRtl: boolean }) => 
       clearInterval(cycleInterval);
       clearInterval(scrambleInterval);
     };
-  }, [words]);
+  }, [words, prefersReduced, stopped, finalWord]);
 
   return (
-    <span className="relative inline-block whitespace-nowrap">
+    <span className="relative inline-block whitespace-nowrap" aria-hidden="true">
       {/* Invisible target word dictates the container width, preventing layout shifts */}
       <span className="invisible">{targetWord}</span>
       {/* Absolutely positioned scrambling text doesn't affect document flow */}
@@ -76,37 +101,51 @@ const ScrambleText = ({ words, isRtl }: { words: string[]; isRtl: boolean }) => 
   );
 };
 
-const HeroStatusLabel = ({ labels }: { labels: string[] }) => {
+const HeroStatusLabel = ({ labels, stopped }: { labels: string[]; stopped: boolean }) => {
+  const prefersReduced = usePrefersReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const longestLabel = labels.reduce((longest, label) => (
     label.length > longest.length ? label : longest
   ), labels[0] ?? '');
 
   useEffect(() => {
-    if (labels.length < 2) {
+    // 2.1 + 2.4: no rotation when reduced motion or after attention budget exhausted
+    if (prefersReduced || stopped || labels.length < 2) {
       return;
     }
 
+    let count = 0;
+    // 2.4: ~6s interval — synced to the 4s scramble + 2s buffer so only one
+    // attention event fires at a time.
     const rotationTimer = setInterval(() => {
+      count++;
+      if (count >= MAX_CYCLES * labels.length) {
+        clearInterval(rotationTimer);
+        return;
+      }
       setActiveIndex((currentIndex) => (currentIndex + 1) % labels.length);
-    }, 3000);
+    }, 6000);
 
     return () => clearInterval(rotationTimer);
-  }, [labels]);
+  }, [labels, prefersReduced, stopped]);
 
   const activeLabel = labels[activeIndex % labels.length] ?? longestLabel;
 
   return (
     <span className="relative inline-grid items-center whitespace-nowrap">
-      <span className="invisible col-start-1 row-start-1">{longestLabel}</span>
+      {/* sr-only static phrase for screen readers (WCAG 2.2.2) */}
+      <span className="sr-only">{labels[0]}</span>
+      {/* Invisible sizer — keeps container width stable */}
+      <span className="invisible col-start-1 row-start-1" aria-hidden="true">{longestLabel}</span>
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
           key={activeLabel}
           initial={{ opacity: 0, y: 2, filter: 'blur(4px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           exit={{ opacity: 0, y: -2, filter: 'blur(4px)' }}
-          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.24, ease: EASE_OUT }}
           className="col-start-1 row-start-1"
+          aria-hidden="true"
         >
           {activeLabel}
         </motion.span>
@@ -123,18 +162,23 @@ const container = {
   }
 };
 
+// 2.2: Removed filter:blur(8px) from entrance variants — paint-heavy during hydration.
+// item: non-title blocks still start at opacity:0 (fine — not LCP content).
 const item = {
-  hidden: { opacity: 0, y: 30, filter: 'blur(8px)' },
-  show: { 
-    opacity: 1, 
-    y: 0, 
-    filter: 'blur(0px)',
-    transition: { duration: 0.8, easings: [0.22, 1, 0.36, 1] } 
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: EASE_OUT }
   }
 };
 
+// 2.2: Title chars animate FROM visible (opacity:1, y:0) and only add subtle lift.
+// The "hidden" state has opacity:1 so SSR HTML is readable with JS disabled.
+// On hydration, motion picks up from the already-visible state and the slight
+// upward shift gives visual feedback that the page is alive — no flash-of-invisible.
 const wordVariants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 1 },
   show: {
     opacity: 1,
     transition: { staggerChildren: 0.04, delayChildren: 0.2 }
@@ -142,12 +186,11 @@ const wordVariants = {
 };
 
 const charVariants = {
-  hidden: { opacity: 0, y: 20, filter: 'blur(8px)' },
-  show: { 
-    opacity: 1, 
-    y: 0, 
-    filter: 'blur(0px)', 
-    transition: { duration: 0.8, easings: [0.22, 1, 0.36, 1] } 
+  hidden: { opacity: 1, y: 8 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: EASE_OUT }
   }
 };
 
@@ -299,10 +342,10 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile }: {
     const iconFilter = [
       // Bottom edge catches light (renders behind icon shape)
       `drop-shadow(0px 2px 2px rgba(255,255,255,${(0.03 + eff * 0.04).toFixed(3)}))`,
-      // Phosphorescent glow from within
+      // Phosphorescent glow from within — uses accent token so light theme stays correct
       ...(eff > 0.03 ? [
-        `drop-shadow(0 0 ${(eff * 3).toFixed(1)}px rgba(37,99,235,${(eff * 0.3).toFixed(3)}))`,
-        `drop-shadow(0 0 ${(eff * 8).toFixed(1)}px rgba(37,99,235,${(eff * 0.1).toFixed(3)}))`,
+        `drop-shadow(0 0 ${(eff * 3).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 30)}%, transparent))`,
+        `drop-shadow(0 0 ${(eff * 8).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 10)}%, transparent))`,
       ] : []),
     ].join(' ');
 
@@ -350,10 +393,11 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile }: {
     // Phosphorescent glow — emanates from within the groove
     // Because text-shadow is BEHIND the dark text body,
     // the glow peeks out at the edges = light inside the carved channel
+    // Uses accent token so light theme stays correct
     ...(eff > 0.03 ? [
-      `0 0 ${(eff * 2).toFixed(1)}px rgba(37,99,235,${(eff * 0.35).toFixed(3)})`,
-      `0 0 ${(eff * 6).toFixed(1)}px rgba(37,99,235,${(eff * 0.15).toFixed(3)})`,
-      `0 0 ${(eff * 14).toFixed(1)}px rgba(37,99,235,${(eff * 0.05).toFixed(3)})`,
+      `0 0 ${(eff * 2).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 35)}%, transparent)`,
+      `0 0 ${(eff * 6).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 15)}%, transparent)`,
+      `0 0 ${(eff * 14).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 5)}%, transparent)`,
     ] : []),
   ].join(', ');
 
@@ -388,6 +432,7 @@ RecessedSymbol.displayName = 'RecessedSymbol';
 const VISIBLE_COUNT = 19;
 
 const IlluminationBackground = () => {
+  const prefersReduced = usePrefersReducedMotion();
   const [beamStage, setBeamStage] = useState(0);
   const [activeTarget, setActiveTarget] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
@@ -419,7 +464,6 @@ const IlluminationBackground = () => {
     const ids = new Set([...must.map(e => e.id), ...rest]);
     // Client-only randomization, guarded to run once — keeps SSR markup stable
     // and avoids a hydration mismatch from Math.random differing server/client.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleElements(STAGE_ELEMENTS.filter(e => ids.has(e.id)));
   }, []);
 
@@ -438,14 +482,20 @@ const IlluminationBackground = () => {
     return visitOrder.current[visitIndex.current];
   }, [visibleElements]);
 
-  // Sequence timing
+  // Sequence timing — 2.1: skip beam entirely for reduced motion users
   useEffect(() => {
+    if (prefersReduced) {
+      // Settle immediately at stage 2 so symbols are at rest (brightness 0 = invisible)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBeamStage(2);
+      return;
+    }
     // Synced with logo-dot flashlight ignition:
     // Dot ignites at 3800ms, flash settles ~4400ms, then beam extends
     const t1 = setTimeout(() => setBeamStage(1), 4400);
     const t2 = setTimeout(() => setBeamStage(2), 5900);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
+  }, [prefersReduced]);
 
   // Randomized target cycling — recursive setTimeout for varied dwell
   useEffect(() => {
@@ -475,8 +525,10 @@ const IlluminationBackground = () => {
     return () => clearTimeout(timeoutId);
   }, [beamStage, getNextTarget]);
 
-  // Beam angle tracking
+  // Beam angle tracking — 2.1: skip rAF loop entirely for reduced motion
   useEffect(() => {
+    if (prefersReduced) return;
+
     let raf: number;
     let lx = -999, ly = -999, la = -999;
 
@@ -502,7 +554,7 @@ const IlluminationBackground = () => {
 
     track();
     return () => cancelAnimationFrame(raf);
-  }, [activeTarget, visibleElements]);
+  }, [activeTarget, visibleElements, prefersReduced]);
 
   // Scroll fade
   useEffect(() => {
@@ -527,7 +579,7 @@ const IlluminationBackground = () => {
             height: '150vh',
             x: '-50%',
             transformOrigin: 'top center',
-            background: 'linear-gradient(180deg, rgba(37,99,235,0.25) 0%, rgba(37,99,235,0.12) 15%, rgba(37,99,235,0.04) 40%, rgba(37,99,235,0.01) 60%, transparent 100%)',
+            background: 'linear-gradient(180deg, color-mix(in oklab, var(--accent) 25%, transparent) 0%, color-mix(in oklab, var(--accent) 12%, transparent) 15%, color-mix(in oklab, var(--accent) 4%, transparent) 40%, color-mix(in oklab, var(--accent) 1%, transparent) 60%, transparent 100%)',
             filter: 'blur(8px)',
           }}
           initial={{ opacity: 0, clipPath: 'polygon(50% 0%, 50% 0%, 50% 0%, 50% 0%)', rotate: 0 }}
@@ -544,7 +596,7 @@ const IlluminationBackground = () => {
           }}
           transition={{
             opacity: { duration: 0.5 },
-            clipPath: { duration: 1.2, ease: [0.22, 1, 0.36, 1] },
+            clipPath: { duration: 1.2, ease: EASE_OUT },
             rotate: { type: "spring", stiffness: 18, damping: 22 },
           }}
         />,
@@ -588,6 +640,18 @@ export const Hero = () => {
   const direction = useDirection();
   const isRtl = direction === 'rtl';
   const CtaArrow = isRtl ? ArrowLeft : ArrowRight;
+  // 2.4: Stop scramble + rotator after first user interaction
+  const [animStopped, setAnimStopped] = useState(false);
+
+  useEffect(() => {
+    const stop = () => setAnimStopped(true);
+    window.addEventListener('pointerdown', stop, { once: true, passive: true });
+    window.addEventListener('keydown', stop, { once: true, passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', stop);
+      window.removeEventListener('keydown', stop);
+    };
+  }, []);
 
   return (
     <section className="pt-32 pb-24 px-6 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10 min-h-[90vh]">
@@ -603,7 +667,7 @@ export const Hero = () => {
         <motion.div variants={item} className="status-badge mb-6">
           <span className="status-dot" />
           <span className="text-accent">
-            <HeroStatusLabel labels={hero.statusLabels} />
+            <HeroStatusLabel labels={hero.statusLabels} stopped={animStopped} />
           </span>
         </motion.div>
 
@@ -616,8 +680,10 @@ export const Hero = () => {
             ))}
           </motion.div>
           <br />
-          <motion.div variants={item} className="inline-block overflow-hidden pb-2">
-            <ScrambleText words={hero.rotatingWords} isRtl={isRtl} />
+          {/* 2.4: sr-only span gives screen readers the static first word */}
+          <span className="sr-only">{hero.rotatingWords[0]}</span>
+          <motion.div variants={item} className="inline-block overflow-hidden pb-2" aria-hidden="true">
+            <ScrambleText words={hero.rotatingWords} isRtl={isRtl} stopped={animStopped} />
           </motion.div>
         </div>
         
@@ -654,7 +720,7 @@ export const Hero = () => {
       <motion.div 
         initial={{ opacity: 0, x: isRtl ? -40 : 40, filter: 'blur(10px)' }}
         animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-        transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 1, delay: 0.4, ease: EASE_OUT }}
         className="relative hidden lg:block"
       >
         <div className="absolute inset-0 bg-accent/20 blur-[100px] rounded-full pointer-events-none" />

@@ -1,16 +1,19 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Layers } from 'lucide-react';
 import { useReveal } from '@/lib/useReveal';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
+import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 
 export const ThePractice = () => {
   const ref = useReveal<HTMLElement>();
   const { practice, skills } = useDictionary();
   const direction = useDirection();
   const isRtl = direction === 'rtl';
+  const prefersReduced = usePrefersReducedMotion();
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   return (
     <section
@@ -28,13 +31,19 @@ export const ThePractice = () => {
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* spotlight-group: when a card is hovered (.is-spotlit), siblings recede
+            via the CSS rule in globals.css. Transform lift is gated for reduced-motion. */}
+        <div className="spotlight-group grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {skills.map((skillGroup, idx) => (
             <motion.div
               key={idx}
-              className="reveal card p-6 transition-colors duration-200"
+              className={`reveal-pop card p-6 transition-colors duration-200${hoveredIdx === idx ? ' is-spotlit' : ''}`}
               style={{ '--reveal-delay': `${idx * 100}ms` } as React.CSSProperties}
-              whileHover={{ y: -4, borderColor: 'var(--accent)' }}
+              onHoverStart={() => setHoveredIdx(idx)}
+              onHoverEnd={() => setHoveredIdx(null)}
+              onFocus={() => setHoveredIdx(idx)}
+              onBlur={() => setHoveredIdx(null)}
+              whileHover={prefersReduced ? undefined : { y: -3, scale: 1.02, borderColor: 'var(--accent)' }}
               dir={isRtl ? 'ltr' : undefined}
             >
               <h3 className="text-fg-0 text-base font-semibold mb-4 flex items-center gap-2 bidi-ltr" style={{ textAlign: 'left' }}>

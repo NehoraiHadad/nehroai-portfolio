@@ -6,6 +6,8 @@ import { FileText, Send, Lock } from 'lucide-react';
 import { useReveal } from '@/lib/useReveal';
 import { sendContact } from '@/app/lib/actions/contact';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
+import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
+import { TerminalFrame } from '@/app/components/TerminalFrame';
 
 type SubmitPhase = '' | 'encrypting' | 'transmitting';
 
@@ -24,6 +26,7 @@ const AsciiBar = ({ pct, label }: { pct: number; label: string }) => {
 };
 
 export const Dossier = () => {
+  const prefersReduced = usePrefersReducedMotion();
   const { dossier } = useDictionary();
   const direction = useDirection();
   const isRtl = direction === 'rtl';
@@ -39,6 +42,13 @@ export const Dossier = () => {
   const ref = useReveal<HTMLElement>();
 
   useEffect(() => {
+    // 2.1: Skip init theater for reduced-motion users — show form immediately
+    if (prefersReduced) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInitStep(dossier.initLines.length - 1);
+      setInitialized(true);
+      return;
+    }
     const timers = [
       setTimeout(() => setInitStep(0), 80),
       setTimeout(() => setInitStep(1), 500),
@@ -46,7 +56,7 @@ export const Dossier = () => {
       setTimeout(() => setInitialized(true), 1380),
     ];
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [prefersReduced, dossier.initLines.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,32 +157,23 @@ export const Dossier = () => {
             {/* Outer glow */}
             <div className="absolute -inset-3 bg-accent/[0.03] rounded-3xl blur-2xl" />
 
-            <div className="relative rounded-2xl overflow-hidden border border-line bg-page shadow-2xl shadow-black/50">
-
-              {/* Window chrome */}
-              <div className="flex items-center justify-between px-4 py-3 bg-surface border-b border-line/80">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-line-strong hover:bg-danger transition-colors cursor-default" />
-                  <div className="w-3 h-3 rounded-full bg-line-strong hover:bg-warn transition-colors cursor-default" />
-                  <div className="w-3 h-3 rounded-full bg-line-strong hover:bg-ok transition-colors cursor-default" />
-                  <span className="font-mono text-[10px] text-fg-2 select-none bidi-ltr" style={{ marginInlineStart: '0.75rem' }}>
-                    {dossier.terminalFileName}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
+            {/* TerminalFrame — migrated from duplicate inline chrome (3.3).
+                inkTrail=true triggers the border-draw reveal on first scroll-in (3.4).
+                Scanlines kept via withScanlines (panel-level, absolute/z-10).
+                className preserves the original panel's bg-page + shadow. */}
+            <TerminalFrame
+              title={<span className="bidi-ltr">{dossier.terminalFileName}</span>}
+              statusSlot={
+                <>
                   <Lock className="w-3 h-3 text-ok" />
                   <span className="font-mono text-[9px] text-ok tracking-widest bidi-ltr">{dossier.securityLabel}</span>
-                </div>
-              </div>
-
-              {/* Scanlines */}
-              <div
-                className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]"
-                style={{ backgroundImage: 'repeating-linear-gradient(0deg, #fff, #fff 1px, transparent 1px, transparent 4px)' }}
-              />
-
-              {/* Terminal body */}
-              <div className="relative p-6 min-h-[340px] flex flex-col">
+                </>
+              }
+              className="bg-page shadow-2xl shadow-black/50"
+              bodyClassName="relative p-6 min-h-[340px] flex flex-col"
+              withScanlines
+              inkTrail
+            >
                 <AnimatePresence mode="wait">
 
                   {/* ① Init sequence */}
@@ -343,8 +344,7 @@ export const Dossier = () => {
                   )}
 
                 </AnimatePresence>
-              </div>
-            </div>
+            </TerminalFrame>
           </div>
         </div>
       </div>
