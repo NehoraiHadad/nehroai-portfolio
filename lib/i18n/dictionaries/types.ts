@@ -32,6 +32,16 @@ export interface AppDictionary {
     code: 'en' | 'he';
     direction: 'ltr' | 'rtl';
   };
+  a11y: {
+    openMenu: string;
+    closeMenu: string;
+    closeDialog: string;
+    chatInput: string;
+    sendMessage: string;
+    openChat: string;
+    themeToggle: string;
+    skipToContent: string;
+  };
   meta: {
     title: string;
     description: string;

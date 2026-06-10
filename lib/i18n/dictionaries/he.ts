@@ -5,6 +5,16 @@ export const heDictionary: AppDictionary = {
     code: 'he',
     direction: 'rtl',
   },
+  a11y: {
+    openMenu: 'פתח תפריט ניווט',
+    closeMenu: 'סגור תפריט ניווט',
+    closeDialog: 'סגור חלון',
+    chatInput: 'הקלד הודעה',
+    sendMessage: 'שלח הודעה',
+    openChat: 'פתח עוזר צ\'אט',
+    themeToggle: 'החלף ערכת נושא',
+    skipToContent: 'דלג לתוכן הראשי',
+  },
   meta: {
     title: 'תיק עבודות של AI Solution Architect',
     description:

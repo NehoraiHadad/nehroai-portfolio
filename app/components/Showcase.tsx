@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Network, Cpu, Settings2, Play, Code2 } from 'lucide-react';
@@ -8,6 +8,7 @@ import { CaseStudy } from '@/lib/types';
 import { useReveal } from '@/lib/useReveal';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
 import { caseStudyIcons } from '@/lib/case-study-icons';
+import { useFocusTrap } from '@/lib/useFocusTrap';
 import {
   ReactFlow,
   Background,
@@ -31,6 +32,7 @@ type ProjectNodeData = Record<string, unknown> & CaseStudy & {
   isMobile: boolean;
   isRtl: boolean;
   isSpotlit: boolean;
+  onOpen?: (study: CaseStudy) => void;
 };
 
 type ShowcaseNode = Node<OrchestratorNodeData | ProjectNodeData>;
@@ -58,9 +60,20 @@ const OrchestratorNode = ({ data }: { data: OrchestratorNodeData }) => (
 
 const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
   const Icon = data.icon || Cpu;
+  // 4.1: keyboard activation — Enter/Space open the drawer via the onOpen callback
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      data.onOpen?.(data as unknown as CaseStudy);
+    }
+  };
   return (
     <div
-      className={`bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-all duration-300 group cursor-pointer relative overflow-hidden${data.isSpotlit ? ' is-spotlit' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label={data.title}
+      onKeyDown={handleKeyDown}
+      className={`bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-all duration-300 group cursor-pointer relative overflow-hidden focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none${data.isSpotlit ? ' is-spotlit' : ''}`}
       dir={data.isRtl ? 'rtl' : 'ltr'}
       style={{ textAlign: 'start' }}
     >
@@ -74,7 +87,7 @@ const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
 
       <div className="flex items-start gap-3 sm:gap-4 mb-3">
         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-raised/50 border border-line-strong/50 flex items-center justify-center text-fg-1 group-hover:text-accent group-hover:bg-accent/10 group-hover:border-accent/30 transition-all duration-300 shrink-0">
-          <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6" aria-hidden="true" />
         </div>
         <div>
           <div className="text-sm font-bold text-fg-0 group-hover:text-accent-pale transition-colors leading-tight mb-1">{data.title}</div>

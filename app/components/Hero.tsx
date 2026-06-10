@@ -671,7 +671,7 @@ export const Hero = () => {
           </span>
         </motion.div>
 
-        <div className="display text-5xl md:text-7xl text-fg-0 mb-6 leading-tight">
+        <h1 className="display text-5xl md:text-7xl text-fg-0 mb-6 leading-tight">
           <motion.div variants={wordVariants} initial="hidden" animate="show" className="inline-block overflow-hidden pb-2">
             {hero.titlePrefix.split('').map((char, i) => (
               <motion.span key={i} variants={charVariants} className="inline-block">
@@ -685,11 +685,11 @@ export const Hero = () => {
           <motion.div variants={item} className="inline-block overflow-hidden pb-2" aria-hidden="true">
             <ScrambleText words={hero.rotatingWords} isRtl={isRtl} stopped={animStopped} />
           </motion.div>
-        </div>
-        
-        <motion.h2 variants={item} className="text-xl md:text-2xl text-fg-1 mb-6 font-normal leading-relaxed">
+        </h1>
+
+        <motion.p variants={item} className="lead text-xl md:text-2xl text-fg-1 mb-6 font-normal leading-relaxed">
           {hero.subtitle}
-        </motion.h2>
+        </motion.p>
 
         <motion.div
           variants={item}

@@ -5,6 +5,16 @@ export const enDictionary: AppDictionary = {
     code: 'en',
     direction: 'ltr',
   },
+  a11y: {
+    openMenu: 'Open navigation menu',
+    closeMenu: 'Close navigation menu',
+    closeDialog: 'Close dialog',
+    chatInput: 'Type your message',
+    sendMessage: 'Send message',
+    openChat: 'Open chat assistant',
+    themeToggle: 'Toggle theme',
+    skipToContent: 'Skip to main content',
+  },
   meta: {
     title: 'AI Solution Architect Portfolio',
     description:

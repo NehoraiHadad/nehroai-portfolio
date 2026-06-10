@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Terminal, Cpu, Bot, X } from 'lucide-react';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
@@ -14,8 +14,9 @@ interface Message {
 }
 
 export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => {
-  const { assistant } = useDictionary();
+  const { assistant, a11y } = useDictionary();
   const direction = useDirection();
+  const titleId = useId();
   const messageIdRef = useRef(assistant.initialMessages.length);
   const [messages, setMessages] = useState<Message[]>(
     assistant.initialMessages.map((message, index) => ({
@@ -149,20 +150,26 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       matrixMode ? 'border-green-900/50 bg-black/80' : 'border-line bg-surface/50'
     }`}>
       <div className="flex items-center gap-2">
-        <Cpu className={`w-4 h-4 transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-accent'}`} />
-        <span className={`text-xs font-mono font-semibold tracking-wider transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-fg-1'}`}>
+        <Cpu className={`w-4 h-4 transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-accent'}`} aria-hidden="true" />
+        {/* 4.2: title id used for aria-labelledby on the panel (when used as dialog) */}
+        <span id={titleId} className={`text-xs font-mono font-semibold tracking-wider transition-colors duration-1000 ${matrixMode ? 'text-green-500' : 'text-fg-1'}`}>
           {matrixMode ? assistant.matrixTitle : assistant.title}
         </span>
       </div>
       <div className="flex items-center gap-4">
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5" aria-hidden="true">
           <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-1000 ${matrixMode ? 'bg-green-900' : 'bg-line-strong'}`} />
           <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-1000 ${matrixMode ? 'bg-green-900' : 'bg-line-strong'}`} />
           <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
         </div>
         {onClose && (
-          <button onClick={onClose} className={`transition-colors ${matrixMode ? 'text-green-700 hover:text-green-400' : 'text-fg-1 hover:text-fg-0'}`}>
-            <X className="w-4 h-4" />
+          // 4.2 + 4.6: localized aria-label, 44×44 touch target
+          <button
+            onClick={onClose}
+            aria-label={a11y.closeDialog}
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-[var(--r-1)] transition-colors focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${matrixMode ? 'text-green-700 hover:text-green-400' : 'text-fg-1 hover:text-fg-0'}`}
+          >
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -181,8 +188,20 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       dir={direction}
     >
 
+      {/* 4.4: role="log" so new chat messages are announced by screen readers */}
+      {/* 4.4: visually-hidden typing announcement */}
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {isTyping ? '…' : ''}
+      </p>
+
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-[color:var(--line-strong)] scrollbar-track-transparent">
+      <div
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-label={assistant.title}
+        className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-[color:var(--line-strong)] scrollbar-track-transparent"
+      >
         <AnimatePresence initial={false}>
           {messages.map((msg) => (
             <motion.div
@@ -236,15 +255,15 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Prompts */}
+      {/* Quick Prompts — 4.6: py-2 bumps chip hit area toward 44px */}
       <div className="px-4 pb-2 flex gap-2 overflow-x-auto scrollbar-none">
         {assistant.quickPrompts.map((prompt, i) => (
           <button
             key={i}
             onClick={() => handleSend(prompt)}
             disabled={isTyping}
-            className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-              matrixMode 
+            className={`whitespace-nowrap text-xs font-medium px-3 py-2 rounded-full border transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${
+              matrixMode
                 ? 'bg-black border-green-900 text-green-700 hover:text-green-400 hover:border-green-500/50 font-mono'
                 : 'bg-surface border-line text-fg-1 hover:text-accent hover:border-accent/30'
             }`}
@@ -258,35 +277,39 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       <div className={`p-4 pt-2 border-t transition-colors duration-1000 ${
         matrixMode ? 'border-green-900/50 bg-black/80' : 'border-line/50 bg-surface/30'
       }`}>
-        <form 
+        <form
           onSubmit={(e) => { e.preventDefault(); handleSend(inputValue); }}
           className="relative flex items-center"
         >
+          {/* 4.2: localized aria-label; 4.5: visible focus ring replacing outline-none */}
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             disabled={isTyping}
             placeholder={matrixMode ? assistant.matrixInputPlaceholder : assistant.inputPlaceholder}
+            aria-label={a11y.chatInput}
             dir={inputDirection}
-            className={`w-full border rounded-xl py-3 text-sm focus:outline-none transition-colors disabled:opacity-50 ${
+            className={`w-full border rounded-xl py-3 text-sm outline-none transition-colors disabled:opacity-50 ${
               matrixMode
-                ? 'bg-black border-green-900/50 text-green-500 placeholder:text-green-900 focus:border-green-500/50 font-mono'
-                : 'bg-page border-line text-fg-0 placeholder:text-fg-2 focus:border-accent/50'
+                ? 'bg-black border-green-900/50 text-green-500 placeholder:text-green-900 focus-visible:border-green-500/50 font-mono'
+                : 'bg-page border-line text-fg-0 placeholder:text-fg-2 focus-visible:[box-shadow:var(--shadow-focus-ring)]'
             }`}
             style={{ paddingInlineStart: '1rem', paddingInlineEnd: '3rem', textAlign: 'start' }}
           />
+          {/* 4.2: localized aria-label; 4.6: h-11 w-11 inside the input — visually 36px, touch area padded */}
           <button
             type="submit"
             disabled={!inputValue.trim() || isTyping}
-            className={`absolute p-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+            aria-label={a11y.sendMessage}
+            className={`absolute inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors disabled:opacity-50 focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none ${
               matrixMode
                 ? 'bg-green-900/30 text-green-500 hover:bg-green-900/60 border border-green-500/30 disabled:hover:bg-green-900/30'
                 : 'bg-accent text-[var(--fg-on-accent)] hover:bg-accent disabled:hover:bg-accent'
             }`}
             style={{ insetInlineEnd: '0.5rem' }}
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4" aria-hidden="true" />
           </button>
         </form>
       </div>
