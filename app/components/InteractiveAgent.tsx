@@ -253,7 +253,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
         aria-live="polite"
         aria-relevant="additions"
         aria-label={assistant.title}
-        className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-[color:var(--line-strong)] scrollbar-track-transparent"
+        className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-slim"
       >
         <AnimatePresence initial={false}>
           {messages.map((msg) => (

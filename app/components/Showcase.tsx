@@ -140,7 +140,11 @@ export const Showcase = () => {
         type: 'project',
         position: isMobile
           ? { x: 0, y: projectStartY + idx * projectGap }
-          : { x: idx % 2 === 0 ? 360 : 610, y: projectStartY + idx * projectGap },
+          // Two columns spaced so the 320px-wide cards never overlap horizontally
+          // (left col [360,680], right col [720,1040] → 40px gutter). Vertical gap
+          // is 2×projectGap within a column (300 > 192px card height) so the
+          // staggered fan-out reads as a clean diagonal with no collisions.
+          : { x: idx % 2 === 0 ? 360 : 720, y: projectStartY + idx * projectGap },
         // 4.1: pass onOpen so keyboard activation (Enter/Space) works from ProjectNode.
         // isSpotlit is intentionally NOT driven by selectedStudy: rebuilding nodes on
         // open would detach the focused node element and break focus restore (4.1) —
@@ -282,7 +286,7 @@ export const Showcase = () => {
                 <div
                   key={selectedStudy.id}
                   ref={drawerRef}
-                  className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-[color:var(--line-strong)] scrollbar-track-transparent"
+                  className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-slim"
                   style={{ textAlign: 'start' }}
                 >
 

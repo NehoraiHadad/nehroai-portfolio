@@ -692,9 +692,11 @@ body[data-scene="showcase"] {
     filter var(--dur-3) var(--ease-out),
     transform var(--dur-3) var(--ease-out);
 }
+/* Gentle focus, not a vanish: siblings recede just enough to push the hovered
+   card forward. Heavy dim (0.5) + desaturation read as "the other cards broke",
+   so keep opacity high and drop the saturation shift entirely. */
 .spotlight-group:has(.is-spotlit) > *:not(.is-spotlit) {
-  opacity: 0.5;
-  filter: saturate(0.65);
+  opacity: 0.82;
 }
 .is-spotlit {
   box-shadow: var(--shadow-spotlight);
@@ -812,11 +814,26 @@ body[data-scene="showcase"] {
     dot-pulse 3s ease-in-out 0.6s infinite;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; }
+/* Custom scrollbar — WebKit/Blink */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-0); }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--r-pill); }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+/* Firefox / standard `scrollbar-*` props are NOT inherited and WebKit pseudo-
+   elements don't exist there, so the rules above never reach Gecko — leaving the
+   thick OS scrollbar. Set the standard props on the root and on a reusable slim
+   utility for nested scroll panels (chat log, drawer). */
+html { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+
+.scrollbar-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.scrollbar-slim::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-slim::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-slim::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--r-pill); }
+.scrollbar-slim::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
 
 /* ============================================================
    2.7 — Per-scene display font (instant swap, NOT in body transition).

@@ -350,6 +350,14 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile }: {
   const eff = Math.min(el.depth, brightness * el.depth);
   const dur = eff > 0.1 ? '1s' : '2s'; // fast ignition, slow decay
 
+  // Reveal is driven purely by how close the beam is (brightness), independent
+  // of the carve colours. At rest (brightness 0) every symbol is fully
+  // transparent — so the engravings stay invisible in BOTH themes and only
+  // surface where the beam actually lands, instead of the old fixed dark fill
+  // that showed through on the light theme. The depth still shapes the glow
+  // intensity below; here it only gives deeper symbols a touch more presence.
+  const reveal = Math.min(1, Math.max(0, brightness) * (0.85 + el.depth * 0.35));
+
   // Use mobile positions when on small screens
   const posLeft = isMobile && el.mobileLeft != null ? el.mobileLeft : el.left;
   const posTop = isMobile && el.mobileTop != null ? el.mobileTop : el.top;
@@ -358,6 +366,9 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile }: {
     left: `${posLeft}%`,
     top: `${posTop}%`,
     transform: 'translate(-50%, -50%)',
+    opacity: reveal,
+    transition: `opacity ${dur} var(--ease-out)`,
+    willChange: 'opacity',
   };
 
   if (Icon) {
