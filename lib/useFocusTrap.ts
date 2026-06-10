@@ -31,6 +31,10 @@ export function useFocusTrap<T extends HTMLElement>({
   useEffect(() => {
     if (!active) return;
 
+    // Snapshot the trigger element now — by cleanup time restoreRef.current
+    // may already point elsewhere (it's set imperatively right before open).
+    const restoreTo = restoreRef.current;
+
     // Move focus into the dialog
     const focusTarget =
       initialFocusRef?.current ??
@@ -73,8 +77,11 @@ export function useFocusTrap<T extends HTMLElement>({
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      // Restore focus to trigger element
-      restoreRef.current?.focus();
+      // Restore focus to the trigger captured at activation, but on the next
+      // frame: sibling effects in the same commit (e.g. removing `inert` from
+      // the page's main content) may not have run yet, and focusing an element
+      // still inside an inert subtree silently fails (focus falls to <body>).
+      requestAnimationFrame(() => restoreTo?.focus());
     };
   }, [active, restoreRef, initialFocusRef]);
 

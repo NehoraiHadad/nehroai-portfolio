@@ -1,120 +1,80 @@
 'use client';
 
-import React, { useMemo, useState, useEffect, useRef, useId } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useId, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Network, Cpu, Settings2, Play, Code2 } from 'lucide-react';
+import { X, Settings2, Play, Code2 } from 'lucide-react';
 import { CaseStudy } from '@/lib/types';
 import { useReveal } from '@/lib/useReveal';
 import { useDictionary, useDirection } from '@/lib/i18n/provider';
 import { caseStudyIcons } from '@/lib/case-study-icons';
 import { useFocusTrap } from '@/lib/useFocusTrap';
 import {
-  ReactFlow,
-  Background,
-  Handle,
-  Position,
   MarkerType,
   useNodesState,
   useEdgesState,
-  type Edge,
-  type Node,
 } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+import type { ShowcaseFlowNode, ShowcaseFlowEdge } from './ShowcaseFlow';
 
-type OrchestratorNodeData = Record<string, unknown> & {
-  isMobile: boolean;
-  label: string;
-  shippingLabel: string;
-};
-
-type ProjectNodeData = Record<string, unknown> & CaseStudy & {
-  isMobile: boolean;
-  isRtl: boolean;
-  isSpotlit: boolean;
-  onOpen?: (study: CaseStudy) => void;
-};
-
-type ShowcaseNode = Node<OrchestratorNodeData | ProjectNodeData>;
-type ShowcaseEdge = Edge;
-
-const OrchestratorNode = ({ data }: { data: OrchestratorNodeData }) => (
-  <div className="bg-page/90 backdrop-blur-xl border border-accent/30 rounded-2xl p-5 w-56 flex flex-col items-center text-center relative overflow-hidden group" style={{ boxShadow: '0 0 30px color-mix(in oklab, var(--accent) 15%, transparent)' }}>
-    <div className="absolute inset-0 bg-gradient-to-b from-accent/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-    <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent mb-3 relative">
-      <div className="absolute inset-0 rounded-xl bg-accent/20 animate-ping opacity-20" />
-      <Network className="w-6 h-6" />
-    </div>
-    <div className="text-sm font-bold text-fg-0 tracking-wide">{data.label}</div>
-    <div className="text-[10px] text-accent font-mono mt-2 flex items-center gap-1.5 bg-accent/10 px-2 py-1 rounded-full border border-accent/20">
-      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-      {data.shippingLabel}
-    </div>
-    <Handle
-      type="source"
-      position={data.isMobile ? Position.Bottom : Position.Right}
-      className="w-3 h-3 bg-accent border-2 border-page"
-    />
-  </div>
-);
-
-const ProjectNode = ({ data }: { data: ProjectNodeData }) => {
-  const Icon = data.icon || Cpu;
-  // 4.1: keyboard activation — Enter/Space open the drawer via the onOpen callback
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      data.onOpen?.(data as unknown as CaseStudy);
-    }
-  };
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={data.title}
-      onKeyDown={handleKeyDown}
-      className={`bg-surface/90 backdrop-blur-xl border border-line rounded-2xl p-4 sm:p-5 w-[280px] sm:w-80 shadow-xl hover:border-accent/40 project-node transition-all duration-300 group cursor-pointer relative overflow-hidden focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none${data.isSpotlit ? ' is-spotlit' : ''}`}
-      dir={data.isRtl ? 'rtl' : 'ltr'}
-      style={{ textAlign: 'start' }}
-    >
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent/0 via-accent/0 to-accent/0 group-hover:from-accent/50 group-hover:via-accent-pale/50 group-hover:to-accent-ice/50 transition-all duration-500" />
-
-      <Handle
-        type="target"
-        position={data.isMobile ? Position.Top : Position.Left}
-        className="w-3 h-3 bg-line-strong border-2 border-page group-hover:bg-accent transition-colors"
-      />
-
-      <div className="flex items-start gap-3 sm:gap-4 mb-3">
-        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-raised/50 border border-line-strong/50 flex items-center justify-center text-fg-1 group-hover:text-accent group-hover:bg-accent/10 group-hover:border-accent/30 transition-all duration-300 shrink-0">
-          <Icon className="w-5 h-5 sm:w-6 sm:h-6" aria-hidden="true" />
-        </div>
-        <div>
-          <div className="text-sm font-bold text-fg-0 group-hover:text-accent-pale transition-colors leading-tight mb-1">{data.title}</div>
-          <div className="text-[9px] sm:text-[10px] font-mono text-accent-text uppercase tracking-wider">{data.tags[0]}</div>
-        </div>
-      </div>
-      <div className="text-xs text-fg-1 leading-relaxed line-clamp-2">{data.description}</div>
-    </div>
-  );
-};
-
-const nodeTypes = {
-  orchestrator: OrchestratorNode,
-  project: ProjectNode,
-};
+// 4.7: Lazy-load the heavy React Flow canvas.
+// ssr:false — ReactFlow uses browser APIs (ResizeObserver, DOM measurement)
+// and must not run on the server. Confirmed API in lazy-loading.md:
+//   dynamic(() => import('...'), { ssr: false })
+// The dynamic() call is at module top-level (not inside a component) so
+// Next.js can associate it with a webpack chunk at build time.
+const ShowcaseFlowCanvas = dynamic(() => import('./ShowcaseFlow'), {
+  ssr: false,
+  // While the chunk loads we render nothing — the canvas wrapper already
+  // reserves the correct height and shows the blueprint-grid placeholder.
+  loading: () => null,
+});
 
 export const Showcase = () => {
-  const { showcase, caseStudies: rawCaseStudies } = useDictionary();
+  const { showcase, a11y, caseStudies: rawCaseStudies } = useDictionary();
   const direction = useDirection();
   const isRtl = direction === 'rtl';
   const [selectedStudy, setSelectedStudy] = useState<CaseStudy | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [nodes, setNodes, onNodesChange] = useNodesState<ShowcaseNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<ShowcaseEdge>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<ShowcaseFlowNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<ShowcaseFlowEdge>([]);
+  // 4.7: mount React Flow canvas only after the section enters near-viewport
+  // (one-shot IntersectionObserver with 400px rootMargin — avoids loading
+  // ~200 kB of React Flow JS for users who never scroll to the section).
+  const [flowMounted, setFlowMounted] = useState(false);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const ref = useReveal<HTMLElement>();
   // 2.3: reveal-pop for drawer items — separate observer on the drawer scroll container
   const drawerRef = useReveal<HTMLDivElement>();
+  // 4.1: focus trap + restore for the drawer dialog
+  const drawerTitleId = useId();
+  // Tracks which element opened the drawer so we can restore focus on close.
+  // Using a ref (not state) avoids re-renders and stays stable across callbacks.
+  const restoreRef = useRef<HTMLElement | null>(null);
+  const drawerTrapRef = useFocusTrap<HTMLDivElement>({
+    active: selectedStudy !== null,
+    restoreRef,
+  });
+  const closeDrawer = useCallback(() => {
+    setSelectedStudy(null);
+    // useFocusTrap will call restoreRef.current.focus() on deactivation
+  }, []);
+  // Called whenever a node is activated (click or keyboard) to open the drawer
+  const openDrawer = useCallback((study: CaseStudy) => {
+    restoreRef.current = document.activeElement as HTMLElement;
+    setSelectedStudy(study);
+  }, []);
+  // 4.1: set inert on main content while drawer is open
+  useEffect(() => {
+    const main = document.getElementById('main-content');
+    if (!main) return;
+    if (selectedStudy) {
+      main.setAttribute('inert', '');
+    } else {
+      main.removeAttribute('inert');
+    }
+    return () => main.removeAttribute('inert');
+  }, [selectedStudy]);
   const caseStudies = useMemo<CaseStudy[]>(
     () =>
       rawCaseStudies.map((study) => ({
@@ -142,6 +102,26 @@ export const Showcase = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // 4.7: one-shot IntersectionObserver — mount React Flow only when the canvas
+  // wrapper is within 400px of the viewport.  Avoids eagerly loading ~200 kB
+  // of React Flow JS for users who never scroll to the section.
+  useEffect(() => {
+    if (flowMounted) return;
+    const el = canvasRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setFlowMounted(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [flowMounted]);
+
   useEffect(() => {
     const projectStartY = isMobile ? 170 : 30;
     const projectGap = isMobile ? 180 : 150;
@@ -161,7 +141,12 @@ export const Showcase = () => {
         position: isMobile
           ? { x: 0, y: projectStartY + idx * projectGap }
           : { x: idx % 2 === 0 ? 360 : 610, y: projectStartY + idx * projectGap },
-        data: { ...study, isMobile, isRtl, isSpotlit: selectedStudy?.id === study.id },
+        // 4.1: pass onOpen so keyboard activation (Enter/Space) works from ProjectNode.
+        // isSpotlit is intentionally NOT driven by selectedStudy: rebuilding nodes on
+        // open would detach the focused node element and break focus restore (4.1) —
+        // and the drawer + backdrop cover the canvas anyway, so a selected-node
+        // spotlight would be invisible.
+        data: { ...study, isMobile, isRtl, isSpotlit: false, onOpen: openDrawer },
       }))
     ];
 
@@ -179,7 +164,7 @@ export const Showcase = () => {
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [caseStudies, isMobile, isRtl, selectedStudy, setNodes, setEdges, showcase.orchestratorLabel, showcase.shippingLabel]);
+  }, [caseStudies, isMobile, isRtl, openDrawer, setNodes, setEdges, showcase.orchestratorLabel, showcase.shippingLabel]);
 
   return (
     <section id="showcase" ref={ref} className="py-24 px-4 sm:px-6 max-w-7xl mx-auto relative z-10">
@@ -191,37 +176,34 @@ export const Showcase = () => {
         </p>
       </div>
 
+      {/* 4.7: canvas wrapper — height reserved to avoid CLS while the chunk loads */}
       <div
+        ref={canvasRef}
         className="reveal w-full bg-page border border-line/80 rounded-2xl overflow-hidden relative shadow-2xl"
         style={{ '--reveal-delay': '200ms', height: `${flowHeight}px` } as React.CSSProperties}
       >
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          nodeTypes={nodeTypes}
-          onNodeClick={(event, node) => {
-            if (node.type === 'project') {
-              setSelectedStudy(node.data as CaseStudy);
-            }
-          }}
-          fitView
-          fitViewOptions={{ padding: isMobile ? 0.18 : 0.12 }}
-          minZoom={0.2}
-          maxZoom={1.5}
-          zoomOnScroll={false}
-          zoomOnPinch={false}
-          zoomOnDoubleClick={false}
-          preventScrolling={false}
-          panOnDrag={false}
-          nodesDraggable={false}
-          elementsSelectable={false}
-          className="bg-page/50"
-          proOptions={{ hideAttribution: true }}
-        >
-          <Background color="var(--line-strong)" gap={20} size={1.5} />
-        </ReactFlow>
+        {/* Blueprint-grid placeholder shown until React Flow chunk is loaded */}
+        {!flowMounted && (
+          <div className="absolute inset-0 blueprint-grid opacity-40 pointer-events-none" />
+        )}
+
+        {/* 4.7: lazy-loaded canvas — only mounted after section nears viewport */}
+        {flowMounted && (
+          <ShowcaseFlowCanvas
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onNodeClick={(event, node) => {
+              if (node.type === 'project') {
+                // 4.1: capture the clicked element for focus restore when drawer closes
+                restoreRef.current = event.target as HTMLElement;
+                setSelectedStudy(node.data as CaseStudy);
+              }
+            }}
+            isMobile={isMobile}
+          />
+        )}
 
         {/* Overlay hint */}
         <div
@@ -232,6 +214,21 @@ export const Showcase = () => {
           {showcase.hint}
         </div>
       </div>
+
+      {/* 4.1: sr-only project list — SEO + screen-reader fallback for the canvas */}
+      <ul className="sr-only">
+        {caseStudies.map((study) => (
+          <li key={study.id}>
+            <a
+              href={study.details?.liveUrl ?? study.details?.githubUrl ?? '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {study.title}
+            </a>
+          </li>
+        ))}
+      </ul>
 
       {/* Node Configuration Drawer */}
       {typeof document !== 'undefined' && createPortal(
@@ -244,12 +241,16 @@ export const Showcase = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                onClick={() => setSelectedStudy(null)}
+                onClick={closeDrawer}
                 className="fixed inset-0 bg-page/60 backdrop-blur-sm z-[100]"
               />
 
-              {/* Drawer */}
+              {/* Drawer — 4.1: dialog role, focus trap, Escape, focus restore */}
               <motion.div
+                ref={drawerTrapRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={drawerTitleId}
                 initial={{ x: isRtl ? '-100%' : '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: isRtl ? '-100%' : '100%' }}
@@ -257,18 +258,22 @@ export const Showcase = () => {
                 className="fixed top-0 h-full w-full sm:w-[480px] bg-page border-line shadow-2xl z-[101] flex flex-col"
                 dir={direction}
                 style={{ insetInlineEnd: 0, borderInlineStartWidth: '1px' }}
+                onKeyDown={(e) => { if (e.key === 'Escape') closeDrawer(); }}
               >
                 {/* Drawer Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-line/80 bg-surface/50 shrink-0">
                   <div className="flex items-center gap-3 text-fg-0 font-mono text-sm">
-                    <Settings2 className="w-5 h-5 text-accent" />
-                    {showcase.drawerTitle}
+                    <Settings2 className="w-5 h-5 text-accent" aria-hidden="true" />
+                    {/* 4.1: title element labelled by drawerTitleId */}
+                    <span id={drawerTitleId}>{selectedStudy?.title ?? showcase.drawerTitle}</span>
                   </div>
+                  {/* 4.2+4.6: localized aria-label, 44×44 touch target */}
                   <button
-                    onClick={() => setSelectedStudy(null)}
-                    className="text-fg-2 hover:text-fg-1 transition-colors p-1"
+                    onClick={closeDrawer}
+                    aria-label={a11y.closeDialog}
+                    className="inline-flex h-11 w-11 items-center justify-center text-fg-2 hover:text-fg-1 transition-colors rounded-[var(--r-1)] focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-5 h-5" aria-hidden="true" />
                   </button>
                 </div>
 
