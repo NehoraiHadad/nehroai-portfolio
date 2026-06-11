@@ -44,8 +44,12 @@ export const Showcase = () => {
   const [flowMounted, setFlowMounted] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const ref = useReveal<HTMLElement>();
-  // 2.3: reveal-pop for drawer items — separate observer on the drawer scroll container
-  const drawerRef = useReveal<HTMLDivElement>();
+  // 2.3: reveal-pop for drawer items. The drawer is always fully in view the
+  // instant it opens, so it uses reveal-on-open (immediate) rather than a
+  // viewport observer — items cascade in via their CSS transition-delays with
+  // no dependency on scroll/animation timing or the 4s fallback. Keyed on
+  // selectedStudy so it re-fires on open and when switching between studies.
+  const drawerRef = useReveal<HTMLDivElement>([selectedStudy], { immediate: true });
   // 4.1: focus trap + restore for the drawer dialog
   const drawerTitleId = useId();
   // Tracks which element opened the drawer so we can restore focus on close.
