@@ -136,6 +136,16 @@
   --grid-color: color-mix(in oklab, var(--accent-pale) 10%, transparent);
   --grid-size: 32px;
   --scanline-opacity: 0.03;
+
+  /* Engraved Hero symbols (frameless — the glyph is carved into the surface).
+     `--socket-shade` (r,g,b) + `--socket-shade-mul` = the carved top-edge shadow;
+     `--socket-lip-a` = the bright bottom-lip highlight (the letterpress edge);
+     `--socket-hot` = what a fully-lit glyph fills toward. Dark: white-hot
+     phosphor on navy. Light theme overrides these for a paper deboss + ink. */
+  --socket-shade: 0, 0, 0;
+  --socket-shade-mul: 1;
+  --socket-lip-a: 0.14;
+  --socket-hot: #FFFFFF;
 }
 
 /* ============================================================
@@ -163,6 +173,12 @@
   --shadow-glow-ice: 0 0 24px -8px color-mix(in oklab, var(--accent) 50%, transparent);
   --grid-color: color-mix(in oklab, var(--accent) 8%, transparent);
   --scanline-opacity: 0.04;
+  /* Paper deboss instead of a glowing pit: a cool carved edge, a strong white
+     lip, and lit glyphs that fill toward rich ink rather than white-hot. */
+  --socket-shade: 30, 50, 95;
+  --socket-shade-mul: 0.55;
+  --socket-lip-a: 0.85;
+  --socket-hot: var(--accent-press);
   color-scheme: light;
 }
 
@@ -800,10 +816,10 @@ body[data-scene="showcase"] {
 
 .brand-wordmark-dot {
   position: absolute;
-  left: 58%;
-  top: 0.18em;
-  width: 0.16em;
-  height: 0.16em;
+  left: 66%;
+  top: 0.24em;
+  width: 0.14em;
+  height: 0.14em;
   border-radius: var(--r-pill);
   translate: -50% 0;
 }

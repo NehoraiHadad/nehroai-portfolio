@@ -787,69 +787,68 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile, clickable, onDisc
   const lx = dvx / dvlen; // unit light-travel direction (dot → socket)
   const ly = dvy / dvlen;
 
-  // ── Pseudo-3D lift — the whole socket rises toward the light ──
-  const liftScale = 1 + eff * 0.10;
-  const liftY = -(eff * 5 * el.depth);
+  // ── Bloom — the engraving swells faintly as the beam fills it (no rise; an
+  // engraving is flush with the surface, it doesn't float up like a chip). ──
+  const liftScale = 1 + eff * 0.05;
 
   const wrapperStyle: React.CSSProperties = {
     left: `${posLeft}%`,
     top: `${posTop}%`,
-    transform: `translate(-50%, -50%) translateY(${liftY.toFixed(2)}px) scale(${liftScale.toFixed(3)})`,
+    transform: `translate(-50%, -50%) scale(${liftScale.toFixed(3)})`,
     opacity: reveal,
     transition: `opacity ${dur} var(--ease-out), transform ${dur} var(--ease-out)`,
     willChange: 'opacity, transform',
   };
 
-  // ── THE SOCKET — a recess carved into the surface ──
-  // The symbol sits inside a depression. `box-shadow: inset` sculpts the walls
-  // (top wall in shadow, bottom lip catching light = concave, you SEE the depth);
-  // a radial background is the phosphorescent floor that ignites as the beam
-  // fills it; an outer glow spills the phosphor light onto the surface around
-  // the rim. All accent-driven via color-mix so both themes stay correct.
+  // ── THE ENGRAVING — frameless. No box/chip; the GLYPH itself is carved into
+  // the surface. Three theme-aware layers via the --socket-* vars:
+  //   • a bright bottom lip (--socket-lip-a) + a carved top shadow
+  //     (--socket-shade) = the letterpress edge that reads as depth,
+  //   • the glyph fills toward --socket-hot (white-hot on dark / rich ink on
+  //     light) as it lights,
+  //   • a soft radial pool of accent light lands on the surface around it,
+  //     offset toward the beam's incoming side (lx,ly), fading to nothing so
+  //     there's never a rectangle.
   const pad = Math.round(el.size * 0.5);
   const padX = pad + Math.round(el.size * 0.18);
-  const radius = Math.round(el.size * 0.42);
+  const lit = eff > 0.04;
 
-  const socketStyle: React.CSSProperties = {
+  // Soft light pool on the surface — no edges, just shading.
+  const poolBg = lit
+    ? `radial-gradient(ellipse 66% 66% at ${(50 + lx * 14).toFixed(0)}% ${(50 + ly * 14).toFixed(0)}%, color-mix(in oklab, var(--accent) ${Math.round(eff * 22)}%, transparent) 0%, transparent 72%)`
+    : 'transparent';
+
+  const spanStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: `${pad}px ${padX}px`,
-    borderRadius: `${radius}px`,
-    // Floor of the recess. The bright phosphor pool sits where the beam lands on
-    // the floor — offset from centre along the light-travel direction (lx,ly).
-    background: `radial-gradient(ellipse at ${(50 + lx * 16).toFixed(0)}% ${(50 + ly * 16).toFixed(0)}%, color-mix(in oklab, var(--accent) ${Math.round(eff * 70)}%, rgba(0,0,0,0.5)) 0%, color-mix(in oklab, var(--accent) ${Math.round(eff * 22)}%, rgba(0,0,0,0.58)) 56%, rgba(0,0,0,0.64) 100%)`,
-    boxShadow: [
-      // Crisp recess rim — the cut edge of the opening.
-      `inset 0 0 0 1px color-mix(in oklab, var(--accent) ${Math.round(eff * 34)}%, rgba(255,255,255,${(0.04 + eff * 0.05).toFixed(3)}))`,
-      // NEAR lip (facing the dot) shadows the interior just inside it. Offset
-      // along +(lx,ly) so the shadow sits on the side the beam comes FROM.
-      `inset ${(lx * (3 + eff * 1.5)).toFixed(1)}px ${(ly * (3 + eff * 1.5)).toFixed(1)}px ${(6 + eff * 4).toFixed(1)}px rgba(0,0,0,${(0.55 + eff * 0.2).toFixed(2)})`,
-      // FAR wall (away from the dot) lit by the incoming beam — the light pours
-      // into the pit and lands here. Offset along -(lx,ly) puts the glow there.
-      `inset ${(-lx * (3.5 + eff * 1)).toFixed(1)}px ${(-ly * (3.5 + eff * 1)).toFixed(1)}px ${(7 + eff * 8).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 62)}%, transparent)`,
-      // Phosphor welling up from the whole floor.
-      `inset 0 0 ${(4 + eff * 10).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 42)}%, transparent)`,
-      // Outer lip facing the dot catches the incoming light = a bright edge on
-      // the near side (offset along -(lx,ly)).
-      `${(-lx * 1.4).toFixed(1)}px ${(-ly * 1.4).toFixed(1)}px 0 rgba(255,255,255,${(0.03 + eff * 0.06).toFixed(3)})`,
-      // A little phosphor overflow onto the surface where the pit brims with light.
-      ...(eff > 0.05 ? [
-        `0 0 ${(eff * 10).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 22)}%, transparent)`,
-      ] : []),
-    ].join(', '),
-    transition: `background ${dur} ease-out, box-shadow ${dur} ease-out`,
-    // Only the currently-lit sockets accept the pointer (the field is otherwise
+    background: poolBg,
+    transition: `background ${dur} ease-out`,
+    // Only the currently-lit glyphs accept the pointer (the field is otherwise
     // pointer-events:none). Clicking one fires an energy discharge.
     pointerEvents: clickable ? 'auto' : 'none',
     cursor: clickable ? 'pointer' : 'default',
   };
 
-  // The phosphorescent MATERIAL inside the socket — the glyph/icon itself.
-  // Dormant and near-invisible at rest; ignites accent → white-hot as it lights.
-  const litColor = `color-mix(in oklab, white ${Math.round(eff * 55)}%, var(--accent))`;
-  const materialGlow = eff > 0.04
-    ? `0 0 ${(eff * 4).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 70)}%, transparent), 0 0 ${(eff * 11).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 38)}%, transparent)`
+  // The carved glyph itself — colour fills toward the theme's "hot" target.
+  const glyphColor = lit
+    ? `color-mix(in oklab, var(--socket-hot) ${Math.round(eff * 55)}%, var(--accent))`
+    : 'color-mix(in oklab, var(--accent) 10%, transparent)';
+
+  // Letterpress for the text glyph: bright lip below + carved shadow above +
+  // phosphor glow. Theme-aware through --socket-lip-a / --socket-shade.
+  const glyphShadow = lit
+    ? [
+        `0 1px 0 rgba(255,255,255, calc(var(--socket-lip-a) * ${(0.45 + eff * 0.55).toFixed(2)}))`,
+        `0 -1px 1.5px rgba(var(--socket-shade), calc(${(0.35 + eff * 0.25).toFixed(2)} * var(--socket-shade-mul)))`,
+        `0 0 ${(eff * 9).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 50)}%, transparent)`,
+      ].join(', ')
+    : 'none';
+
+  // Same letterpress + glow for icon glyphs, expressed as stacked drop-shadows.
+  const iconFilter = lit
+    ? `drop-shadow(0 1px 0 rgba(255,255,255, calc(var(--socket-lip-a) * 0.7))) drop-shadow(0 -1px 1px rgba(var(--socket-shade), calc(0.4 * var(--socket-shade-mul)))) drop-shadow(0 0 ${(eff * 6).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 50)}%, transparent))`
     : 'none';
 
   return (
@@ -860,7 +859,7 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile, clickable, onDisc
     >
       <span
         className="inline-flex"
-        style={socketStyle}
+        style={spanStyle}
         onClick={clickable ? () => onDischarge(el.id) : undefined}
         aria-hidden="true"
       >
@@ -870,10 +869,8 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile, clickable, onDisc
               width: el.size,
               height: el.size,
               display: 'inline-flex',
-              color: eff > 0.04 ? litColor : 'rgba(255,255,255,0.06)',
-              filter: eff > 0.04
-                ? `drop-shadow(0 0 ${(eff * 4).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(eff * 65)}%, transparent))`
-                : 'none',
+              color: glyphColor,
+              filter: iconFilter,
               transition: `color ${dur} ease-out, filter ${dur} ease-out`,
             }}
           >
@@ -885,8 +882,8 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile, clickable, onDisc
             style={{
               fontSize: el.size,
               lineHeight: 1,
-              color: eff > 0.04 ? litColor : 'rgba(255,255,255,0.06)',
-              textShadow: materialGlow,
+              color: glyphColor,
+              textShadow: glyphShadow,
               transition: `color ${dur} ease-out, text-shadow ${dur} ease-out`,
             }}
           >
@@ -1279,6 +1276,21 @@ const IlluminationBackground = () => {
             cr.left, cr.top,
             cb.isMobile,
           );
+
+          // Keep the assistant panel ABOVE the beam: clear the additive light
+          // out of its EXACT rect so the shaft never washes over the chat UI.
+          // Clearing exactly the panel box (no expansion) avoids a dark moat/gap
+          // around it — the panel sits flush in the hole; the canvas's CSS blur
+          // only feathers a hair onto the very edge. Desktop only (hidden < lg).
+          if (!cb.isMobile) {
+            const chat = document.getElementById('hero-chat-panel');
+            if (chat) {
+              const chr = chat.getBoundingClientRect();
+              if (chr.width > 0) {
+                ctx.clearRect(chr.left - cr.left, chr.top - cr.top, chr.width, chr.height);
+              }
+            }
+          }
         }
       }
 
@@ -1534,7 +1546,12 @@ export const Hero = () => {
       </m.div>
 
       {/* Interactive Agent Visual */}
-      <m.div 
+      {/* id lets the beam canvas clear its additive light out of this rect each
+          frame, so the assistant panel always reads as ABOVE the beam (the
+          canvas is portaled above the nav at z-60 and can't be out-stacked from
+          inside this section, so we cut the light instead of fighting z-index). */}
+      <m.div
+        id="hero-chat-panel"
         initial={{ opacity: 0, x: isRtl ? -40 : 40, filter: 'blur(10px)' }}
         animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
         transition={{ duration: 1, delay: 0.4, ease: EASE_OUT }}
