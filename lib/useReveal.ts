@@ -8,7 +8,7 @@ interface RevealOptions {
    * to be visible the moment it mounts — drawers, modals — a viewport
    * IntersectionObserver is the wrong tool: it couples the reveal to scroll/
    * animation timing and leans on the 4s CSS fallback when it doesn't fire.
-   * With `immediate`, the items flip to `.in-view` as soon as they mount; the
+   * With `immediate`, the items are marked revealed as soon as they mount; the
    * CSS `transition-delay` on each `.reveal-pop` still produces the stagger.
    */
   immediate?: boolean;
@@ -16,9 +16,11 @@ interface RevealOptions {
 
 /**
  * Reveal-on-scroll (default): attaches a native IntersectionObserver to the
- * `.reveal` / `.reveal-pop` elements within the container ref and adds
- * `.in-view` as they enter the viewport. Replaces motion's `whileInView`,
- * which has hydration timing bugs on mobile Chrome with Next.js streaming/SSR.
+ * `.reveal` / `.reveal-pop` elements within the container ref and sets the
+ * `[data-revealed]` attribute as they enter the viewport. Replaces motion's
+ * `whileInView`, which has hydration timing bugs on mobile Chrome with
+ * Next.js streaming/SSR. A data attribute (not a class) is used so React
+ * re-renders that rewrite `className` cannot wipe the revealed state.
  *
  * Reveal-on-open (`{ immediate: true }`): for always-visible-on-mount content.
  *
@@ -51,7 +53,7 @@ export function useReveal<T extends HTMLElement = HTMLElement>(
       let raf2 = 0;
       const raf1 = requestAnimationFrame(() => {
         raf2 = requestAnimationFrame(() => {
-          for (const el of elements) el.classList.add('in-view');
+          for (const el of elements) el.setAttribute('data-revealed', '');
         });
       });
       return () => {
@@ -64,7 +66,7 @@ export function useReveal<T extends HTMLElement = HTMLElement>(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            entry.target.classList.add('in-view');
+            entry.target.setAttribute('data-revealed', '');
             observer.unobserve(entry.target);
           }
         }

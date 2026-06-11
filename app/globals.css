@@ -683,7 +683,7 @@ body[data-scene="showcase"] {
 
 /* ============================================================
    Spotlight + sibling recede (3.2). UNLAYERED on purpose: the
-   recede opacity must beat `.reveal-pop.in-view { opacity: 1 }`
+   recede opacity must beat `.reveal-pop[data-revealed] { opacity: 1 }`
    (also unlayered) — inside @layer components it always loses.
    ============================================================ */
 .spotlight-group > * {
@@ -694,8 +694,10 @@ body[data-scene="showcase"] {
 }
 /* Gentle focus, not a vanish: siblings recede just enough to push the hovered
    card forward. Heavy dim (0.5) + desaturation read as "the other cards broke",
-   so keep opacity high and drop the saturation shift entirely. */
-.spotlight-group:has(.is-spotlit) > *:not(.is-spotlit) {
+   so keep opacity high and drop the saturation shift entirely.
+   Gated on [data-revealed] so only already-revealed siblings recede — an
+   un-revealed card stays at its reveal-pop opacity instead of half-appearing. */
+.spotlight-group:has(.is-spotlit) > [data-revealed]:not(.is-spotlit) {
   opacity: 0.82;
 }
 .is-spotlit {
@@ -714,9 +716,14 @@ body[data-scene="showcase"] {
     filter var(--dur-4) var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
-.reveal.in-view { opacity: 1; transform: translateY(0); filter: blur(0px); }
+/* Reveal marker is a data attribute, NOT a class: useReveal sets it imperatively
+   on React-controlled elements, and React rewrites `className` on re-render
+   (e.g. when a card toggles .is-spotlit on hover) — which would wipe a reveal
+   *class* and snap the card back to opacity:0. React never touches attributes
+   it doesn't own, so [data-revealed] survives re-renders. */
+.reveal[data-revealed] { opacity: 1; transform: translateY(0); filter: blur(0px); }
 @keyframes reveal-fallback { to { opacity: 1; transform: translateY(0); filter: blur(0px); } }
-.reveal:not(.in-view) { animation: reveal-fallback 0s 4s forwards; }
+.reveal:not([data-revealed]) { animation: reveal-fallback 0s 4s forwards; }
 
 /* Spring-overshoot one-shot reveal — cards and drawer items */
 .reveal-pop {
@@ -729,9 +736,9 @@ body[data-scene="showcase"] {
 }
 /* Once revealed, drop the stagger delay so later transitions on the same
    element (e.g. spotlight recede) respond immediately. */
-.reveal-pop.in-view { opacity: 1; transform: none; transition-delay: 0ms; }
+.reveal-pop[data-revealed] { opacity: 1; transform: none; transition-delay: 0ms; }
 @keyframes reveal-pop-fallback { to { opacity: 1; transform: none; } }
-.reveal-pop:not(.in-view) { animation: reveal-pop-fallback 0s 4s forwards; }
+.reveal-pop:not([data-revealed]) { animation: reveal-pop-fallback 0s 4s forwards; }
 
 /* ============================================================
    Signature motion (kept, retinted electric-blue / ice)
