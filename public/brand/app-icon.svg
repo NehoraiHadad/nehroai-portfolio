@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" fill="none">
+  <style>
+    .shell { fill: #050E22; }
+    .panel { fill: #0A1735; stroke: #2A3D78; }
+    .n { fill: #EEF2FB; }
+    .stem { fill: #2563EB; }
+    .dot { fill: #BAEFFE; }
+    .glow-ice { fill: #BAEFFE; opacity: 0.14; }
+    .glow-blue { fill: #2563EB; opacity: 0.1; }
+    @media (prefers-color-scheme: light) {
+      .shell { fill: #F0F4FF; }
+      .panel { fill: #FFFFFF; stroke: #B8C2D9; }
+      .n { fill: #050E22; }
+      .dot { fill: #2563EB; }
+      .glow-ice { fill: #2563EB; opacity: 0.12; }
+      .glow-blue { fill: #60A5FA; opacity: 0.12; }
+    }
+  </style>
+  <rect class="shell" width="96" height="96" rx="22"/>
+  <rect class="panel" x="10" y="10" width="76" height="76" rx="18" stroke-width="2"/>
+  <path class="n" d="M21 70V27H31L53 60V70H44.5L31 47V70H21Z"/>
+  <rect class="stem" x="56" y="38" width="9" height="32" rx="1.5"/>
+  <circle class="glow-blue" cx="60.5" cy="30" r="10"/>
+  <circle class="glow-ice" cx="60.5" cy="30" r="6.6"/>
+  <circle class="dot" cx="60.5" cy="30" r="4.9"/>
+</svg>

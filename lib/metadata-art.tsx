@@ -31,31 +31,43 @@ export function BrandMark() {
           borderRadius: 28,
           border: `2px solid ${COLORS.slate}`,
           background: COLORS.panel,
-          boxShadow: '0 0 0 2px rgba(37, 99, 235, 0.12) inset',
+          boxShadow: '0 0 22px rgba(37, 99, 235, 0.18), 0 0 0 2px rgba(37, 99, 235, 0.12) inset',
           position: 'relative',
         }}
       >
         <div
           style={{
-            color: COLORS.electric,
-            fontSize: 118,
-            fontWeight: 800,
-            lineHeight: 1,
-            letterSpacing: '-0.08em',
+            position: 'absolute',
+            left: '18%',
+            top: '27%',
+            width: '52%',
+            height: '50%',
+            background: COLORS.text,
+            clipPath: 'polygon(0 100%, 0 0, 28% 0, 100% 78%, 100% 100%, 74% 100%, 28% 47%, 28% 100%)',
           }}
-        >
-          N
-        </div>
+        />
         <div
           style={{
             position: 'absolute',
-            top: '18%',
-            right: '24%',
-            width: 16,
-            height: 16,
+            right: '16%',
+            top: '35%',
+            width: '11%',
+            height: '43%',
+            borderRadius: 3,
+            background: COLORS.electric,
+            boxShadow: `0 0 10px rgba(37, 99, 235, 0.5)`,
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            top: '22%',
+            right: '19%',
+            width: 12,
+            height: 12,
             borderRadius: 9999,
             background: COLORS.ice,
-            boxShadow: `0 0 12px ${COLORS.ice}`,
+            boxShadow: `0 0 10px rgba(186, 239, 254, 0.76), 0 0 20px rgba(37, 99, 235, 0.24)`,
           }}
         />
       </div>
@@ -130,8 +142,8 @@ export function SocialShareCard() {
       >
         <div
           style={{
-            width: 260,
-            height: 260,
+            width: 244,
+            height: 244,
             display: 'flex',
             flexShrink: 0,
           }}

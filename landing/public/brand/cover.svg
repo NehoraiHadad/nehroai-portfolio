@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#050E22"/>
+  <rect x="28" y="28" width="1144" height="574" rx="34" fill="white" opacity="0.03" stroke="white" stroke-opacity="0.08"/>
+  <path d="M120 0H412L302 630H10L120 0Z" fill="#2563EB" opacity="0.07"/>
+  <circle cx="962" cy="156" r="86" stroke="#BAEFFE" stroke-opacity="0.22"/>
+  <rect x="880" y="474" width="220" height="2" fill="#BAEFFE" opacity="0.42"/>
+
+  <g transform="translate(104 178)">
+    <rect width="232" height="232" rx="52" fill="#050E22"/>
+    <rect x="22" y="22" width="188" height="188" rx="42" fill="#0A1735" stroke="#2A3D78" stroke-width="5"/>
+    <path d="M50 168V64H73L132 142V168H111L73 113V168H50Z" fill="#EEF2FB"/>
+    <rect x="139" y="91" width="22" height="77" rx="4" fill="#2563EB"/>
+    <circle cx="150" cy="70" r="11.5" fill="#BAEFFE"/>
+    <circle cx="150" cy="70" r="21" fill="#BAEFFE" opacity="0.12"/>
+    <circle cx="150" cy="70" r="33" fill="#2563EB" opacity="0.08"/>
+  </g>
+
+  <g transform="translate(400 192)">
+    <text x="0" y="84" fill="#EEF2FB" font-family="Geist, Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="96" font-weight="800" letter-spacing="-0.06em">Nehorai Hadad</text>
+    <text x="0" y="158" fill="#9CA9C8" font-family="Geist, Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="34" font-weight="500">AI engineer and full-stack builder</text>
+    <text x="0" y="222" fill="#BAEFFE" font-family="Geist Mono, ui-monospace, SFMono-Regular, Consolas, monospace" font-size="24" font-weight="600" letter-spacing="0.12em">AGENTS // WORKFLOWS // SYSTEMS</text>
+  </g>
+</svg>

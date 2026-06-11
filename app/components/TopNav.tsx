@@ -10,6 +10,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 import { useFocusTrap } from '@/lib/useFocusTrap';
 import { TIMELINE } from '@/lib/choreography';
+import { BrandLogo } from './BrandLogo';
 
 export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean, setMobileMenuOpen: (v: boolean) => void }) => {
   const prefersReduced = usePrefersReducedMotion();
@@ -56,23 +57,9 @@ export const TopNav = ({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: 
             href="#"
             aria-label="Nehorai"
             dir="ltr"
-            className="text-2xl font-bold tracking-tighter text-fg-0 relative group inline-block w-max bidi-ltr"
+            className="relative group inline-block w-max bidi-ltr"
           >
-            <span aria-hidden="true">
-              Nehor
-              <span className="font-light logo-ai-neon">
-                a
-                <span className="relative inline-block">
-                  <span
-                    id="logo-dot"
-                    className={`absolute top-[0.12em] left-[50%] -translate-x-1/2 w-[0.16em] h-[0.16em] rounded-full ${
-                      dotIgnited ? 'flashlight-active' : 'opacity-0 scale-0 bg-white'
-                    }`}
-                  />
-                  ı
-                </span>
-              </span>
-            </span>
+            <BrandLogo dotIgnited={dotIgnited} />
           </a>
           <span className="font-mono text-[10px] text-fg-2 tracking-[0.16em] uppercase mt-0.5 hidden sm:block">
             {navigation.eyebrow}

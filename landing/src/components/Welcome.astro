@@ -50,6 +50,10 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
 ---
 
 <main class="welcome u-container">
+  <a class="welcome__corner-brand" href="/" aria-label="Nehorai">
+    <img src="/brand/monogram-dark.svg" alt="" width="40" height="40" />
+  </a>
+
   {/* Rotor — swings a few degrees on rotateY each world change so the page
       appears to "turn toward" the next world. The fixed grid/glow backdrop
       stays put and cross-fades, so the content turns against it. */}
@@ -154,6 +158,33 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
     flex-direction: column;
     align-items: center;
     gap: var(--s-3);
+  }
+
+  .welcome__corner-brand {
+    position: fixed;
+    inset-block-start: var(--s-4);
+    inset-inline-start: var(--s-4);
+    z-index: var(--z-overlay);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-1);
+    opacity: 0.86;
+    transition: opacity var(--dur-2), transform var(--dur-2);
+    filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.24));
+  }
+
+  .welcome__corner-brand:hover,
+  .welcome__corner-brand:focus-visible {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+
+  .welcome__corner-brand img {
+    width: 32px;
+    height: auto;
   }
 
   .welcome__lede {

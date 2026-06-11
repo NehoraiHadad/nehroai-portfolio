@@ -798,6 +798,16 @@ body[data-scene="showcase"] {
     neon-buzz 3s ease-in-out 3.5s infinite;
 }
 
+.brand-wordmark-dot {
+  position: absolute;
+  left: 58%;
+  top: 0.18em;
+  width: 0.16em;
+  height: 0.16em;
+  border-radius: var(--r-pill);
+  translate: -50% 0;
+}
+
 /* ── Flashlight ignition for logo dot (retinted) ── */
 /* NOTE: The white-flash (#fff) and ice-blue (#BAEFFE) stops are deliberate
    ignition choreography — hot white → cool blue → settled accent. They are
@@ -814,7 +824,7 @@ body[data-scene="showcase"] {
   0%, 100% { box-shadow: 0 0 8px 2px color-mix(in oklab, var(--accent) 80%, transparent), 0 0 18px 6px color-mix(in oklab, var(--accent) 25%, transparent); }
   50%      { box-shadow: 0 0 6px 2px color-mix(in oklab, var(--accent) 60%, transparent), 0 0 14px 4px color-mix(in oklab, var(--accent) 15%, transparent); }
 }
-#logo-dot.flashlight-active {
+.logo-dot.flashlight-active {
   background: var(--accent) !important;
   animation:
     flashlight-on 0.6s var(--ease-out) forwards,
