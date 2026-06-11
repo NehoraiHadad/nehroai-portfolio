@@ -832,6 +832,20 @@ body[data-scene="showcase"] {
   perspective-origin: 8% 4%;  /* roughly matches the logo-dot beam origin */
 }
 
+/* Socket discharge pop — fired (via JS class toggle) when a lit socket is
+   clicked. Animates `filter` only so it never fights the inline `transform`
+   that drives the pseudo-3D lift. The crackling arcs/ring live on the canvas;
+   this just over-charges the socket's own phosphor for a beat. Reduced-motion
+   users still get the instant brightness flash (no movement involved). */
+@keyframes socket-zap {
+  0%   { filter: brightness(2.5) saturate(1.4) drop-shadow(0 0 12px var(--accent)); }
+  60%  { filter: brightness(1.5) saturate(1.2) drop-shadow(0 0 6px var(--accent)); }
+  100% { filter: brightness(1)   saturate(1)   drop-shadow(0 0 0 transparent); }
+}
+.socket-zap {
+  animation: socket-zap 0.55s var(--ease-out);
+}
+
 /* ============================================================
    Custom scrollbar — WebKit/Blink */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

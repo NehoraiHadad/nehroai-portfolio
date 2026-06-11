@@ -228,7 +228,11 @@ const charVariants = {
 // Beam moves on → glow fades. That's the whole event.
 // ============================================================
 
-const ILLUMINATION_RADIUS = 28;
+// How far the beam's glow reaches (in viewport-% distance units) and how sharply
+// it falls off. A tighter radius + steeper exponent keeps the spotlight focused
+// on the target and its immediate neighbours instead of lighting a wide cluster.
+const ILLUMINATION_RADIUS = 19;
+const ILLUMINATION_FALLOFF = 2.6;
 
 // ============================================================
 // CANVAS BEAM DRAW — volumetric light shaft on Canvas2D
@@ -452,6 +456,162 @@ function drawBeamFrame(
   // the beam just points the way in, and the pit ignites naturally.
 }
 
+// ============================================================
+// DISCHARGE — click an illuminated socket to release an energy
+// burst: a hot flash, an expanding shock ring, crackling arcs
+// around the socket, and lightning that chains to the OTHER
+// currently-lit sockets. Pure canvas (additive), layered onto
+// the same light field right after the beam each frame.
+// ============================================================
+
+/** One active discharge event, stored in viewport px (converted at draw time). */
+interface Discharge {
+  ox: number;            // origin socket centre x (viewport px)
+  oy: number;            // origin socket centre y (viewport px)
+  links: { x: number; y: number }[]; // other lit sockets to chain to (viewport px)
+  start: number;         // frameCount when spawned
+  seed: number;          // per-burst random seed for stable-ish jitter
+}
+
+const DISCHARGE_LIFE = 36; // frames (~0.6s @60fps)
+
+/** Cheap deterministic pseudo-random in [0,1) from two numeric inputs. */
+function hashNoise(a: number, b: number): number {
+  const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+/**
+ * Draw a jagged lightning bolt from (x1,y1) to (x2,y2): a polyline whose
+ * interior vertices are pushed off the straight line by perpendicular jitter,
+ * re-rolled each frame so the bolt crackles. Stroked twice — a wide soft accent
+ * glow under a thin white-hot core. Assumes additive composite is already set.
+ */
+function drawBolt(
+  ctx: CanvasRenderingContext2D,
+  x1: number, y1: number, x2: number, y2: number,
+  amp: number, seed: number, frame: number,
+  accentRGB: string, alpha: number,
+) {
+  if (alpha <= 0.01) return;
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.hypot(dx, dy) || 1;
+  const px = -dy / len, py = dx / len;          // perpendicular unit
+  const segs = Math.max(3, Math.round(len / 22));
+  const pts: [number, number][] = [];
+  for (let i = 0; i <= segs; i++) {
+    const t = i / segs;
+    let off = 0;
+    if (i > 0 && i < segs) {
+      const taper = Math.sin(t * Math.PI);       // 0 at ends, 1 in middle
+      off = (hashNoise(seed + i * 7.13, frame) - 0.5) * 2 * amp * taper;
+    }
+    pts.push([x1 + dx * t + px * off, y1 + dy * t + py * off]);
+  }
+  const stroke = () => {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.stroke();
+  };
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = `rgba(${accentRGB},${(alpha * 0.5).toFixed(3)})`;
+  ctx.lineWidth = 3.5;
+  stroke();
+  ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+  ctx.lineWidth = 1.2;
+  stroke();
+}
+
+/**
+ * Render all active discharges and prune expired ones (mutates `list`).
+ * Coords are stored in viewport px; (crLeft,crTop) maps them to canvas-local.
+ */
+function drawDischarges(
+  ctx: CanvasRenderingContext2D,
+  list: Discharge[],
+  frame: number,
+  accent: AccentCache,
+  crLeft: number,
+  crTop: number,
+  isMobile: boolean,
+) {
+  if (list.length === 0) return;
+  const cc = (v: number) => (v > 255 ? 255 : v < 0 ? 0 : v);
+  const { r: ar, g: ag, b: ab } = accent;
+  const accentRGB = `${ar},${ag},${ab}`;
+  const hotRGB = `${cc(ar + 80)},${cc(ag + 80)},${cc(ab + 60)}`;
+
+  ctx.globalCompositeOperation = 'lighter';
+
+  for (let k = list.length - 1; k >= 0; k--) {
+    const d = list[k];
+    const age = frame - d.start;
+    if (age < 0 || age >= DISCHARGE_LIFE) { list.splice(k, 1); continue; }
+    const p = age / DISCHARGE_LIFE;   // 0..1
+    const fade = 1 - p;
+    const ox = d.ox - crLeft, oy = d.oy - crTop;
+
+    // ── Central flash — bright at impact, gone fast ──
+    const fa = Math.max(0, 1 - p * 2.2);
+    if (fa > 0.01) {
+      const R = isMobile ? 22 : 32;
+      const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, R);
+      g.addColorStop(0,   `rgba(255,255,255,${(0.9 * fa).toFixed(3)})`);
+      g.addColorStop(0.4, `rgba(${hotRGB},${(0.5 * fa).toFixed(3)})`);
+      g.addColorStop(1,   `rgba(${accentRGB},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(ox, oy, R, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ── Shock ring — expanding circle ──
+    const ringA = fade * 0.55;
+    if (ringA > 0.01) {
+      const R = 6 + p * (isMobile ? 52 : 78);
+      ctx.strokeStyle = `rgba(${hotRGB},${ringA.toFixed(3)})`;
+      ctx.lineWidth = Math.max(0.6, 2.6 * fade);
+      ctx.beginPath();
+      ctx.arc(ox, oy, R, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // ── Crackle arcs radiating around the socket (early only) ──
+    if (p < 0.6) {
+      const ca = (1 - p / 0.6) * 0.85;
+      const N = isMobile ? 4 : 6;
+      const baseLen = isMobile ? 26 : 38;
+      for (let i = 0; i < N; i++) {
+        const ang = (i / N) * Math.PI * 2 + d.seed + frame * 0.05;
+        const ln = baseLen * (0.5 + hashNoise(d.seed + i, frame) * 0.7);
+        drawBolt(ctx, ox, oy, ox + Math.cos(ang) * ln, oy + Math.sin(ang) * ln,
+          isMobile ? 5 : 8, d.seed + i * 3.7, frame, accentRGB, ca);
+      }
+    }
+
+    // ── Chain bolts to the other lit sockets (early-mid life) ──
+    if (p < 0.72) {
+      const la = 1 - p / 0.72;
+      for (let i = 0; i < d.links.length; i++) {
+        const lx = d.links[i].x - crLeft, ly = d.links[i].y - crTop;
+        drawBolt(ctx, ox, oy, lx, ly, isMobile ? 8 : 13,
+          d.seed + 100 + i * 9.1, frame, accentRGB, la);
+        // small flash at the receiving socket
+        const R = isMobile ? 14 : 20;
+        const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, R);
+        g.addColorStop(0, `rgba(${hotRGB},${(0.7 * la * 0.8).toFixed(3)})`);
+        g.addColorStop(1, `rgba(${accentRGB},0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(lx, ly, R, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+}
+
 interface StageElementDef {
   id: number;
   content: string;
@@ -577,7 +737,7 @@ const computeProximity = (elIdx: number, targetIdx: number, mobile: boolean): nu
   const tgtLeft = mobile && tgt.mobileLeft != null ? tgt.mobileLeft : tgt.left;
   const tgtTop = mobile && tgt.mobileTop != null ? tgt.mobileTop : tgt.top;
   const dist = Math.sqrt((elLeft - tgtLeft) ** 2 + (elTop - tgtTop) ** 2);
-  return Math.max(0, 1 - (dist / ILLUMINATION_RADIUS) ** 2);
+  return Math.max(0, 1 - (dist / ILLUMINATION_RADIUS) ** ILLUMINATION_FALLOFF);
 };
 
 // Fisher-Yates shuffle
@@ -595,10 +755,12 @@ const shuffleArray = (arr: number[]): number[] => {
 // text-shadow creates the groove illusion (dark top edge + light bottom lip).
 // When beam touches: phosphorescent glow fills the groove + symbol lifts
 // toward the light in pseudo-3D (scale + translateY + cast shadow beneath).
-const RecessedSymbol = React.memo(({ el, brightness, isMobile }: {
+const RecessedSymbol = React.memo(({ el, brightness, isMobile, clickable, onDischarge }: {
   el: StageElementDef;
   brightness: number;
   isMobile: boolean;
+  clickable: boolean;
+  onDischarge: (id: number) => void;
 }) => {
   const Icon = el.icon;
   const eff = Math.min(el.depth, brightness * el.depth);
@@ -677,6 +839,10 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile }: {
       ] : []),
     ].join(', '),
     transition: `background ${dur} ease-out, box-shadow ${dur} ease-out`,
+    // Only the currently-lit sockets accept the pointer (the field is otherwise
+    // pointer-events:none). Clicking one fires an energy discharge.
+    pointerEvents: clickable ? 'auto' : 'none',
+    cursor: clickable ? 'pointer' : 'default',
   };
 
   // The phosphorescent MATERIAL inside the socket — the glyph/icon itself.
@@ -692,7 +858,12 @@ const RecessedSymbol = React.memo(({ el, brightness, isMobile }: {
       className={`absolute select-none${el.mobileHidden ? ' hidden lg:block' : ''}`}
       style={wrapperStyle}
     >
-      <span className="inline-flex" style={socketStyle}>
+      <span
+        className="inline-flex"
+        style={socketStyle}
+        onClick={clickable ? () => onDischarge(el.id) : undefined}
+        aria-hidden="true"
+      >
         {Icon ? (
           <span
             style={{
@@ -779,6 +950,8 @@ const IlluminationBackground = () => {
   const frameCountRef = useRef(0);
   // DPR tracking
   const dprRef = useRef(1);
+  // Active click-discharge bursts — drawn additively after the beam each frame.
+  const dischargesRef = useRef<Discharge[]>([]);
 
   // Keep the beam-state refs in sync with React state so the canvas loop
   // always reads the freshest values without waiting for a render cycle.
@@ -790,18 +963,27 @@ const IlluminationBackground = () => {
 
   // Detect mobile (below lg breakpoint = 1024px)
   useEffect(() => {
+    // Measure the logo-dot's viewport centre into the cache the rAF loop reads.
+    // Guards out degenerate rects: pre-ignition the dot is `opacity-0 scale-0`
+    // (collapsed 0×0), and at first paint the nav is still spring-animating in
+    // from y:-100 with fonts unsettled — measuring then would freeze a wrong
+    // origin until a resize. Only a real, laid-out dot updates the cache.
+    const measureDot = () => {
+      const dot = document.getElementById('logo-dot');
+      if (!dot) return;
+      const r = dot.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) {
+        dotRectRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }
+    };
+
     const check = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       isMobileRef.current = mobile;
       canvasBeamRef.current.isMobile = mobile;
 
-      // Refresh cached dot rect on resize
-      const dot = document.getElementById('logo-dot');
-      if (dot) {
-        const r = dot.getBoundingClientRect();
-        dotRectRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-      }
+      measureDot();
 
       // Resize canvas to match new viewport + DPR
       const canvas = canvasRef.current;
@@ -818,7 +1000,26 @@ const IlluminationBackground = () => {
     };
     check();
     window.addEventListener('resize', check, { passive: true });
-    return () => window.removeEventListener('resize', check);
+
+    // Re-measure the dot as layout settles: next frame, after fonts load, and at
+    // each choreography milestone (the dot only becomes measurable once it
+    // ignites at dotIgnite). The last valid measurement wins, so by the time the
+    // beam first draws (beamStage1) the origin is correct without a resize.
+    const raf1 = requestAnimationFrame(measureDot);
+    const settleTimers = [
+      TIMELINE.dotIgnite,
+      TIMELINE.beamStage1,
+      TIMELINE.beamStage2,
+    ].map((t) => setTimeout(measureDot, t + 60));
+    let fontsCancelled = false;
+    document.fonts?.ready?.then(() => { if (!fontsCancelled) measureDot(); });
+
+    return () => {
+      window.removeEventListener('resize', check);
+      cancelAnimationFrame(raf1);
+      settleTimers.forEach(clearTimeout);
+      fontsCancelled = true;
+    };
   }, []);
 
   // MutationObserver on documentElement — re-read accent when data-theme / class changes.
@@ -989,9 +1190,15 @@ const IlluminationBackground = () => {
         ox = dotRectRef.current.x;
         oy = dotRectRef.current.y;
       } else {
+        // No valid cache yet — read live, but only trust (cache) it once the dot
+        // is actually laid out. Pre-ignition it's `scale-0` (collapsed 0×0) and
+        // the nav may still be spring-animating in; caching that would freeze a
+        // wrong origin forever. Skip the frame until we get a real measurement —
+        // the beam isn't visible before ignition anyway, so this is invisible.
         const dot = document.getElementById('logo-dot');
         if (!dot) { raf = requestAnimationFrame(track); return; }
         const dr = dot.getBoundingClientRect();
+        if (dr.width === 0 || dr.height === 0) { raf = requestAnimationFrame(track); return; }
         ox = dr.left + dr.width / 2;
         oy = dr.top + dr.height / 2;
         dotRectRef.current = { x: ox, y: oy };
@@ -1061,6 +1268,17 @@ const IlluminationBackground = () => {
             frameCountRef.current,
             cb.isMobile,
           );
+
+          // Click-discharge bursts layer on top of the beam (additive). Viewport
+          // coords → canvas-local via the same rect used for the beam geometry.
+          drawDischarges(
+            ctx,
+            dischargesRef.current,
+            frameCountRef.current,
+            accentRef.current,
+            cr.left, cr.top,
+            cb.isMobile,
+          );
         }
       }
 
@@ -1123,6 +1341,57 @@ const IlluminationBackground = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Click an illuminated socket → release an energy discharge that crackles
+  // around it and chains lightning to the OTHER currently-lit sockets. The
+  // chain naturally stays sparse because only a few sockets are lit at once.
+  // Skipped under reduced motion (the canvas loop is off there) — those users
+  // still get the brief CSS brightness pop on the socket itself.
+  const handleDischarge = useCallback((id: number) => {
+    const flare = (node: HTMLElement | null) => {
+      if (!node) return;
+      node.classList.remove('socket-zap');
+      void node.offsetWidth;              // reflow → restart on rapid re-clicks
+      node.classList.add('socket-zap');
+      window.setTimeout(() => node.classList.remove('socket-zap'), 600);
+    };
+
+    const originEl = document.getElementById(`target-${id}`);
+    if (!originEl) return;
+    flare(originEl);
+    if (prefersReduced) return;           // no canvas → CSS pop only
+
+    const or = originEl.getBoundingClientRect();
+    const ox = or.left + or.width / 2;
+    const oy = or.top + or.height / 2;
+
+    // Which other sockets are lit right now? Use the same proximity-to-active-
+    // target signal that drives the glow; chain to the closest few.
+    const targetEl = visibleElements[activeTarget];
+    const lit: { x: number; y: number; node: HTMLElement; d: number }[] = [];
+    if (targetEl) {
+      for (const el of visibleElements) {
+        if (el.id === id) continue;
+        if (computeProximity(el.id, targetEl.id, isMobileRef.current) < 0.28) continue;
+        const node = document.getElementById(`target-${el.id}`);
+        if (!node) continue;
+        const r = node.getBoundingClientRect();
+        const x = r.left + r.width / 2, y = r.top + r.height / 2;
+        lit.push({ x, y, node, d: Math.hypot(x - ox, y - oy) });
+      }
+    }
+    lit.sort((a, b) => a.d - b.d);
+    const picked = lit.slice(0, 3);
+    picked.forEach((l) => flare(l.node));
+
+    dischargesRef.current.push({
+      ox, oy,
+      links: picked.map((l) => ({ x: l.x, y: l.y })),
+      start: frameCountRef.current,
+      seed: Math.random() * 1000,
+    });
+    if (dischargesRef.current.length > 6) dischargesRef.current.shift();
+  }, [visibleElements, activeTarget, prefersReduced]);
+
   return (
     <div ref={wrapperRef} className="absolute inset-0 overflow-hidden pointer-events-none z-0">
       {/* Canvas volumetric light layer — additive blending. Portaled to <body>
@@ -1167,6 +1436,8 @@ const IlluminationBackground = () => {
               el={element}
               brightness={brightness}
               isMobile={isMobile}
+              clickable={brightness > 0.25}
+              onDischarge={handleDischarge}
             />
           );
         })}
