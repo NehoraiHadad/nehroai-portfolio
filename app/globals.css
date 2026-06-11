@@ -821,7 +821,19 @@ body[data-scene="showcase"] {
     dot-pulse 3s ease-in-out 0.6s infinite;
 }
 
-/* Custom scrollbar — WebKit/Blink */
+/* ============================================================
+   Illumination symbol field — perspective container for pseudo-3D lift.
+   The absolute inset-0 wrapper that holds RecessedSymbols gets a CSS
+   perspective so translateZ / scale lifts read as genuine depth.
+   500px gives visible parallax without distorting symbol legibility.
+   ============================================================ */
+.symbol-field {
+  perspective: 500px;
+  perspective-origin: 8% 4%;  /* roughly matches the logo-dot beam origin */
+}
+
+/* ============================================================
+   Custom scrollbar — WebKit/Blink */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-0); }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--r-pill); }
