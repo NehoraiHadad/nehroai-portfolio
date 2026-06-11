@@ -671,14 +671,41 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
     return wasShown;
   };
 
-  // Visitor flipped the A/B toggle → re-skin the per-version cards in place so
-  // each matches the clip they're now watching (v1 plain ↔ v2 authored).
+  // Visitor flipped the A/B toggle → REPLAY the whole intro in the new version.
+  // The vote script restarts the clip from 0 (swapVideo → load()), so hide every
+  // card and let the restarted clip re-author them on its own beats — that's the
+  // only way the visitor actually sees how v1 vs v2 presents them. (Re-skinning
+  // in place dumped all the revealed cards at once, frozen out of sync with the
+  // character, so the two versions looked identical.)
+  let replaySafetyNet = 0;
   document.addEventListener("introver:change", () => {
     syncVerAttr();
-    Object.keys(v2Reveal).forEach((beat) => {
-      const card = byBeat(beat);
-      if (resetCard(card)) present(card); // was on screen → re-present in new style
-    });
+    const video = document.querySelector<HTMLVideoElement>(
+      "video.character__media"
+    );
+    if (!video) {
+      // Static fallback (reduced motion / clip failed → poster <img>): there is
+      // no clip to replay, so just re-skin the on-screen cards in the new style.
+      Object.keys(v2Reveal).forEach((beat) => {
+        const card = byBeat(beat);
+        if (resetCard(card)) present(card);
+      });
+      return;
+    }
+    cards.forEach((card) => resetCard(card));
+    // The beat source de-dupes worlds by id and we're usually still "inside"
+    // portfolio when the clip restarts — releaseWorld() clears its lastWorld so
+    // the first frame re-emits the opening world and the first card re-authors
+    // immediately instead of waiting for its mid-dwell beat.
+    releaseWorld();
+    // Boot-style safety net: if the swapped clip can't play (404 / autoplay
+    // blocked), don't leave the page blank — reveal everything.
+    window.clearTimeout(replaySafetyNet);
+    replaySafetyNet = window.setTimeout(() => {
+      if (!document.querySelector("[data-beat].is-revealed")) {
+        BEAT_MAP.forEach((b) => present(byBeat(b.id)));
+      }
+    }, 4500);
   });
 
   // Beat = "present this card" (cumulative reveal; also the fallback path used
