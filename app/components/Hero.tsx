@@ -1393,7 +1393,7 @@ const IlluminationBackground = () => {
   }, [visibleElements, activeTarget, prefersReduced]);
 
   return (
-    <div ref={wrapperRef} className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+    <div ref={wrapperRef} className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
       {/* Canvas volumetric light layer — additive blending. Portaled to <body>
           and fixed above the nav (z-60) so the beam ORIGINATES from the logo dot
           itself (which sits inside the fixed nav bar) instead of being clipped
