@@ -2,12 +2,12 @@
 
 This folder holds the central character clip referenced by
 `src/pages/index.astro`. Phase 1 ships only a placeholder **poster**
-(`character.poster.png`). Drop the real files here with these names — no code
+(`character.poster.webp`). Drop the real files here with these names — no code
 change needed:
 
 | File                    | Purpose                                  | Browsers          |
 | ----------------------- | ---------------------------------------- | ----------------- |
-| `character.poster.png`  | Still poster + reduced-motion fallback   | all               |
+| `character.poster.webp`  | Still poster + reduced-motion fallback   | all               |
 | `character.mp4`         | H.264 — universal clip / framed mode     | all               |
 | `character.webm`        | VP9 (or AV1) **with alpha** — transparent| Chrome/FF/Edge    |
 | `character.mov`         | HEVC **with alpha** — transparent        | Safari/iOS/macOS  |

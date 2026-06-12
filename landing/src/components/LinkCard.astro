@@ -46,7 +46,7 @@ const target = link.external ? "_blank" : undefined;
     text-align: start;
     transition: transform var(--dur-2) var(--ease-out),
       border-color var(--dur-2), box-shadow var(--dur-2), opacity var(--dur-3),
-      filter var(--dur-3);
+      filter var(--dur-3), visibility var(--dur-3);
 
     /* Hidden initial state — revealed by .is-revealed (beat fires) */
     opacity: 0;
@@ -54,12 +54,17 @@ const target = link.external ? "_blank" : undefined;
     /* Not yet authored → not hoverable: stops a hover over an empty card slot
        from summoning that world and revealing the card before its beat. */
     pointer-events: none;
+    /* visibility (unlike opacity/pointer-events) also drops the link from the
+       tab order + a11y tree, so keyboard users can't land on an invisible card.
+       It's in the transition list so a reset (A/B switch) fades out first. */
+    visibility: hidden;
   }
 
   .link-card.is-revealed {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: auto;
+    visibility: visible;
   }
 
   .link-card:hover {

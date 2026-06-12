@@ -7,6 +7,8 @@ import {
   localeUrl,
   type Locale,
 } from "../lib/i18n";
+import { LINKS } from "../lib/links";
+import { VIDEOS, DEFAULT_VER } from "../lib/videos";
 
 interface Props {
   locale?: Locale;
@@ -26,6 +28,19 @@ const ogImage = new URL("/brand/cover.png", Astro.site ?? "https://nehoraihadad.
 // Hreflang alternates so search engines pair the two locales.
 const enUrl = new URL(localeUrl("en"), Astro.site ?? "https://nehoraihadad.com");
 const heUrl = new URL(localeUrl("he"), Astro.site ?? "https://nehoraihadad.com");
+
+// Person schema for the personal-brand knowledge panel. sameAs = the public
+// profiles the cards link to (skip the WhatsApp deep link — it's a contact
+// action, not a profile page).
+const personLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Nehorai Hadad",
+  alternateName: "נהוראי חדד",
+  url: enUrl.href,
+  image: ogImage.href,
+  sameAs: LINKS.filter((l) => l.beat !== "contact").map((l) => l.href),
+});
 ---
 
 <!doctype html>
@@ -39,6 +54,15 @@ const heUrl = new URL(localeUrl("he"), Astro.site ?? "https://nehoraihadad.com")
     <link rel="alternate" hreflang="he" href={heUrl.href} />
     <link rel="alternate" hreflang="x-default" href={enUrl.href} />
     <meta name="theme-color" content="#050E22" />
+    {/* The character poster is the page's first visual — fetch it alongside the
+        document instead of after the island hydrates. SSR default version; a
+        saved v1/v2 preference swaps post-hydration anyway. */}
+    <link
+      rel="preload"
+      as="image"
+      type="image/webp"
+      href={VIDEOS[DEFAULT_VER].poster}
+    />
 
     {
       /* Auto-redirect Hebrew browsers once. Only on the default-locale page so
@@ -60,11 +84,16 @@ const heUrl = new URL(localeUrl("he"), Astro.site ?? "https://nehoraihadad.com")
     <meta property="og:description" content={pageDescription} />
     <meta property="og:url" content={canonical.href} />
     <meta property="og:image" content={ogImage.href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={pageTitle} />
     <meta property="og:locale" content={locale === "he" ? "he_IL" : "en_US"} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDescription} />
     <meta name="twitter:image" content={ogImage.href} />
+
+    <script type="application/ld+json" set:html={personLd} />
   </head>
   <body data-world="portfolio">
     <div class="bg-glow" aria-hidden="true"></div>

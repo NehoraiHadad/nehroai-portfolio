@@ -1,0 +1,66 @@
+---
+/**
+ * Branded 404 — served by the Worker for any unknown path (wrangler.jsonc
+ * `not_found_handling: "404-page"` maps misses to this page's /404.html).
+ * One page for both locales: the visitor landed on a URL that doesn't exist,
+ * so there's no locale context to trust — show both, lead with English.
+ */
+import Base from "../layouts/Base.astro";
+import { STRINGS } from "../lib/i18n";
+
+const en = STRINGS.en.notFound;
+const he = STRINGS.he.notFound;
+---
+
+<Base title="404 — Nehorai Hadad" description={en.message}>
+  <main class="nf u-container">
+    <p class="eyebrow">404</p>
+    <h1 class="display">{en.title}</h1>
+    <p class="nf__msg">{en.message}</p>
+    <p class="nf__msg" dir="rtl" lang="he">{he.message}</p>
+    <div class="nf__actions">
+      <a class="nf__btn" href="/">{en.back}</a>
+      <a class="nf__btn" href="/he/" dir="rtl" lang="he">{he.back}</a>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .nf {
+    position: relative;
+    z-index: var(--z-base);
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-4);
+    text-align: center;
+    padding-block: var(--s-6);
+  }
+
+  .nf__msg {
+    max-width: 44ch;
+    color: var(--fg-1);
+  }
+
+  .nf__actions {
+    display: flex;
+    gap: var(--s-3);
+    margin-top: var(--s-3);
+  }
+
+  .nf__btn {
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: 999px;
+    color: var(--fg-0, #fff);
+    border: 1px solid color-mix(in oklab, var(--w-accent, #6ea8fe) 55%, transparent);
+    transition: background var(--dur-2) var(--ease-out), transform var(--dur-2);
+  }
+
+  .nf__btn:hover {
+    background: color-mix(in oklab, var(--w-accent, #6ea8fe) 18%, transparent);
+    transform: translateY(-1px);
+  }
+</style>

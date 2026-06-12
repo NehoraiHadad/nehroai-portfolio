@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two-URL site; maintained by hand. Update if a locale or page is added. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://nehoraihadad.com/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://nehoraihadad.com/" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://nehoraihadad.com/he/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://nehoraihadad.com/" />
+  </url>
+  <url>
+    <loc>https://nehoraihadad.com/he/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://nehoraihadad.com/" />
+    <xhtml:link rel="alternate" hreflang="he" href="https://nehoraihadad.com/he/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://nehoraihadad.com/" />
+  </url>
+</urlset>

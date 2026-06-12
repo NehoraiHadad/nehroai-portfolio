@@ -8,6 +8,7 @@
 import CharacterStage from "./CharacterStage.astro";
 import LinkCards from "./LinkCards.astro";
 import { STRINGS, DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { VIDEOS, DEFAULT_VER } from "../lib/videos";
 
 interface Props {
   locale?: Locale;
@@ -23,29 +24,8 @@ const t = STRINGS[locale];
   - mode="alpha"   -> transparent character (provide webm + hevc), no box.
   See landing/README.md and public/video/README.md.
 */
-// Bump on every re-encode of the character clip so browsers (and the CDN)
-// fetch the new file instead of a stale cached copy.
-// Two character clips are kept live so visitors can A/B them (see the vote
-// strip below): v1 = the original 3-clip metamorphosis loop, v2 = the newer
-// "agency" loop (writes/types/texts to author each card). Both are alpha
-// (transparent character floats over the grid); mp4 is the navy-baked fallback.
-const V1 = "7";
-const V2 = "9-v2";
-const VIDEOS = {
-  v1: {
-    poster: `/video/character.poster.png?v=${V1}`,
-    mp4: `/video/character.mp4?v=${V1}`,
-    webm: `/video/character.webm?v=${V1}`,
-  },
-  v2: {
-    poster: `/video/character-v2.poster.png?v=${V2}`,
-    mp4: `/video/character-v2.mp4?v=${V2}`,
-    webm: `/video/character-v2.webm?v=${V2}`,
-  },
-} as const;
-// Which clip renders on first paint (the client script may override from a
-// saved preference). v2 is the newer one we want eyes on.
-const DEFAULT_VER: "v1" | "v2" = "v2";
+// Clip URLs + the SSR default version live in lib/videos.ts (shared with
+// Base.astro, which preloads the default poster).
 const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
 ---
 
@@ -87,6 +67,8 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
     class="vote"
     data-vote
     data-default={DEFAULT_VER}
+    data-voted-label={t.vote.voted}
+    data-thanks-label={t.vote.thanks}
     data-v1-webm={VIDEOS.v1.webm}
     data-v1-mp4={VIDEOS.v1.mp4}
     data-v1-poster={VIDEOS.v1.poster}
@@ -102,16 +84,16 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
       aria-controls="vote-panel"
     >
       <span class="vote__toggle-dot" aria-hidden="true"></span>
-      A/B intro
+      {t.vote.pill}
     </button>
     <div class="vote__panel" id="vote-panel" data-vote-panel hidden>
-      <p class="vote__q">Two takes on the intro — which do you prefer?</p>
+      <p class="vote__q">{t.vote.question}</p>
       <div class="vote__row">
-        <div class="vote__seg" role="group" aria-label="Choose intro version">
+        <div class="vote__seg" role="group" aria-label={t.vote.segAria}>
           <button type="button" class="vote__opt" data-ver="v1">v1</button>
           <button type="button" class="vote__opt is-on" data-ver="v2">v2</button>
         </div>
-        <button type="button" class="vote__cast" data-cast>Vote for this</button>
+        <button type="button" class="vote__cast" data-cast>{t.vote.cast}</button>
       </div>
       <p class="vote__tally" data-tally hidden aria-live="polite"></p>
     </div>
@@ -239,6 +221,31 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
     border-radius: 50%;
     background: var(--w-accent, #6ea8fe);
     box-shadow: 0 0 9px -1px var(--w-glow, rgba(110, 168, 254, 0.8));
+  }
+  /* One-time nudge after the first full loop: the pill pulses a few times to
+     invite a vote, then never again (localStorage flag in the script below).
+     Animating the pill itself (not just the dot) so it reads at a glance. */
+  .vote__toggle.is-nudge {
+    animation: vote-nudge 1.1s var(--ease-out) 3;
+  }
+  @keyframes vote-nudge {
+    0%,
+    100% {
+      opacity: 0.62;
+      transform: scale(1);
+      box-shadow: 0 0 0 0 var(--w-glow, rgba(110, 168, 254, 0.5));
+    }
+    35% {
+      opacity: 1;
+      transform: scale(1.06);
+      box-shadow: 0 0 18px -2px var(--w-glow, rgba(110, 168, 254, 0.7));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vote__toggle.is-nudge {
+      animation: none;
+      opacity: 1;
+    }
   }
   .vote__panel {
     display: flex;
@@ -505,7 +512,12 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
       "video.character__media"
     );
 
-    if (!video || video.paused || video.readyState < 2) {
+    // `paused` flips false the moment play() is invoked, so this stays true
+    // through the brief not-yet-loaded window right after a version switch
+    // (load() → readyState 0) — the synced tick below just holds in predraw
+    // until the clip's clock starts. Only a video that isn't even TRYING to
+    // play (autoplay blocked / reduced clip) falls back to the CSS draw.
+    if (!video || video.paused) {
       // No usable clock — let CSS draw it on a fixed timeline, then hand off.
       fxTimers.set(card, window.setTimeout(finish, 2500));
       return;
@@ -521,7 +533,16 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
     const line = svg.querySelector<SVGRectElement>(".ink-trail__line");
     const point = svg.querySelector<SVGRectElement>(".ink-trail__point");
     const span = WRITE_END - WRITE_START;
+    // Stall watchdog: if the clip never starts giving us a clock (swap to a
+    // clip that 404s / playback dies before the first frame), don't hold the
+    // card in predraw (copy hidden) forever — hand off without the trail.
+    const t0 = performance.now();
     const tick = () => {
+      if (video.currentTime < 0.2 && performance.now() - t0 > 3500) {
+        fxRafs.delete(card);
+        finish();
+        return;
+      }
       const p = Math.max(
         0,
         Math.min(1, (video.currentTime - WRITE_START) / span)
@@ -921,6 +942,7 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
       root.classList.toggle("is-open", open);
       toggle?.setAttribute("aria-expanded", String(open));
       if (panel) panel.hidden = !open;
+      if (open) toggle?.classList.remove("is-nudge"); // noticed — stop nudging
     };
     toggle?.addEventListener("click", () => setOpen(!!panel?.hidden));
     document.addEventListener("click", (e) => {
@@ -938,6 +960,22 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
     const ssrDefault = (d.default === "v1" ? "v1" : "v2") as Ver;
     const norm = (x: string | null): Ver => (x === "v1" ? "v1" : "v2");
     let current: Ver = norm(localStorage.getItem("introVer") ?? ssrDefault);
+
+    // A/B exposure counter (fire-and-forget): one event per version actually
+    // WATCHED this page load, so the vote tally has context from the silent
+    // majority who never open the panel. sendBeacon survives quick bounces;
+    // under `astro dev` there's no /api and the beacon just 404s harmlessly.
+    const seenSent = new Set<Ver>();
+    const markSeen = (ver: Ver) => {
+      if (seenSent.has(ver)) return;
+      seenSent.add(ver);
+      try {
+        navigator.sendBeacon?.("/api/seen?v=" + (ver === "v2" ? "2" : "1"));
+      } catch {
+        /* no beacon support — skip */
+      }
+    };
+    markSeen(current);
 
     const applyShown = (ver: Ver) =>
       opts.forEach((b) => b.classList.toggle("is-on", b.dataset.ver === ver));
@@ -963,6 +1001,7 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
       localStorage.setItem("introVer", ver);
       applyShown(ver);
       swapVideo(ver);
+      markSeen(ver);
       // Tell the presentation script to re-skin the per-version cards.
       document.dispatchEvent(new CustomEvent("introver:change", { detail: ver }));
     };
@@ -1002,15 +1041,36 @@ const VIDEO = { mode: "alpha" as const, ...VIDEOS[DEFAULT_VER] };
       const pct = (n: number) => (total ? Math.round((n / total) * 100) : 0);
       tally.hidden = false;
       tally.innerHTML =
-        (justVoted ? "Thanks! " : "") +
+        (justVoted ? `${d.thanksLabel ?? ""} ` : "") +
         `v1 <b>${pct(v1)}%</b> · v2 <b>${pct(v2)}%</b> ` +
         `<span style="opacity:.55">(${total})</span>`;
     };
 
     const lockVoted = () => {
       cast.disabled = true;
-      cast.textContent = "Voted ✓";
+      cast.textContent = d.votedLabel ?? "Voted ✓";
     };
+
+    // One-time nudge: after the first full loop (~14s) has had time to play,
+    // pulse the pill a few times to invite a vote — only if the visitor hasn't
+    // opened the panel or voted, and never more than once per browser (the
+    // pill is intentionally subtle; this is its single moment of self-promotion).
+    if (
+      !localStorage.getItem("introVoted") &&
+      !localStorage.getItem("voteNudged")
+    ) {
+      window.setTimeout(() => {
+        if (root.classList.contains("is-open")) return;
+        if (localStorage.getItem("introVoted")) return;
+        localStorage.setItem("voteNudged", "1");
+        toggle?.classList.add("is-nudge");
+        toggle?.addEventListener(
+          "animationend",
+          () => toggle.classList.remove("is-nudge"),
+          { once: true }
+        );
+      }, 16000);
+    }
 
     // Show the running tally (no-op if the API isn't there, e.g. astro dev).
     fetch("/api/votes")

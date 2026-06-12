@@ -51,6 +51,27 @@ export interface UIStrings {
   toggleLabel: string;
   /** aria-label of the language toggle link. */
   toggleAria: string;
+  /** A/B intro vote widget (the corner pill + panel in Welcome.astro). */
+  vote: {
+    /** Collapsed corner pill that opens the panel. */
+    pill: string;
+    /** Question shown at the top of the panel. */
+    question: string;
+    /** aria-label of the v1/v2 segmented control. */
+    segAria: string;
+    /** The "cast my vote" button. */
+    cast: string;
+    /** Button label after the vote is locked in. */
+    voted: string;
+    /** Prefix on the tally right after voting. */
+    thanks: string;
+  };
+  /** 404 page copy. */
+  notFound: {
+    title: string;
+    message: string;
+    back: string;
+  };
   /** Card copy keyed by beat id (see links.ts / BEAT_MAP). */
   links: Record<string, LinkCopy>;
 }
@@ -68,6 +89,19 @@ export const STRINGS: Record<Locale, UIStrings> = {
     videoLabel: "Animated portrait of Nehorai welcoming you",
     toggleLabel: "עברית",
     toggleAria: "עבור לעברית — switch to Hebrew",
+    vote: {
+      pill: "A/B intro",
+      question: "Two takes on the intro — which do you prefer?",
+      segAria: "Choose intro version",
+      cast: "Vote for this",
+      voted: "Voted ✓",
+      thanks: "Thanks!",
+    },
+    notFound: {
+      title: "Lost in the grid.",
+      message: "This page doesn't exist — but the worlds below do.",
+      back: "Back home",
+    },
     links: {
       portfolio: {
         kicker: "AI · Engineering",
@@ -98,6 +132,19 @@ export const STRINGS: Record<Locale, UIStrings> = {
     videoLabel: "דמות מונפשת של נהוראי מקבלת אתכם בברכה",
     toggleLabel: "EN",
     toggleAria: "Switch to English — עבור לאנגלית",
+    vote: {
+      pill: "פתיח A/B",
+      question: "שתי גרסאות לפתיח — איזו עדיפה בעיניכם?",
+      segAria: "בחירת גרסת פתיח",
+      cast: "הצביעו לזו",
+      voted: "הצבעתם ✓",
+      thanks: "תודה!",
+    },
+    notFound: {
+      title: "הלכתם לאיבוד ברשת.",
+      message: "העמוד הזה לא קיים — אבל העולמות למטה כן.",
+      back: "חזרה הביתה",
+    },
     links: {
       portfolio: {
         kicker: "בינה מלאכותית · הנדסה",
