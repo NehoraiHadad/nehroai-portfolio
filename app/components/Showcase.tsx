@@ -87,13 +87,21 @@ export const Showcase = () => {
       })),
     [rawCaseStudies]
   );
+  const featured = useMemo<CaseStudy[]>(
+    () => caseStudies.filter((s) => s.tier !== 'compact'),
+    [caseStudies]
+  );
+  const compact = useMemo<CaseStudy[]>(
+    () => caseStudies.filter((s) => s.tier === 'compact'),
+    [caseStudies]
+  );
   const flowHeight = useMemo(() => {
     if (isMobile) {
-      return Math.max(760, 220 + caseStudies.length * 170);
+      return Math.max(760, 220 + featured.length * 170);
     }
 
-    return Math.max(680, 220 + caseStudies.length * 140);
-  }, [caseStudies.length, isMobile]);
+    return Math.max(680, 220 + featured.length * 140);
+  }, [featured.length, isMobile]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -131,7 +139,7 @@ export const Showcase = () => {
     const projectGap = isMobile ? 180 : 150;
     const orchestratorY = isMobile
       ? 0
-      : projectStartY + ((caseStudies.length - 1) * projectGap) / 2 - 40;
+      : projectStartY + ((featured.length - 1) * projectGap) / 2 - 40;
     const newNodes = [
       {
         id: 'orchestrator',
@@ -139,7 +147,7 @@ export const Showcase = () => {
         position: isMobile ? { x: 0, y: 0 } : { x: 0, y: orchestratorY },
         data: { isMobile, label: showcase.orchestratorLabel, shippingLabel: showcase.shippingLabel },
       },
-      ...caseStudies.map((study, idx) => ({
+      ...featured.map((study, idx) => ({
         id: study.id,
         type: 'project',
         position: isMobile
@@ -158,7 +166,7 @@ export const Showcase = () => {
       }))
     ];
 
-    const newEdges = caseStudies.map((study) => ({
+    const newEdges = featured.map((study) => ({
       id: `e-orch-${study.id}`,
       source: 'orchestrator',
       target: study.id,
@@ -172,7 +180,7 @@ export const Showcase = () => {
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [caseStudies, isMobile, isRtl, openDrawer, setNodes, setEdges, showcase.orchestratorLabel, showcase.shippingLabel]);
+  }, [featured, isMobile, isRtl, openDrawer, setNodes, setEdges, showcase.orchestratorLabel, showcase.shippingLabel]);
 
   return (
     <section id="showcase" ref={ref} className="py-24 px-4 sm:px-6 max-w-7xl mx-auto relative z-10">
@@ -222,6 +230,47 @@ export const Showcase = () => {
           {showcase.hint}
         </div>
       </div>
+
+      {/* Compact "Also shipped" strip */}
+      {compact.length > 0 && (
+        <div className="reveal mt-12" style={{ '--reveal-delay': '300ms' } as React.CSSProperties}>
+          <div className="mb-6" style={{ textAlign: 'start' }}>
+            <h3 className="text-xl font-bold text-fg-0 mb-1">{showcase.compactTitle}</h3>
+            <p className="text-fg-2 text-sm">{showcase.compactDescription}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {compact.map((study) => {
+              const Icon = study.icon;
+              return (
+                <div
+                  key={study.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={study.title}
+                  dir={direction}
+                  style={{ textAlign: 'start' }}
+                  className="bg-surface/90 border border-line rounded-xl p-4 flex items-start gap-3 hover:border-accent/40 transition-[border-color] cursor-pointer focus-visible:[box-shadow:var(--shadow-focus-ring)] outline-none"
+                  onClick={() => openDrawer(study)}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openDrawer(study);
+                    }
+                  }}
+                >
+                  <div className="w-9 h-9 rounded-lg bg-surface-raised/50 border border-line-strong/50 flex items-center justify-center text-fg-1 shrink-0">
+                    <Icon className="w-4 h-4" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-fg-0 mb-1 leading-tight">{study.title}</div>
+                    <div className="text-xs text-fg-2 leading-relaxed line-clamp-2">{study.description}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 4.1: sr-only project list — SEO + screen-reader fallback for the canvas */}
       <ul className="sr-only">

@@ -44,7 +44,9 @@ export const enDictionary: AppDictionary = {
   showcase: {
     sectionMarker: '02 — PROJECTS',
     title: 'Selected Projects',
-    description: 'Five shipped systems — AI pipelines on AWS, agent orchestration over MCP, client sites in production.',
+    description: 'Shipped systems — AI pipelines on AWS, agent orchestration over MCP, an edge-native SaaS, a published npm library, and client sites in production.',
+    compactTitle: 'Also shipped',
+    compactDescription: 'Client sites and live side projects.',
     hint: 'Click a node to open the project details',
     orchestratorLabel: 'Nehorai // Builder',
     shippingLabel: 'SHIPPING',
@@ -189,6 +191,7 @@ export const enDictionary: AppDictionary = {
     {
       id: 'podcasto',
       title: 'Podcasto',
+      tier: 'featured',
       description:
         'Turns Telegram news channels into AI-narrated podcasts delivered by email. Chunked audio pipeline on AWS — Lambda, SQS, DynamoDB, SES — with Google Gemini 2.5 Flash TTS.',
       impact:
@@ -217,6 +220,7 @@ export const enDictionary: AppDictionary = {
     {
       id: 'agendo',
       title: 'Agendo',
+      tier: 'featured',
       description:
         'Self-hosted dashboard for orchestrating AI coding agents — Claude, Codex, Gemini — from a single Kanban-style interface with MCP integration.',
       impact: 'Removes the need to juggle multiple CLIs; agents share a task board and coordinate via MCP.',
@@ -234,6 +238,7 @@ export const enDictionary: AppDictionary = {
     {
       id: 'story-creator',
       title: 'Story Creator',
+      tier: 'featured',
       description:
         "AI storybook product that turns a child's photo into a personalized illustrated book with character-consistent images, bilingual UX, and a resumable multi-step wizard.",
       impact:
@@ -260,8 +265,88 @@ export const enDictionary: AppDictionary = {
       },
     },
     {
+      id: 'freckle',
+      title: 'Freckle',
+      tier: 'featured',
+      description:
+        'A centralized admin dashboard that builds its entire UI at runtime from each product\'s OpenAPI spec — no hardcoded screens per product. Add a compliant API and Freckle renders the tables, forms, and detail views automatically.',
+      impact: 'Onboard a new product by pointing Freckle at its OpenAPI spec — zero bespoke admin UI to write.',
+      tags: ['Next.js 16', 'OpenAPI', 'TypeScript', 'SQLite', 'i18n'],
+      icon: 'controls',
+      details: {
+        challenge: 'Every product ends up needing its own hand-built admin panel — duplicated CRUD screens that rot the moment the API changes.',
+        solution:
+          'Freckle discovers resources and operations from each product\'s OpenAPI spec and generates sidebars, tables, JSON-Schema-driven forms, and detail views at runtime. A server-side proxy encrypts API keys with AES-256-GCM so they never reach the browser, with audit logging and periodic health checks.',
+        architecture: [
+          'Next.js 16',
+          'React 19',
+          'TypeScript',
+          'OpenAPI discovery',
+          'SQLite (better-sqlite3)',
+          'JWT (jose)',
+          'AES-256-GCM proxy',
+          'shadcn/ui + Tailwind 4',
+          'next-intl (RTL)',
+        ],
+        githubUrl: 'https://github.com/NehoraiHadad/freckle',
+      },
+    },
+    {
+      id: 'nehorai-plugins',
+      title: 'nehorai-plugins',
+      tier: 'featured',
+      description:
+        'A published suite of 9 @nehorai/* npm packages built as a ports-and-adapters monorepo — a credits/billing system with a two-phase commit, plus a payment-orchestration layer with a circuit breaker and pluggable providers (Stripe, Israeli gateways, SUMIT).',
+      impact: 'Published to npm and reused across products — drop-in credits and payment orchestration instead of re-implementing billing in every app.',
+      tags: ['npm · 9 packages', 'TypeScript', 'Credits + Payments', 'Circuit breaker', 'Ports & adapters'],
+      icon: 'credits',
+      details: {
+        challenge:
+          'Billing and payments get re-implemented per app — each time re-solving atomic credit deduction, provider failover, and gateway-specific quirks, multiplying risk across products.',
+        solution:
+          'A ports-and-adapters monorepo. The credits core defines a CreditsService with a two-phase commit (reserve → commit/rollback) behind a repository interface, with Firestore and Next.js adapters. The payments core adds multi-provider orchestration with a circuit breaker and routing, with swappable provider adapters — Stripe, Israeli gateways (Hyp, Cardcom), SUMIT/UPAY — plus Drizzle and Next.js App Router integrations.',
+        architecture: [
+          'TypeScript monorepo (pnpm)',
+          'Ports & adapters',
+          '9 published @nehorai/* packages',
+          'Two-phase commit (credits)',
+          'Circuit breaker + multi-provider routing (payments)',
+          'Stripe / Hyp / Cardcom / SUMIT providers',
+          'Firestore + Drizzle adapters',
+          'Next.js App Router',
+        ],
+        githubUrl: 'https://github.com/NehoraiHadad/nehorai-plugins',
+      },
+    },
+    {
+      id: 'maklikim',
+      title: 'Maklikim',
+      tier: 'featured',
+      description:
+        'A multi-tenant smart-link, QR, and campaign manager running entirely on the Cloudflare edge — Workers for routing and server-rendered UI, D1 for data, KV for rate limiting, R2 for tenant logos.',
+      impact: 'Full multi-tenant SaaS on the edge — cheap to run, fast everywhere, no origin server.',
+      tags: ['Cloudflare Workers', 'D1', 'KV', 'R2', 'Multi-tenant'],
+      icon: 'link',
+      details: {
+        challenge:
+          'Link management with QR codes, campaigns, and click analytics usually means a server, a database, and a bill that scales with traffic — overkill for a lean, tenant-scoped tool.',
+        solution:
+          'A single Cloudflare Worker handles routing and server-rendered dashboards, with D1 for tenant-scoped data, KV for rate limiting, and R2 for QR-logo blobs. Hardened with CSRF protection, HttpOnly sessions, destination-URL validation, safe redirects, and hashed-IP click tracking.',
+        architecture: [
+          'Cloudflare Workers',
+          'Cloudflare D1',
+          'Cloudflare KV',
+          'Cloudflare R2',
+          'CSRF + HttpOnly sessions',
+          'Hashed-IP analytics',
+        ],
+        liveUrl: 'https://maklikim.co.il/',
+      },
+    },
+    {
       id: 'ykl',
       title: "Yeshiva Ketana Ma'ale Hever",
+      tier: 'compact',
       description:
         'Full-stack website for a yeshiva — content management, media gallery, Hebrew-first responsive UI. Shipped for a paying client.',
       impact: "Live at ykl.org.il — the institution's public face.",
@@ -279,6 +364,7 @@ export const enDictionary: AppDictionary = {
     {
       id: 'judah-brigade',
       title: 'Be-Shvil Yehuda',
+      tier: 'compact',
       description:
         'Website for the Judah Brigade community — trip guides, points of interest, and content built for mobile-first browsing in the field.',
       impact: 'Live and in use by the community.',
@@ -292,6 +378,47 @@ export const enDictionary: AppDictionary = {
         architecture: ['Next.js 15', 'TypeScript', 'Tailwind CSS', 'Vercel'],
         liveUrl: 'https://judah-brigade.vercel.app',
         githubUrl: 'https://github.com/NehoraiHadad/Judah-Brigade',
+      },
+    },
+    {
+      id: 'maayan',
+      title: 'Maayan — Graphic Art',
+      tier: 'compact',
+      description:
+        'Portfolio and workshops site for an Israeli graphic designer — Next.js 16, RTL, a custom token-based design system, and hand-script typography.',
+      impact: 'Live at maayanart.co.il — the designer\'s public portfolio and workshop bookings.',
+      tags: ['Next.js 16', 'TypeScript', 'Design system', 'RTL'],
+      icon: 'palette',
+      details: {
+        challenge: 'A designer needs a portfolio that feels designed — not a template — while staying easy to update.',
+        solution:
+          'Next.js 16 App Router with a custom CSS-token design system, server components by default, and an RTL Hebrew-first layout with hand-script display type.',
+        architecture: ['Next.js 16', 'TypeScript', 'Vanilla CSS + design tokens', 'next/font', 'RTL'],
+        liveUrl: 'https://www.maayanart.co.il/',
+      },
+    },
+    {
+      id: 'dorgames',
+      title: 'DorGames',
+      tier: 'compact',
+      description:
+        'A Hebrew, RTL app that turns family photos into two printable party games — a Guess-Who board and a Dobble-style deck — using the real finite-projective-plane algorithm so every two cards share exactly one symbol.',
+      impact: 'Live at dorgames.co.il — families generate and print custom game sets from a single shared link.',
+      tags: ['Next.js', 'Supabase', 'TypeScript', 'RTL'],
+      icon: 'dice',
+      details: {
+        challenge: 'A Dobble deck only works if every pair of cards shares exactly one symbol — get the combinatorics wrong and the game breaks.',
+        solution:
+          'A classic finite-projective-plane deck builder (covered by Vitest) generates valid 13/31/57-card decks, paired with print-safe A4 layouts and a shared-link workspace on Supabase — no accounts needed.',
+        architecture: [
+          'Next.js',
+          'Supabase (Postgres + Storage)',
+          'TypeScript',
+          'Finite-projective-plane algorithm',
+          'Vitest',
+          'Browser print → A4',
+        ],
+        liveUrl: 'https://dorgames.co.il/',
       },
     },
   ],

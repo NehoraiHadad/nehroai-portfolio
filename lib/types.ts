@@ -7,6 +7,7 @@ export interface CaseStudy {
   impact: string;
   tags: string[];
   icon: ElementType;
+  tier?: 'featured' | 'compact';
   details?: {
     challenge: string;
     solution: string;

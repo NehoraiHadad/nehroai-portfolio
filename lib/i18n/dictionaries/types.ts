@@ -8,7 +8,7 @@
  * Examples of what localizes:   form labels, section descriptions, human confirmations.
  */
 
-export type CaseStudyIconKey = 'podcast' | 'dashboard' | 'globe' | 'map' | 'book';
+export type CaseStudyIconKey = 'podcast' | 'dashboard' | 'globe' | 'map' | 'book' | 'controls' | 'credits' | 'link' | 'palette' | 'dice';
 
 export interface CaseStudyContent {
   id: string;
@@ -17,6 +17,7 @@ export interface CaseStudyContent {
   impact: string;
   tags: string[];
   icon: CaseStudyIconKey;
+  tier?: 'featured' | 'compact';
   details?: {
     challenge: string;
     solution: string;
@@ -81,6 +82,8 @@ export interface AppDictionary {
     sectionMarker: string;
     title: string;
     description: string;
+    compactTitle: string;
+    compactDescription: string;
     hint: string;
     orchestratorLabel: string;
     shippingLabel: string;

@@ -44,7 +44,9 @@ export const heDictionary: AppDictionary = {
   showcase: {
     sectionMarker: '02 — PROJECTS',
     title: 'פרויקטים נבחרים',
-    description: 'חמישה מערכות שנמסרו — pipelines של AI על AWS, תיאום agents דרך MCP, אתרי לקוחות ב-production.',
+    description: 'מערכות שנמסרו — pipelines של AI על AWS, תיאום agents דרך MCP, SaaS על ה-edge, ספריית npm שפורסמה, ואתרי לקוחות ב-production.',
+    compactTitle: 'עוד עבודות',
+    compactDescription: 'אתרי לקוחות ופרויקטי צד באוויר.',
     hint: 'לחץ על node כדי לפתוח את פרטי הפרויקט',
     orchestratorLabel: 'Nehorai // Builder',
     shippingLabel: 'באוויר',
@@ -189,6 +191,7 @@ export const heDictionary: AppDictionary = {
     {
       id: 'podcasto',
       title: 'Podcasto',
+      tier: 'featured',
       description:
         'הופך ערוצי חדשות ב-Telegram לפודקאסטים בקריינות AI שנשלחים באימייל. צינור אודיו שמחולק ל-chunks על AWS — Lambda, SQS, DynamoDB, SES — עם Google Gemini 2.5 Flash TTS.',
       impact:
@@ -217,6 +220,7 @@ export const heDictionary: AppDictionary = {
     {
       id: 'agendo',
       title: 'Agendo',
+      tier: 'featured',
       description:
         'דשבורד self-hosted לתזמור agents לקידוד AI — Claude, Codex, Gemini — מממשק יחיד בסגנון Kanban עם אינטגרציית MCP.',
       impact: 'מבטל את הצורך ללהטט בין כמה CLIs; agents משתפים לוח משימות ומתאמים דרך MCP.',
@@ -234,6 +238,7 @@ export const heDictionary: AppDictionary = {
     {
       id: 'story-creator',
       title: 'Story Creator',
+      tier: 'featured',
       description:
         'מוצר AI ליצירת ספרי ילדים שממיר תמונה של הילד לספר מאויר אישי עם עקביות דמויות, חוויית שימוש דו-לשונית ו-wizard רב-שלבי שניתן להמשיך ממנו.',
       impact:
@@ -260,8 +265,88 @@ export const heDictionary: AppDictionary = {
       },
     },
     {
+      id: 'freckle',
+      title: 'Freckle',
+      tier: 'featured',
+      description:
+        'דשבורד אדמין מרכזי שבונה את כל ה-UI שלו בזמן ריצה מתוך ה-OpenAPI spec של כל מוצר — בלי מסכים שמקודדים ידנית לכל מוצר. מוסיפים API תואם ו-Freckle מרנדר את הטבלאות, הטפסים ומסכי הפירוט אוטומטית.',
+      impact: 'חיבור מוצר חדש מסתכם בהפניית Freckle ל-OpenAPI spec שלו — אפס UI אדמין ייעודי לכתוב.',
+      tags: ['Next.js 16', 'OpenAPI', 'TypeScript', 'SQLite', 'i18n'],
+      icon: 'controls',
+      details: {
+        challenge: 'כל מוצר בסוף צריך פאנל אדמין משלו שנבנה ביד — מסכי CRUD משוכפלים שמתיישנים ברגע שה-API משתנה.',
+        solution:
+          'Freckle מגלה resources ו-operations מתוך ה-OpenAPI spec של כל מוצר ומייצר sidebars, טבלאות, טפסים מבוססי JSON-Schema ומסכי פירוט בזמן ריצה. proxy בצד שרת מצפין מפתחות API ב-AES-256-GCM כך שהם לעולם לא מגיעים לדפדפן, עם audit logging ובדיקות תקינות תקופתיות.',
+        architecture: [
+          'Next.js 16',
+          'React 19',
+          'TypeScript',
+          'OpenAPI discovery',
+          'SQLite (better-sqlite3)',
+          'JWT (jose)',
+          'AES-256-GCM proxy',
+          'shadcn/ui + Tailwind 4',
+          'next-intl (RTL)',
+        ],
+        githubUrl: 'https://github.com/NehoraiHadad/freckle',
+      },
+    },
+    {
+      id: 'nehorai-plugins',
+      title: 'nehorai-plugins',
+      tier: 'featured',
+      description:
+        'סוויטה של 9 חבילות npm בסקופ @nehorai/* שנבנתה כמונורפו ports-and-adapters — מערכת credits/חיוב עם two-phase commit, ושכבת תזמור תשלומים עם circuit breaker וספקים מתחלפים (Stripe, שערי תשלום ישראליים, SUMIT).',
+      impact: 'פורסם ל-npm ובשימוש חוזר בין מוצרים — credits ותזמור תשלומים מן המוכן במקום מימוש חיוב מחדש בכל אפליקציה.',
+      tags: ['npm · 9 packages', 'TypeScript', 'Credits + Payments', 'Circuit breaker', 'Ports & adapters'],
+      icon: 'credits',
+      details: {
+        challenge:
+          'חיוב ותשלומים ממומשים מחדש בכל אפליקציה, וכל פעם פותרים מחדש ניכוי credits אטומי, failover בין ספקים וקפריזות ספציפיות לכל gateway — מה שמכפיל סיכון בין מוצרים.',
+        solution:
+          'מונורפו ports-and-adapters. ה-core של credits מגדיר CreditsService עם two-phase commit (reserve → commit/rollback) מאחורי ממשק repository, עם adapters ל-Firestore ול-Next.js. ה-core של payments מוסיף תזמור מרובה-ספקים עם circuit breaker וניתוב, עם adapters מתחלפים לספקים — Stripe, שערים ישראליים (Hyp, Cardcom), SUMIT/UPAY — ובנוסף אינטגרציות ל-Drizzle ול-Next.js App Router.',
+        architecture: [
+          'TypeScript monorepo (pnpm)',
+          'Ports & adapters',
+          '9 published @nehorai/* packages',
+          'Two-phase commit (credits)',
+          'Circuit breaker + multi-provider routing (payments)',
+          'Stripe / Hyp / Cardcom / SUMIT providers',
+          'Firestore + Drizzle adapters',
+          'Next.js App Router',
+        ],
+        githubUrl: 'https://github.com/NehoraiHadad/nehorai-plugins',
+      },
+    },
+    {
+      id: 'maklikim',
+      title: 'Maklikim',
+      tier: 'featured',
+      description:
+        'מנהל smart-links, QR וקמפיינים מרובה-tenants שרץ כולו על ה-edge של Cloudflare — Workers לניתוב ול-UI מרונדר בשרת, D1 לנתונים, KV ל-rate limiting, ו-R2 ללוגואים של tenants.',
+      impact: 'SaaS מלא מרובה-tenants על ה-edge — זול להפעלה, מהיר בכל מקום, בלי שרת origin.',
+      tags: ['Cloudflare Workers', 'D1', 'KV', 'R2', 'Multi-tenant'],
+      icon: 'link',
+      details: {
+        challenge:
+          'ניהול לינקים עם קודי QR, קמפיינים וניתוח קליקים בדרך כלל דורש שרת, בסיס נתונים וחשבון שגדל עם התעבורה — אוברקיל לכלי רזה וממוקד-tenant.',
+        solution:
+          'Worker יחיד של Cloudflare מטפל בניתוב ובדשבורדים מרונדרי-שרת, עם D1 לנתונים מוגבלי-tenant, KV ל-rate limiting, ו-R2 ל-blobs של לוגו QR. מוקשח עם הגנת CSRF, sessions מסוג HttpOnly, ולידציה של כתובות יעד, redirects בטוחים, ומעקב קליקים עם IP מ-hashed.',
+        architecture: [
+          'Cloudflare Workers',
+          'Cloudflare D1',
+          'Cloudflare KV',
+          'Cloudflare R2',
+          'CSRF + HttpOnly sessions',
+          'Hashed-IP analytics',
+        ],
+        liveUrl: 'https://maklikim.co.il/',
+      },
+    },
+    {
       id: 'ykl',
       title: "Yeshiva Ketana Ma'ale Hever",
+      tier: 'compact',
       description:
         'אתר Full-Stack לישיבה עם ניהול תוכן, גלריית מדיה וממשק רספונסיבי בגישת Hebrew-first. נמסר ללקוח משלם.',
       impact: 'באוויר ב-ykl.org.il — הפנים הציבוריות של המוסד.',
@@ -279,6 +364,7 @@ export const heDictionary: AppDictionary = {
     {
       id: 'judah-brigade',
       title: 'Be-Shvil Yehuda',
+      tier: 'compact',
       description:
         'אתר לקהילת Judah Brigade עם מדריכי טיולים, נקודות עניין ותוכן שנבנה לגלישה mobile-first בשטח.',
       impact: 'באוויר ובשימוש של הקהילה.',
@@ -292,6 +378,47 @@ export const heDictionary: AppDictionary = {
         architecture: ['Next.js 15', 'TypeScript', 'Tailwind CSS', 'Vercel'],
         liveUrl: 'https://judah-brigade.vercel.app',
         githubUrl: 'https://github.com/NehoraiHadad/Judah-Brigade',
+      },
+    },
+    {
+      id: 'maayan',
+      title: 'Maayan — Graphic Art',
+      tier: 'compact',
+      description:
+        'אתר פורטפוליו וסדנאות למעצבת גרפית ישראלית — Next.js 16, RTL, מערכת עיצוב מבוססת tokens מותאמת אישית, וטיפוגרפיה בכתב יד.',
+      impact: 'באוויר ב-maayanart.co.il — הפורטפוליו הציבורי והרשמה לסדנאות של המעצבת.',
+      tags: ['Next.js 16', 'TypeScript', 'Design system', 'RTL'],
+      icon: 'palette',
+      details: {
+        challenge: 'מעצבת צריכה פורטפוליו שמרגיש מעוצב — לא תבנית — ועדיין קל לעדכון.',
+        solution:
+          'Next.js 16 App Router עם מערכת עיצוב מבוססת CSS-tokens מותאמת אישית, server components כברירת מחדל, ו-layout בגישת Hebrew-first ב-RTL עם פונט תצוגה בכתב יד.',
+        architecture: ['Next.js 16', 'TypeScript', 'Vanilla CSS + design tokens', 'next/font', 'RTL'],
+        liveUrl: 'https://www.maayanart.co.il/',
+      },
+    },
+    {
+      id: 'dorgames',
+      title: 'DorGames',
+      tier: 'compact',
+      description:
+        'אפליקציה בעברית, RTL, שהופכת תמונות משפחתיות לשני משחקי מסיבה להדפסה — לוח "נחש מי" וחפיסה בסגנון Dobble — בעזרת אלגוריתם finite-projective-plane אמיתי כך שכל שני קלפים חולקים בדיוק סמל אחד.',
+      impact: 'באוויר ב-dorgames.co.il — משפחות מייצרות ומדפיסות סטים מותאמים מלינק משותף אחד.',
+      tags: ['Next.js', 'Supabase', 'TypeScript', 'RTL'],
+      icon: 'dice',
+      details: {
+        challenge: 'חפיסת Dobble עובדת רק אם כל זוג קלפים חולק בדיוק סמל אחד — טעות בקומבינטוריקה והמשחק נשבר.',
+        solution:
+          'בונה חפיסות קלאסי מבוסס finite-projective-plane (מכוסה ב-Vitest) מייצר חפיסות תקינות של 13/31/57 קלפים, יחד עם פריסות A4 בטוחות-להדפסה ו-workspace מבוסס-לינק על Supabase — בלי צורך בחשבונות.',
+        architecture: [
+          'Next.js',
+          'Supabase (Postgres + Storage)',
+          'TypeScript',
+          'Finite-projective-plane algorithm',
+          'Vitest',
+          'Browser print → A4',
+        ],
+        liveUrl: 'https://dorgames.co.il/',
       },
     },
   ],
