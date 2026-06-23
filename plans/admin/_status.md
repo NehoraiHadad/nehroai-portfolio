@@ -61,3 +61,47 @@ and an A4 `@media print` block in `globals.css`.
   VAT 18% ₪2,772, **total ₪18,672**); brand "Nehorai Hadad" spelled correctly; Download PDF
   enabled, Send-to-client disabled; mobile (375) stacked layout + dark theme verified; no console
   errors. Harness deleted; final build re-verified clean.
+
+---
+
+# DB Migration — localStorage → Neon Postgres + Drizzle — ✅ DONE (on `main`)
+
+Plan: `plans/admin/_db-master-plan.md`. Quote/brand persistence moved off per-browser
+localStorage onto a real server DB so data survives across devices/browsers.
+
+## Chip A — DB foundation (orchestrator) — ✅
+- Deps (pnpm, both lockfiles): `drizzle-orm`, `@neondatabase/serverless`; dev `drizzle-kit`, `@next/env`.
+- `lib/admin/db/schema.ts` — 3 tables: `quotes` (scalars + `client`/`items` JSONB snapshots),
+  `brand_profiles` (1/owner), `quote_counters` (atomic NH-YYYY-NNNN). Owner-scoped by `owner_email`.
+- `lib/admin/db/client.ts` — lazy neon-http Drizzle client (`getDb()`), `'server-only'`; env read at
+  request time so `next build` works without `DATABASE_URL`.
+- `lib/admin/db/queries.ts` — `'server-only'` DAL: list/get/upsert/delete quote, get/save brand,
+  `allocateQuoteNumber` (atomic INSERT…ON CONFLICT). Every call filtered on owner.
+- `lib/admin/db/mappers.ts` — row↔`QuoteDoc` (shape unchanged end-to-end).
+- `drizzle.config.ts` (`@next/env`; unpooled URL for DDL) + `db:push/generate/studio` scripts.
+- `.env.example` documents `DATABASE_URL`. Schema **pushed to Neon** (`db:push` → "Changes applied").
+
+## Chip B — Quotes wired to DB (Sonnet sub-agent) — ✅
+`quote-actions.ts` (`saveQuoteAction`/`deleteQuoteAction`, `requireAdmin` + `revalidatePath`);
+quotes pages fetch server-side and pass props; `QuoteBuilder` seeds from `initialQuote` + saves via
+action (`useTransition`); `QuotesListContent`/`DashboardContent` presentational; preview page
+server-fetches quote+brand and renders directly; `QuotePreviewClient.tsx` deleted.
+
+## Chip C — Brand/Settings wired to DB (Sonnet sub-agent, parallel) — ✅
+`brand-actions.ts` (`saveBrandAction`); settings page server-fetches brand; `SettingsForm` seeds from
+prop + saves via action.
+
+## Cleanup (orchestrator)
+Deleted `lib/admin/quotes-store.ts`; trimmed `brand.ts` (→ only `defaultBrandProfile`) and
+`quote-number.ts` (→ only `formatQuoteNumber`). No remaining localStorage references in admin.
+
+## Integrated verification — ✅
+- ESLint (whole admin tree + lib/admin): 0 problems. `next build`: pass, all routes compile/dynamic.
+- **Live DB smoke against real Neon** (temporary `/api/dbsmoke` route, deleted after): atomic numbers
+  `NH-2026-0001`→`0002`; insert/get/list/update; **owner isolation** (other owner sees 0, cross-owner
+  get → null); brand default (`נהוראי חדד`) + save/read round-trip; delete; all test rows cleaned up.
+
+## Left for Nehorai
+- Set `DATABASE_URL` in **Vercel** (Neon Marketplace integration usually injects it) + **redeploy**.
+- `.env.local` has the Neon URLs locally (gitignored). Password was pasted in chat → consider
+  rotating it in Neon (Roles → reset) if the transcript is shared.

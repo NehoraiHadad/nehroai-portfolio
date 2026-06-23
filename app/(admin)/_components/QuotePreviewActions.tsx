@@ -1,21 +1,25 @@
 'use client';
 
+import { useTransition } from 'react';
 import Link from 'next/link';
 import { FileDown, Pencil, Save, Send } from 'lucide-react';
 import { useDictionary } from '@/lib/i18n/provider';
-import { upsertQuote } from '@/lib/admin/quotes-store';
+import { saveQuoteAction } from './quote-actions';
 import type { QuoteDoc } from '@/lib/admin/types';
 
 // Action bar for the quote preview. Hidden when printing (.no-print).
 // Layout: left cluster (Save, Edit) — right cluster (Download PDF, Send).
 // "Send to client" is a future stub: always disabled with a tooltip explaining why.
 
-export function QuotePreviewActions({ email, quote }: { email: string; quote: QuoteDoc }) {
+export function QuotePreviewActions({ quote }: { quote: QuoteDoc }) {
   const { admin } = useDictionary();
   const a = admin.actions;
+  const [isPending, startTransition] = useTransition();
 
   const handleSaveDraft = () => {
-    upsertQuote(email, { ...quote, status: quote.status === 'draft' ? 'draft' : quote.status });
+    startTransition(async () => {
+      await saveQuoteAction(quote);
+    });
   };
 
   const handleDownloadPdf = () => {
@@ -33,6 +37,8 @@ export function QuotePreviewActions({ email, quote }: { email: string; quote: Qu
         <button
           type="button"
           onClick={handleSaveDraft}
+          disabled={isPending}
+          aria-disabled={isPending}
           className="btn btn-secondary btn-sm"
           aria-label={a.saveDraft}
         >

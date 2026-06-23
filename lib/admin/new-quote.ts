@@ -1,6 +1,6 @@
 // Factory for a blank QuoteDoc. Isomorphic-safe: only touches Date and crypto.
-// The caller is responsible for calling nextQuoteNumber(email) client-side and
-// passing it in so this file stays free of localStorage references.
+// The caller passes in a freshly allocated quote number (server-side via
+// allocateQuoteNumber), so this file stays free of any persistence concerns.
 
 import type { QuoteDoc } from './types';
 

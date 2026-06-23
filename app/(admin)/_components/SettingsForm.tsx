@@ -1,37 +1,29 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { Check } from 'lucide-react';
-import { useDictionary, useLocale } from '@/lib/i18n/provider';
+import { useDictionary } from '@/lib/i18n/provider';
 import type { BrandProfile } from '@/lib/admin/types';
-import { defaultBrandProfile, loadBrandProfile, saveBrandProfile } from '@/lib/admin/brand';
+import { saveBrandAction } from './brand-actions';
 
-export function SettingsForm({ email }: { email: string }) {
+export function SettingsForm({ initialBrand }: { initialBrand: BrandProfile }) {
   const { admin } = useDictionary();
-  const language = useLocale();
-  // Initial render uses non-storage defaults (SSR-safe); real values hydrate in the effect.
-  const [profile, setProfile] = useState<BrandProfile>(() => defaultBrandProfile(language));
+  const [profile, setProfile] = useState<BrandProfile>(initialBrand);
   const [saved, setSaved] = useState(false);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    // Hydrate from localStorage after mount (SSR-safe). Re-seeds the localized
-    // default name/tagline if the admin language changes and nothing is stored.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setProfile(loadBrandProfile(email, language));
-  }, [email, language]);
-
-  useEffect(() => () => { if (savedTimer.current) clearTimeout(savedTimer.current); }, []);
+  const [isPending, startTransition] = useTransition();
 
   const set = (key: keyof BrandProfile) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setProfile((p) => ({ ...p, [key]: e.target.value }));
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    saveBrandProfile(email, profile);
-    setSaved(true);
-    if (savedTimer.current) clearTimeout(savedTimer.current);
-    savedTimer.current = setTimeout(() => setSaved(false), 2000);
+    startTransition(async () => {
+      await saveBrandAction(profile);
+      setSaved(true);
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setSaved(false), 2000);
+    });
   };
 
   const s = admin.settings;
@@ -71,7 +63,7 @@ export function SettingsForm({ email }: { email: string }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <button type="submit" className="btn btn-primary btn-sm">{s.save}</button>
+        <button type="submit" className="btn btn-primary btn-sm" disabled={isPending}>{s.save}</button>
         {saved && (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--ok)]" role="status">
             <Check className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />

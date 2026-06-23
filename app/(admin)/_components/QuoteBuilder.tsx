@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useTransition, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2 } from 'lucide-react';
 import { useDictionary } from '@/lib/i18n/provider';
 import { computeTotals, formatMoney } from '@/lib/admin/totals';
-import { getQuote, upsertQuote } from '@/lib/admin/quotes-store';
-import { nextQuoteNumber } from '@/lib/admin/quote-number';
-import { createBlankQuote } from '@/lib/admin/new-quote';
+import { saveQuoteAction } from './quote-actions';
 import { QUOTE_STATUSES } from '@/lib/admin/types';
 import type { LineItem, QuoteDoc, QuoteLanguage, QuoteStatus } from '@/lib/admin/types';
 
@@ -15,40 +13,36 @@ import type { LineItem, QuoteDoc, QuoteLanguage, QuoteStatus } from '@/lib/admin
 // Component
 // --------------------------------------------------------------------------
 
-export function QuoteBuilder({ email, quoteId }: { email: string; quoteId?: string }) {
+export function QuoteBuilder({
+  initialQuote,
+  isNew,
+}: {
+  initialQuote: QuoteDoc;
+  isNew?: boolean;
+}) {
   const { admin } = useDictionary();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  // null = not yet hydrated from localStorage (SSR safe)
-  const [quote, setQuote] = useState<QuoteDoc | null>(null);
-
-  useEffect(() => {
-    // Client-only: localStorage is only available after mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setQuote(
-      quoteId
-        ? (getQuote(email, quoteId) ?? createBlankQuote({ number: nextQuoteNumber(email) }))
-        : createBlankQuote({ number: nextQuoteNumber(email) }),
-    );
-  }, [email, quoteId]);
+  // Seed state directly from the server-fetched prop.
+  const [quote, setQuote] = useState<QuoteDoc>(initialQuote);
 
   // Helpers to patch top-level fields
   const patch = useCallback(
     <K extends keyof QuoteDoc>(key: K, value: QuoteDoc[K]) =>
-      setQuote((q) => (q ? { ...q, [key]: value } : q)),
+      setQuote((q) => ({ ...q, [key]: value })),
     [],
   );
 
   const patchClient = useCallback(
     <K extends keyof QuoteDoc['client']>(key: K, value: QuoteDoc['client'][K]) =>
-      setQuote((q) => (q ? { ...q, client: { ...q.client, [key]: value } } : q)),
+      setQuote((q) => ({ ...q, client: { ...q.client, [key]: value } })),
     [],
   );
 
   const patchItem = useCallback(
     <K extends keyof LineItem>(index: number, key: K, value: LineItem[K]) =>
       setQuote((q) => {
-        if (!q) return q;
         const items = q.items.map((item, i) =>
           i === index ? { ...item, [key]: value } : item,
         );
@@ -59,7 +53,6 @@ export function QuoteBuilder({ email, quoteId }: { email: string; quoteId?: stri
 
   const addItem = useCallback(() => {
     setQuote((q) => {
-      if (!q) return q;
       const newItem: LineItem = {
         id: crypto.randomUUID(),
         description: '',
@@ -74,40 +67,29 @@ export function QuoteBuilder({ email, quoteId }: { email: string; quoteId?: stri
 
   const removeItem = useCallback(
     (index: number) =>
-      setQuote((q) => (q ? { ...q, items: q.items.filter((_, i) => i !== index) } : q)),
+      setQuote((q) => ({ ...q, items: q.items.filter((_, i) => i !== index) })),
     [],
   );
 
-  // Persist and return the stamped doc
-  const save = useCallback((): QuoteDoc | null => {
-    if (!quote) return null;
-    return upsertQuote(email, quote);
-  }, [email, quote]);
-
   const handleSaveDraft = useCallback(() => {
-    const saved = save();
-    if (saved) setQuote(saved);
-  }, [save]);
+    startTransition(async () => {
+      const saved = await saveQuoteAction(quote);
+      setQuote(saved);
+    });
+  }, [quote]);
 
   const handlePreview = useCallback(() => {
-    const saved = save();
-    if (saved) {
+    startTransition(async () => {
+      const saved = await saveQuoteAction(quote);
       setQuote(saved);
       router.push(`/admin/quotes/${saved.id}/preview`);
-    }
-  }, [save, router]);
-
-  // Loading state before client hydration
-  if (!quote) {
-    return (
-      <div className="card p-10 text-center text-sm text-fg-2">
-        {admin.builder.noItems}
-      </div>
-    );
-  }
+    });
+  }, [quote, router]);
 
   const b = admin.builder;
   const totals = computeTotals(quote.items, quote.vatRate);
+  // isNew is available for future use (e.g. different header copy)
+  void isNew;
 
   return (
     <div className="flex flex-col gap-6">
@@ -570,6 +552,8 @@ export function QuoteBuilder({ email, quoteId }: { email: string; quoteId?: stri
         <button
           type="button"
           onClick={handleSaveDraft}
+          disabled={isPending}
+          aria-disabled={isPending}
           className="btn btn-primary btn-sm"
         >
           {admin.actions.saveDraft}
@@ -577,6 +561,8 @@ export function QuoteBuilder({ email, quoteId }: { email: string; quoteId?: stri
         <button
           type="button"
           onClick={handlePreview}
+          disabled={isPending}
+          aria-disabled={isPending}
           className="btn btn-secondary btn-sm"
         >
           {admin.actions.preview}

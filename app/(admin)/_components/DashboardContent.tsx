@@ -3,13 +3,12 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { useDictionary } from '@/lib/i18n/provider';
-import { useQuotes } from '@/lib/admin/quotes-store';
 import { computeTotals, formatMoney } from '@/lib/admin/totals';
 import { QuoteStatusBadge } from './QuoteStatusBadge';
+import type { QuoteDoc } from '@/lib/admin/types';
 
-export function DashboardContent({ email }: { email: string }) {
+export function DashboardContent({ quotes }: { quotes: QuoteDoc[] }) {
   const { admin } = useDictionary();
-  const quotes = useQuotes(email);
 
   const drafts = quotes.filter((q) => q.status === 'draft').length;
   const sent = quotes.filter((q) => q.status === 'sent').length;

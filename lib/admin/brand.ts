@@ -1,16 +1,11 @@
 import type { BrandProfile, QuoteLanguage } from './types';
 
-// Brand profile shown on the quote-preview header. Editable in Settings and
-// persisted per user. Defaults use the CORRECT localized spelling of the name —
-// note the repo dir is `nehroai-portfolio` (a historical typo); never reproduce
-// that in branding copy. The English default is "Nehorai Hadad" and the Hebrew
-// default is "נהוראי חדד".
-
-const BRAND_PREFIX = 'nehorai:admin:brand:';
-
-function brandKey(email: string): string {
-  return `${BRAND_PREFIX}${email.toLowerCase()}`;
-}
+// Default brand profile shown on the quote-preview header when the user hasn't
+// saved one yet. Persistence now lives in the database (lib/admin/db/queries.ts:
+// getBrand/saveBrand); this file only provides the localized default. Defaults
+// use the CORRECT spelling of the name — the repo dir `nehroai-portfolio` is a
+// historical typo; never reproduce it in branding copy. English default is
+// "Nehorai Hadad", Hebrew default is "נהוראי חדד".
 
 export function defaultBrandProfile(language: QuoteLanguage): BrandProfile {
   const isHe = language === 'he';
@@ -22,24 +17,4 @@ export function defaultBrandProfile(language: QuoteLanguage): BrandProfile {
     address: '',
     logoUrl: '',
   };
-}
-
-export function loadBrandProfile(email: string, language: QuoteLanguage): BrandProfile {
-  const fallback = defaultBrandProfile(language);
-  try {
-    const raw = window.localStorage.getItem(brandKey(email));
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw) as Partial<BrandProfile>;
-    return { ...fallback, ...parsed };
-  } catch {
-    return fallback;
-  }
-}
-
-export function saveBrandProfile(email: string, profile: BrandProfile): void {
-  try {
-    window.localStorage.setItem(brandKey(email), JSON.stringify(profile));
-  } catch {
-    // Storage unavailable — silently no-op (the in-memory form state still works).
-  }
 }
