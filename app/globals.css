@@ -1124,3 +1124,58 @@ body[data-scene="showcase"] {
     border: none !important;
   }
 }
+
+/* A4 quote-sheet print rules. Supplements the scaffolding above.
+   Plain colours (not tokens) are intentional here — tokens map to the dark
+   navy palette which renders as grey on most printers; white/black gives a
+   clean, professional A4 output. Only affects @media print — no screen impact. */
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+
+  /* Reset page surface to white/black for print */
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  /* Override dark tokens on the sheet so all text prints legibly */
+  .print-sheet {
+    background: #fff !important;
+    color: #111 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Override token-coloured foreground classes inside the sheet */
+  .print-sheet .text-fg-0,
+  .print-sheet .text-fg-1 {
+    color: #111 !important;
+  }
+  .print-sheet .text-fg-2 {
+    color: #555 !important;
+  }
+
+  /* Table hairlines */
+  .print-sheet .admin-table th,
+  .print-sheet .admin-table td {
+    border-color: #ccc !important;
+    color: #111 !important;
+  }
+  .print-sheet .border-line,
+  .print-sheet hr {
+    border-color: #ccc !important;
+  }
+
+  /* Status badge — keep text, simplify border for B&W printers */
+  .print-sheet [class*="border-"] {
+    border-color: #999 !important;
+  }
+
+  /* Ensure page breaks don't split the totals block */
+  .print-sheet dl { page-break-inside: avoid; }
+  .print-sheet section { page-break-inside: avoid; }
+}

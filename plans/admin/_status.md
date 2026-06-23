@@ -35,5 +35,29 @@
 
 ---
 
-## Chip #2 — Quote Builder UI — ⏳ pending (Sonnet sub-agent, after Foundation on `main`)
-## Chip #3 — Branded Quote Preview — ⏳ pending (Sonnet sub-agent, parallel with #2)
+## Chip #2 — Quote Builder UI — ✅ DONE (Sonnet sub-agent)
+
+**Built**: `lib/admin/new-quote.ts` (blank-quote factory), `app/(admin)/_components/QuoteBuilder.tsx`
+(full form: client details, quote fields, line items w/ desktop table + mobile stacked cards,
+live totals via `computeTotals`, status select, ILS, auto editable number, Save draft / Preview);
+replaced `quotes/new/page.tsx` + `quotes/[id]/page.tsx` to mount it.
+
+**Orchestrator fix**: one token defect (`rounded-[var(--r-sm)]` → `--r-1`).
+
+## Chip #3 — Branded Quote Preview — ✅ DONE (Sonnet sub-agent, ran in parallel with #2)
+
+**Built**: `app/(admin)/_components/QuotePreview.tsx` (branded, RTL/LTR driven by `quote.language`,
+monogram fallback, line items + totals + validity + terms placeholder), `QuotePreviewActions.tsx`
+(Save draft / Edit / Download PDF=`window.print()` / Send to client=disabled stub),
+`QuotePreviewClient.tsx` (loads quote+brand from store by id), `quotes/[id]/preview/page.tsx`,
+and an A4 `@media print` block in `globals.css`.
+
+## Integrated verification (orchestrator) — ✅
+- ESLint over the whole admin tree (incl. both chips): 0 problems.
+- `next build`: pass. New route `/admin/quotes/[id]/preview` dynamic; all routes compile.
+- Dev smoke (temporary mock harness, since the UI is auth-gated and OAuth creds aren't available):
+  builder renders (auto number, ILS disabled, live totals); preview renders **RTL Hebrew** and
+  **LTR English** driven by `quote.language`; totals exact (subtotal ₪16,500, discount ₪600,
+  VAT 18% ₪2,772, **total ₪18,672**); brand "Nehorai Hadad" spelled correctly; Download PDF
+  enabled, Send-to-client disabled; mobile (375) stacked layout + dark theme verified; no console
+  errors. Harness deleted; final build re-verified clean.
