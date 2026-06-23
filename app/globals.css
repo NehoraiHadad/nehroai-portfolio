@@ -1020,3 +1020,107 @@ body[data-scene="showcase"] {
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   ADMIN — form primitives + print scaffolding.
+   The public site has no input styling; the private admin app
+   (admin.nehoraihadad.com) needs token-based, RTL-aware form
+   controls. Shared by the quote builder and preview chips. All
+   values reference existing design tokens — no literals.
+   ============================================================ */
+@layer components {
+  /* Field wrapper: label stacked over control */
+  .admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-1);
+  }
+
+  .admin-label {
+    font-family: var(--font-mono);
+    font-size: var(--t-12);
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--ls-wide);
+    text-transform: uppercase;
+    color: var(--fg-2);
+  }
+  .admin-label__optional {
+    text-transform: none;
+    letter-spacing: var(--ls-normal);
+    color: var(--fg-3);
+  }
+
+  /* Text inputs, selects, textareas share one recipe */
+  .admin-input,
+  .admin-select,
+  .admin-textarea {
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: var(--t-14);
+    color: var(--fg-0);
+    background: var(--bg-0);
+    border: 1px solid var(--line);
+    border-radius: var(--r-1);
+    padding: 9px 12px;
+    line-height: var(--lh-snug);
+    /* Logical props so RTL flips padding/text alignment automatically */
+    text-align: start;
+    transition: border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
+  }
+  .admin-input::placeholder,
+  .admin-textarea::placeholder { color: var(--fg-placeholder); }
+
+  .admin-input:hover,
+  .admin-select:hover,
+  .admin-textarea:hover { border-color: var(--line-strong); }
+
+  .admin-input:focus-visible,
+  .admin-select:focus-visible,
+  .admin-textarea:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-faint);
+  }
+  .admin-input:disabled,
+  .admin-select:disabled,
+  .admin-textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .admin-textarea { resize: vertical; min-height: 72px; }
+  .admin-select { appearance: none; cursor: pointer; }
+
+  /* Line-items table — hairline grid, tabular numerals for money columns */
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--t-14);
+  }
+  .admin-table th {
+    font-family: var(--font-mono);
+    font-size: var(--t-12);
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--ls-wide);
+    text-transform: uppercase;
+    color: var(--fg-2);
+    text-align: start;
+    padding: var(--s-2) var(--s-3);
+    border-bottom: 1px solid var(--line);
+  }
+  .admin-table td {
+    padding: var(--s-2) var(--s-3);
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    color: var(--fg-0);
+  }
+  .admin-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+}
+
+/* Print scaffolding for the quote preview (chip #3 builds the sheet itself).
+   When printing, hide everything except the element marked .print-sheet, and
+   reset surfaces to white/black for clean A4 output. */
+@media print {
+  .no-print { display: none !important; }
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

@@ -213,4 +213,144 @@ export interface AppDictionary {
   };
   caseStudies: CaseStudyContent[];
   skills: SkillGroupContent[];
+  /** Private admin app (admin.nehoraihadad.com). Not shown on the public site. */
+  admin: AdminDictionary;
+}
+
+export interface AdminDictionary {
+  appName: string;
+  nav: {
+    dashboard: string;
+    clients: string;
+    quotes: string;
+    settings: string;
+  };
+  topbar: {
+    openMenu: string;
+    closeMenu: string;
+    account: string;
+    logout: string;
+    language: string;
+  };
+  login: {
+    title: string;
+    subtitle: string;
+    googleButton: string;
+    deniedTitle: string;
+    deniedBody: string;
+    backToSite: string;
+  };
+  dashboard: {
+    title: string;
+    subtitle: string;
+    statDrafts: string;
+    statSent: string;
+    statApproved: string;
+    quickNewQuote: string;
+    recentQuotes: string;
+    emptyHint: string;
+  };
+  clients: {
+    title: string;
+    subtitle: string;
+    empty: string;
+    futureNote: string;
+  };
+  quotes: {
+    title: string;
+    subtitle: string;
+    newQuote: string;
+    empty: string;
+    emptyCta: string;
+    colNumber: string;
+    colClient: string;
+    colStatus: string;
+    colTotal: string;
+    colUpdated: string;
+    untitled: string;
+  };
+  settings: {
+    title: string;
+    subtitle: string;
+    brandSection: string;
+    brandSectionHint: string;
+    brandName: string;
+    brandTagline: string;
+    brandEmail: string;
+    brandPhone: string;
+    brandAddress: string;
+    brandLogo: string;
+    brandLogoHint: string;
+    save: string;
+    saved: string;
+    comingSoon: string;
+    comingSoonItems: string[];
+  };
+  status: {
+    draft: string;
+    sent: string;
+    approved: string;
+    rejected: string;
+    expired: string;
+  };
+  builder: {
+    newTitle: string;
+    editTitle: string;
+    sectionClient: string;
+    sectionQuote: string;
+    sectionItems: string;
+    clientName: string;
+    clientCompany: string;
+    clientEmail: string;
+    clientPhone: string;
+    clientTaxId: string;
+    clientAddress: string;
+    quoteNumber: string;
+    projectTitle: string;
+    projectDescription: string;
+    validUntil: string;
+    language: string;
+    currency: string;
+    quoteStatus: string;
+    vatRate: string;
+    itemDescription: string;
+    itemQty: string;
+    itemUnitPrice: string;
+    itemDiscount: string;
+    itemVat: string;
+    itemLineTotal: string;
+    addItem: string;
+    removeItem: string;
+    optional: string;
+    noItems: string;
+  };
+  totals: {
+    subtotal: string;
+    discount: string;
+    vat: string;
+    total: string;
+  };
+  preview: {
+    title: string;
+    quoteFor: string;
+    from: string;
+    validUntil: string;
+    project: string;
+    terms: string;
+    termsPlaceholder: string;
+    quoteNumber: string;
+    date: string;
+    logoPlaceholder: string;
+  };
+  actions: {
+    saveDraft: string;
+    preview: string;
+    edit: string;
+    downloadPdf: string;
+    sendToClient: string;
+    sendToClientFuture: string;
+    back: string;
+    delete: string;
+    cancel: string;
+  };
 }
