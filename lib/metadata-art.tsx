@@ -31,43 +31,44 @@ export function BrandMark() {
           borderRadius: 28,
           border: `2px solid ${COLORS.slate}`,
           background: COLORS.panel,
-          boxShadow: '0 0 22px rgba(37, 99, 235, 0.18), 0 0 0 2px rgba(37, 99, 235, 0.12) inset',
+          boxShadow: '0 0 28px rgba(37, 99, 235, 0.22), 0 0 0 2px rgba(37, 99, 235, 0.12) inset',
           position: 'relative',
         }}
       >
         <div
           style={{
             position: 'absolute',
-            left: '18%',
+            left: '20%',
             top: '27%',
-            width: '52%',
+            width: '54%',
             height: '50%',
             background: COLORS.text,
             clipPath: 'polygon(0 100%, 0 0, 28% 0, 100% 78%, 100% 100%, 74% 100%, 28% 47%, 28% 100%)',
+            boxShadow: 'inset 2px 0 0 rgba(255,255,255,0.18)',
           }}
         />
         <div
           style={{
             position: 'absolute',
-            right: '16%',
+            right: '13%',
             top: '35%',
             width: '11%',
             height: '43%',
             borderRadius: 3,
-            background: COLORS.electric,
-            boxShadow: `0 0 10px rgba(37, 99, 235, 0.5)`,
+            background: 'linear-gradient(180deg, #3C8CFF 0%, #2563EB 48%, #1D56D9 100%)',
+            boxShadow: `0 0 12px rgba(37, 99, 235, 0.5), inset 2px 0 0 rgba(101,160,255,0.22)`,
           }}
         />
         <div
           style={{
             position: 'absolute',
             top: '22%',
-            right: '19%',
-            width: 12,
-            height: 12,
+            right: '16%',
+            width: 14,
+            height: 14,
             borderRadius: 9999,
-            background: COLORS.ice,
-            boxShadow: `0 0 10px rgba(186, 239, 254, 0.76), 0 0 20px rgba(37, 99, 235, 0.24)`,
+            background: 'radial-gradient(circle at 36% 32%, #F0FCFF 0%, #BAEFFE 58%, #83DDF5 100%)',
+            boxShadow: `0 0 14px rgba(186, 239, 254, 0.82), 0 0 34px rgba(37, 99, 235, 0.34)`,
           }}
         />
       </div>
