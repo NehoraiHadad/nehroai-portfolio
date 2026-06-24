@@ -14,6 +14,7 @@ import {
   getQuote,
   upsertQuote,
   deleteQuote,
+  shareQuote,
   getBrand,
   saveBrand,
   listClients,
@@ -24,6 +25,7 @@ import {
   listQuotesByClient,
 } from './db/queries';
 import { buildAndCreateQuote, applyQuotePatch } from './build-quote';
+import { buildShareUrl } from './share-url';
 import { computeTotals } from './totals';
 import { generateQuotePdf } from './pdf/generate-quote-pdf';
 import {
@@ -361,6 +363,66 @@ export function registerQuoteTools(server: McpServer): void {
               text: 'Generated PDF for ' + quote.number + ' (' + pdf.length + ' bytes).',
             },
           ],
+        };
+      } catch (err) {
+        return toolError(err instanceof Error ? err.message : String(err));
+      }
+    },
+  );
+
+  // -- share_quote -------------------------------------------------------------
+  server.registerTool(
+    'share_quote',
+    {
+      title: 'Share Quote',
+      description:
+        'Generate (or retrieve) the public approval link for a quote and advance its status from ' +
+        'draft to sent. The link points to a client-facing page where the client can review and ' +
+        'either approve or reject the quote — their action moves the status to approved or ' +
+        'rejected. The share token is the capability: anyone with the link can respond, so only ' +
+        'share it with the intended client. The operation is idempotent: calling this again for ' +
+        'an already-sent quote returns the same link without creating a new token or resetting ' +
+        'the status. Returns the full approval URL and the updated quote document.',
+      inputSchema: {
+        id: z.string().describe('The quote id (UUID) to create a public approval link for.'),
+      },
+    },
+    async (args, extra) => {
+      try {
+        const owner = ownerOf(extra);
+        const quote = await shareQuote(owner, args.id);
+        if (!quote || !quote.shareToken) {
+          return toolError(`Quote ${args.id} not found.`);
+        }
+
+        // Resolve the origin the same way get_quote_pdf does: prefer the value
+        // the MCP route stashed from the real HTTP request, then fall back to
+        // env vars. If none is available, still return the token so the agent
+        // can construct the URL itself or fall back to the HTTP endpoint.
+        const stashedOrigin = extra.authInfo?.extra?.origin as string | undefined;
+        const origin = stashedOrigin ?? process.env.AUTH_URL ?? process.env.APP_URL;
+        if (!origin) {
+          return toolError(
+            'Quote shared (token: ' +
+              quote.shareToken +
+              ') but could not determine the app origin to build the full URL. ' +
+              'Set APP_URL=https://your-domain.com in your environment variables, or use the ' +
+              'HTTP endpoint POST /api/admin/v1/quotes/' +
+              args.id +
+              '/share which returns the full URL.',
+          );
+        }
+
+        const url = buildShareUrl(origin, quote.shareToken);
+        return {
+          content: [
+            {
+              type: 'text',
+              text:
+                `Public approval link for ${quote.number}: ${url} (status: ${quote.status}).`,
+            },
+          ],
+          structuredContent: { url, quote },
         };
       } catch (err) {
         return toolError(err instanceof Error ? err.message : String(err));

@@ -16,7 +16,7 @@
 import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
 
-import { eq, or } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
 import { apiTokens } from '../lib/admin/db/schema';
@@ -40,9 +40,13 @@ async function main(): Promise<void> {
 
   const db = drizzle(neon(url), { schema: { apiTokens } });
 
+  // When given a prefix (not a UUID), match ONLY on prefix. Including an
+  // `id = <prefix>` comparison makes Postgres try to cast the non-UUID string to
+  // uuid and fail with "invalid input syntax for type uuid" before any row is
+  // checked. The id branch is only valid when the input is actually a UUID.
   const match = isUuid
     ? eq(apiTokens.id, idOrPrefix)
-    : or(eq(apiTokens.prefix, idOrPrefix), eq(apiTokens.id, idOrPrefix));
+    : eq(apiTokens.prefix, idOrPrefix);
 
   const revoked = await db
     .update(apiTokens)

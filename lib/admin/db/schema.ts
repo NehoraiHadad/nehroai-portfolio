@@ -50,6 +50,14 @@ export const quotes = pgTable(
     // jsonb stays authoritative. ON DELETE SET NULL auto-unlinks when a directory
     // client is deleted — it never cascades to delete the quote itself.
     clientId: uuid('client_id').references(() => clients.id, { onDelete: 'set null' }),
+    // Public approval link: a per-quote capability token. Null until the quote
+    // is shared; unique so it can be looked up directly on the public page.
+    shareToken: text('share_token').unique(),
+    // Lifecycle timestamps — set as the quote moves through its states. Null
+    // until the corresponding transition happens. Status itself stays in `status`.
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    rejectedAt: timestamp('rejected_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

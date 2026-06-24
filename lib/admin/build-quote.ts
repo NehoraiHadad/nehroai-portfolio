@@ -47,6 +47,12 @@ export async function buildAndCreateQuote(
     currency: 'ILS',
     // Optional link to the source directory client; null for ad-hoc quotes.
     clientId: input.clientId ?? null,
+    // New quotes start unshared; lifecycle timestamps are stamped by shareQuote
+    // / the public approval actions, never at creation time.
+    shareToken: null,
+    sentAt: null,
+    approvedAt: null,
+    rejectedAt: null,
     // Caller-supplied fields (with schema defaults already applied by Zod).
     client: {
       name: input.client.name,

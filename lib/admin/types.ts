@@ -93,6 +93,15 @@ export interface QuoteDoc {
   /** Nullable link to the source ClientRecord in the clients directory.
    *  Null for quotes created ad-hoc or via the API without a directory entry. */
   clientId: string | null;
+  /** Per-quote capability token backing the public approval link `/q/<token>`.
+   *  Null until the quote is shared. */
+  shareToken: string | null;
+  /** ISO timestamp set when the quote was first shared (draft→sent). Null until then. */
+  sentAt: string | null;
+  /** ISO timestamp set when the client approved via the public link. */
+  approvedAt: string | null;
+  /** ISO timestamp set when the client rejected via the public link. */
+  rejectedAt: string | null;
   client: Client;
   items: LineItem[];
 

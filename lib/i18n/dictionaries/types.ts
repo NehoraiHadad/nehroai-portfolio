@@ -396,5 +396,25 @@ export interface AdminDictionary {
     back: string;
     delete: string;
     cancel: string;
+    shareLinkLabel: string;
+    copyLink: string;
+    linkCopied: string;
+    shareError: string;
+  };
+  publicQuote: {
+    approve: string;
+    reject: string;
+    approveConfirm: string;
+    rejectConfirm: string;
+    processing: string;
+    pendingTitle: string;
+    pendingBody: string;
+    approvedTitle: string;
+    approvedBody: string;
+    rejectedTitle: string;
+    rejectedBody: string;
+    expiredTitle: string;
+    expiredBody: string;
+    errorBody: string;
   };
 }

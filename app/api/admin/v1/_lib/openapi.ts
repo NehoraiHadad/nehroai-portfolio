@@ -177,6 +177,40 @@ export function buildOpenApiDocument(origin: string): object {
         },
       },
 
+      '/quotes/{id}/share': {
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Quote UUID.' },
+        ],
+        post: {
+          operationId: 'shareQuote',
+          summary: 'Generate (or retrieve) the public approval link for a quote',
+          description:
+            'Mints a share token if one does not already exist, advances the quote status from ' +
+            'draft to sent, and returns the client-facing approval URL. Idempotent: calling again ' +
+            'for an already-sent quote returns the same link without resetting state.',
+          security: [bearerAuth],
+          responses: {
+            '200': {
+              description: 'The public approval URL and the updated quote document.',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    required: ['url', 'quote'],
+                    properties: {
+                      url: { type: 'string', description: 'The client-facing approval link (<origin>/q/<token>).' },
+                      quote: { type: 'object', description: 'The updated QuoteDoc (status will be "sent" or later).' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': { description: 'Unauthorized.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            '404': { description: 'Quote not found.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          },
+        },
+      },
+
       '/skill': {
         get: {
           operationId: 'getSkill',

@@ -345,3 +345,100 @@ export async function listQuotesByClient(
     .orderBy(desc(quotes.updatedAt));
   return rows.map(rowToQuoteDoc);
 }
+
+// --- Quote sharing & public approval lifecycle ------------------------------
+//
+// The public approval link `/q/<shareToken>` is a capability URL: possession of
+// the unguessable token IS the authorization. So the lookup + approve/reject
+// functions below are intentionally NOT owner-scoped — the client visiting the
+// link has no session. shareQuote(), which mints the token, IS owner-scoped
+// because only the owning admin may create/expose the link.
+
+/** Mint an unguessable, URL-safe per-quote share token. */
+function generateShareToken(): string {
+  return 'qs_' + randomBytes(24).toString('base64url');
+}
+
+/**
+ * Owner-scoped. Ensure the quote has a share token and is at least `sent`, then
+ * return the updated doc. Idempotent: re-sharing returns the existing token and
+ * does not reset an already-advanced status (approved/rejected stay as-is).
+ * Returns null if the quote does not exist or is not owned by `owner`.
+ */
+export async function shareQuote(owner: string, id: string): Promise<QuoteDoc | null> {
+  const existing = await getQuote(owner, id);
+  if (!existing) return null;
+
+  const doc: QuoteDoc = { ...existing };
+  if (!doc.shareToken) doc.shareToken = generateShareToken();
+  // Only advance draft→sent; never pull an approved/rejected quote back to sent.
+  if (doc.status === 'draft') {
+    doc.status = 'sent';
+    doc.sentAt = doc.sentAt ?? new Date().toISOString();
+  }
+  return upsertQuote(owner, doc);
+}
+
+/**
+ * Public (NOT owner-scoped) lookup by share token. The token is the credential.
+ * Returns the full quote doc, or null if no quote carries this token.
+ */
+export async function getQuoteByShareToken(token: string): Promise<QuoteDoc | null> {
+  if (!token) return null;
+  const rows = await getDb()
+    .select()
+    .from(quotes)
+    .where(eq(quotes.shareToken, token))
+    .limit(1);
+  return rows[0] ? rowToQuoteDoc(rows[0]) : null;
+}
+
+/**
+ * Public (NOT owner-scoped) approve via share token. Atomic + idempotent: the
+ * status='sent' guard in the WHERE clause means a second click, or a click on an
+ * already-decided quote, matches no row and returns null. Returns the updated
+ * doc on success, null otherwise.
+ */
+export async function approveQuoteByShareToken(token: string): Promise<QuoteDoc | null> {
+  if (!token) return null;
+  const now = new Date();
+  const updated = await getDb()
+    .update(quotes)
+    .set({ status: 'approved', approvedAt: now, updatedAt: now })
+    .where(and(eq(quotes.shareToken, token), eq(quotes.status, 'sent')))
+    .returning();
+  return updated[0] ? rowToQuoteDoc(updated[0]) : null;
+}
+
+/** Public (NOT owner-scoped) reject via share token. Mirror of approve. */
+export async function rejectQuoteByShareToken(token: string): Promise<QuoteDoc | null> {
+  if (!token) return null;
+  const now = new Date();
+  const updated = await getDb()
+    .update(quotes)
+    .set({ status: 'rejected', rejectedAt: now, updatedAt: now })
+    .where(and(eq(quotes.shareToken, token), eq(quotes.status, 'sent')))
+    .returning();
+  return updated[0] ? rowToQuoteDoc(updated[0]) : null;
+}
+
+/**
+ * Public (NOT owner-scoped) lookup that also resolves the owner's brand for the
+ * quote's language — the public approval page has no session to resolve owner.
+ * Returns the quote + brand, or null when the token matches no quote.
+ */
+export async function getPublicQuoteByShareToken(
+  token: string,
+): Promise<{ quote: QuoteDoc; brand: BrandProfile } | null> {
+  if (!token) return null;
+  const rows = await getDb()
+    .select()
+    .from(quotes)
+    .where(eq(quotes.shareToken, token))
+    .limit(1);
+  const row = rows[0];
+  if (!row) return null;
+  const quote = rowToQuoteDoc(row);
+  const brand = await getBrand(row.ownerEmail, quote.language);
+  return { quote, brand };
+}
