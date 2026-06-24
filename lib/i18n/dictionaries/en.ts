@@ -531,6 +531,7 @@ export const enDictionary: AppDictionary = {
       quoteNumber: 'Quote number',
       projectTitle: 'Project title',
       projectDescription: 'Short description',
+      terms: 'Terms & payment notes',
       validUntil: 'Valid until',
       language: 'Quote language',
       currency: 'Currency',

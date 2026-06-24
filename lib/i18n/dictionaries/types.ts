@@ -308,6 +308,7 @@ export interface AdminDictionary {
     quoteNumber: string;
     projectTitle: string;
     projectDescription: string;
+    terms: string;
     validUntil: string;
     language: string;
     currency: string;

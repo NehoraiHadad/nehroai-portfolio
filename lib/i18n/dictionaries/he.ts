@@ -531,6 +531,7 @@ export const heDictionary: AppDictionary = {
       quoteNumber: 'מספר הצעה',
       projectTitle: 'כותרת הפרויקט',
       projectDescription: 'תיאור קצר',
+      terms: 'תנאים והערות תשלום',
       validUntil: 'בתוקף עד',
       language: 'שפת ההצעה',
       currency: 'מטבע',

@@ -84,15 +84,21 @@ export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandPr
             <p className="qp-eyebrow mb-2">{p.quoteFor}</p>
             <p className="qp-ink text-[15px] font-semibold">{quote.client.name || '—'}</p>
             {quote.client.company && <p className="qp-ink-1 text-[13px]">{quote.client.company}</p>}
-            {quote.client.email && <p className="qp-ink-1 text-[13px]">{quote.client.email}</p>}
+            {/* bdi isolates Latin/number runs so they read correctly while the
+               line still aligns to the start edge (right in RTL) like the rest. */}
+            {quote.client.email && (
+              <p className="qp-ink-1 text-[13px]">
+                <bdi>{quote.client.email}</bdi>
+              </p>
+            )}
             {quote.client.phone && (
-              <p className="qp-ink-1 text-[13px] text-start" dir="ltr">
-                {quote.client.phone}
+              <p className="qp-ink-1 text-[13px]">
+                <bdi>{quote.client.phone}</bdi>
               </p>
             )}
             {quote.client.taxId && (
               <p className="qp-ink-2 mt-0.5 text-[12px]">
-                {b.clientTaxId}: {quote.client.taxId}
+                {b.clientTaxId}: <bdi>{quote.client.taxId}</bdi>
               </p>
             )}
             {quote.client.address && <p className="qp-ink-2 text-[12px]">{quote.client.address}</p>}
@@ -205,12 +211,22 @@ export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandPr
           </p>
         </section>
 
-        {/* Footer — brand contact line */}
-        <footer className="qp-divide mt-8 flex flex-wrap items-center justify-between gap-2 pt-4">
+        {/* Footer — brand contact line, pinned to the foot of the sheet */}
+        <footer className="qp-divide mt-auto flex flex-wrap items-center justify-between gap-2 pt-6">
           <p className="qp-ink-2 text-[12px]">
             <span className="qp-ink font-semibold">{brand.name}</span>
-            {brand.email ? ` · ${brand.email}` : ''}
-            {brand.phone ? ` · ${brand.phone}` : ''}
+            {brand.email ? (
+              <>
+                {' · '}
+                <bdi>{brand.email}</bdi>
+              </>
+            ) : null}
+            {brand.phone ? (
+              <>
+                {' · '}
+                <bdi>{brand.phone}</bdi>
+              </>
+            ) : null}
           </p>
           <p className="qp-ink-2 text-[12px]">{p.thankYou}</p>
         </footer>

@@ -1151,7 +1151,14 @@ body[data-scene="showcase"] {
     height: 6px;
     background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 45%, #60a5fa 100%);
   }
-  .quote-paper__body { padding: clamp(28px, 5vw, 52px); }
+  /* Flex column + A4-proportioned min-height so the footer can be pinned to the
+     bottom of the sheet (footer uses margin-block-start: auto). */
+  .quote-paper__body {
+    display: flex;
+    flex-direction: column;
+    min-height: 1140px;
+    padding: clamp(28px, 5vw, 52px);
+  }
 
   .qp-eyebrow {
     font-family: var(--font-mono);
@@ -1248,7 +1255,9 @@ body[data-scene="showcase"] {
     print-color-adjust: exact !important;
   }
   .quote-paper__bar { border-radius: 0 !important; }
-  .quote-paper__body { padding: 0 !important; }
+  /* On paper, min-height ≈ one A4 content area so the footer sits near the page
+     foot (kept under the usable 269mm to avoid spilling to a second page). */
+  .quote-paper__body { padding: 0 !important; min-height: 250mm; }
 
   /* Repeat the table header across page breaks; keep blocks intact */
   .qp-table thead { display: table-header-group; }

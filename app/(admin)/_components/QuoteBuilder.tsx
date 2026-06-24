@@ -219,6 +219,16 @@ export function QuoteBuilder({
               onChange={(e) => patch('projectDescription', e.target.value)}
             />
           </div>
+          <div className="admin-field sm:col-span-2">
+            <label className="admin-label" htmlFor="quote-terms">{b.terms}</label>
+            <textarea
+              id="quote-terms"
+              className="admin-textarea"
+              rows={3}
+              value={quote.terms}
+              onChange={(e) => patch('terms', e.target.value)}
+            />
+          </div>
           <div className="admin-field">
             <label className="admin-label" htmlFor="quote-language">{b.language}</label>
             <select
