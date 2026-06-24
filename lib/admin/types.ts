@@ -40,6 +40,29 @@ export interface Client {
   address: string;
 }
 
+/**
+ * A directory entry in the clients address-book. This is the SOURCE used to
+ * pre-populate new quotes and to group "all quotes for this client" — it is
+ * distinct from the frozen per-quote `Client` JSONB snapshot, which must never
+ * change retroactively once a quote is issued. Editing a ClientRecord must never
+ * mutate existing quote snapshots.
+ */
+export interface ClientRecord {
+  id: string;
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  taxId: string;
+  address: string;
+  /** Directory-only notes — NOT included in the quote snapshot. */
+  notes: string;
+  /** ISO timestamp string. */
+  createdAt: string;
+  /** ISO timestamp string. */
+  updatedAt: string;
+}
+
 export interface BrandProfile {
   /** Display wordmark for the quote header (e.g. "Nehorai Hadad" / "נהוראי חדד"). */
   name: string;
@@ -67,6 +90,9 @@ export interface QuoteDoc {
   /** Free-text terms / notes shown on the preview. */
   terms: string;
 
+  /** Nullable link to the source ClientRecord in the clients directory.
+   *  Null for quotes created ad-hoc or via the API without a directory entry. */
+  clientId: string | null;
   client: Client;
   items: LineItem[];
 

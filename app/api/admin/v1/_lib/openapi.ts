@@ -10,6 +10,8 @@ import {
   zCreateQuoteInput,
   zPatchQuoteInput,
   zBrandInput,
+  zClientRecordInput,
+  zClientRecordPatch,
 } from './schemas';
 
 // Conversion options: openApi3 target, no $ref expansion (inline schemas only
@@ -56,6 +58,8 @@ export function buildOpenApiDocument(origin: string): object {
         CreateQuoteInput: toSchema(zCreateQuoteInput),
         PatchQuoteInput: toSchema(zPatchQuoteInput),
         BrandInput: toSchema(zBrandInput),
+        ClientRecordInput: toSchema(zClientRecordInput),
+        ClientRecordPatch: toSchema(zClientRecordPatch),
         Error: {
           type: 'object',
           required: ['error'],
@@ -205,6 +209,92 @@ export function buildOpenApiDocument(origin: string): object {
                 },
               },
             },
+          },
+        },
+      },
+
+      '/clients': {
+        get: {
+          operationId: 'listClients',
+          summary: 'List clients',
+          security: [bearerAuth],
+          responses: {
+            '200': { description: 'Array of ClientRecord objects.' },
+            '401': { description: 'Missing or invalid bearer token.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          },
+        },
+        post: {
+          operationId: 'createClient',
+          summary: 'Create a client',
+          security: [bearerAuth],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ClientRecordInput' } },
+            },
+          },
+          responses: {
+            '201': { description: 'The created ClientRecord.' },
+            '400': { description: 'Validation error.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            '401': { description: 'Missing or invalid bearer token.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          },
+        },
+      },
+
+      '/clients/{id}': {
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Client UUID.' },
+        ],
+        get: {
+          operationId: 'getClient',
+          summary: 'Get a client',
+          security: [bearerAuth],
+          responses: {
+            '200': { description: 'The ClientRecord.' },
+            '401': { description: 'Unauthorized.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            '404': { description: 'Client not found.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          },
+        },
+        patch: {
+          operationId: 'patchClient',
+          summary: 'Partially update a client',
+          security: [bearerAuth],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ClientRecordPatch' } },
+            },
+          },
+          responses: {
+            '200': { description: 'The updated ClientRecord.' },
+            '400': { description: 'Validation error.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            '401': { description: 'Unauthorized.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            '404': { description: 'Client not found.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          },
+        },
+        delete: {
+          operationId: 'deleteClient',
+          summary: 'Delete a client',
+          security: [bearerAuth],
+          responses: {
+            '200': { description: '{ ok: true }' },
+            '401': { description: 'Unauthorized.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            '404': { description: 'Client not found.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          },
+        },
+      },
+
+      '/clients/{id}/quotes': {
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Client UUID.' },
+        ],
+        get: {
+          operationId: 'listClientQuotes',
+          summary: 'List quotes for a client',
+          security: [bearerAuth],
+          responses: {
+            '200': { description: 'Concise array of quotes linked to this client (id, number, status, language, clientName, total, updatedAt).' },
+            '401': { description: 'Unauthorized.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           },
         },
       },

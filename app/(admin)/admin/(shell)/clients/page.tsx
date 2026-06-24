@@ -1,19 +1,32 @@
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { requireAdmin } from '@/lib/admin/auth';
+import { listClients } from '@/lib/admin/db/queries';
 import { adminLang } from '../../../_components/lang';
 import { PageHeader } from '../../../_components/PageHeader';
+import { ClientsListContent } from '../../../_components/ClientsListContent';
 
 export default async function ClientsPage() {
-  await requireAdmin();
-  const dict = await getDictionary(await adminLang());
-  const { clients } = dict.admin;
+  const user = await requireAdmin();
+  const [dict, clients] = await Promise.all([
+    getDictionary(await adminLang()),
+    listClients(user.email),
+  ]);
+  const { clients: c } = dict.admin;
   return (
     <>
-      <PageHeader title={clients.title} subtitle={clients.subtitle} />
-      <div className="card flex flex-col items-center gap-2 p-10 text-center">
-        <p className="text-sm text-fg-1">{clients.empty}</p>
-        <p className="max-w-md text-xs text-fg-2">{clients.futureNote}</p>
-      </div>
+      <PageHeader
+        title={c.title}
+        subtitle={c.subtitle}
+        action={
+          <Link href="/admin/clients/new" className="btn btn-primary btn-sm">
+            <Plus className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+            {c.newClient}
+          </Link>
+        }
+      />
+      <ClientsListContent clients={clients} />
     </>
   );
 }

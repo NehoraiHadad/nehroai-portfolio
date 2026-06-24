@@ -45,6 +45,8 @@ export async function buildAndCreateQuote(
     number,
     // Currency is always ILS for this phase.
     currency: 'ILS',
+    // Optional link to the source directory client; null for ad-hoc quotes.
+    clientId: input.clientId ?? null,
     // Caller-supplied fields (with schema defaults already applied by Zod).
     client: {
       name: input.client.name,
@@ -76,6 +78,7 @@ export function applyQuotePatch(existing: QuoteDoc, patch: PatchQuoteInput): Quo
   const doc: QuoteDoc = { ...existing };
 
   // Scalar fields — only overwrite when the patch key is present.
+  if (patch.clientId !== undefined) doc.clientId = patch.clientId ?? null;
   if (patch.number !== undefined) doc.number = patch.number;
   if (patch.language !== undefined) doc.language = patch.language;
   if (patch.projectTitle !== undefined) doc.projectTitle = patch.projectTitle;

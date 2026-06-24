@@ -48,6 +48,8 @@ export const zCreateQuoteInput = z.object({
   terms: z.string().default(''),
   vatRate: z.number().min(0).default(18),
   status: zQuoteStatus.default('draft'),
+  /** Optional nullable link to a directory ClientRecord. Null for ad-hoc quotes. */
+  clientId: z.string().uuid().nullish(),
 });
 
 /**
@@ -58,6 +60,25 @@ export const zCreateQuoteInput = z.object({
 export const zPatchQuoteInput = zCreateQuoteInput
   .partial()
   .extend({ number: z.string().optional() });
+
+// ---- Client directory inputs ------------------------------------------------
+
+/** Full payload for creating or replacing a directory ClientRecord. */
+export const zClientRecordInput = z.object({
+  name: z.string().min(1),
+  company: z.string().default(''),
+  email: z.string().default(''),
+  phone: z.string().default(''),
+  taxId: z.string().default(''),
+  address: z.string().default(''),
+  notes: z.string().default(''),
+});
+
+/** PATCH payload — every field optional; only provided fields are updated. */
+export const zClientRecordPatch = zClientRecordInput.partial();
+
+export type ClientRecordInput = z.infer<typeof zClientRecordInput>;
+export type ClientRecordPatch = z.infer<typeof zClientRecordPatch>;
 
 // ---- Brand input ------------------------------------------------------------
 

@@ -12,6 +12,7 @@ export function createBlankQuote({ number }: { number: string }): QuoteDoc {
     status: 'draft',
     language: 'en',
     currency: 'ILS',
+    clientId: null,
     projectTitle: '',
     projectDescription: '',
     validUntil: '',

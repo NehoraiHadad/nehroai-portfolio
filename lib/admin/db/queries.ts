@@ -1,11 +1,12 @@
 import 'server-only';
 import { randomBytes, createHash } from 'node:crypto';
 import { and, eq, desc, sql, isNull, or, gt } from 'drizzle-orm';
-import type { BrandProfile, QuoteDoc, QuoteLanguage } from '../types';
+import type { BrandProfile, ClientRecord, QuoteDoc, QuoteLanguage } from '../types';
+import type { ClientRecordInput, ClientRecordPatch } from '@/app/api/admin/v1/_lib/schemas';
 import { defaultBrandProfile } from '../brand';
 import { formatQuoteNumber } from '../quote-number';
 import { getDb } from './client';
-import { quotes, brandProfiles, quoteCounters, apiTokens } from './schema';
+import { quotes, brandProfiles, quoteCounters, apiTokens, clients } from './schema';
 import { rowToQuoteDoc, quoteDocToColumns } from './mappers';
 
 // Server-only Data Access Layer. Every function is scoped to `owner` (the
@@ -221,4 +222,126 @@ export async function touchTokenLastUsed(id: string): Promise<void> {
     .update(apiTokens)
     .set({ lastUsedAt: new Date() })
     .where(eq(apiTokens.id, id));
+}
+
+// --- Clients (directory) ----------------------------------------------------
+//
+// The clients table is an address-book directory — the source for pre-populating
+// quotes and for "all quotes by client" views. Every function is owner-scoped:
+// callers pass the session email and all queries filter on owner_email, so one
+// admin can never read or mutate another's directory entries.
+
+/** Map a `clients` DB row to the `ClientRecord` shape the application works with. */
+function rowToClient(row: typeof clients.$inferSelect): ClientRecord {
+  return {
+    id: row.id,
+    name: row.name,
+    company: row.company,
+    email: row.email,
+    phone: row.phone,
+    taxId: row.taxId,
+    address: row.address,
+    notes: row.notes,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+/** All directory clients for `owner`, ordered newest-updated first. */
+export async function listClients(owner: string): Promise<ClientRecord[]> {
+  const rows = await getDb()
+    .select()
+    .from(clients)
+    .where(eq(clients.ownerEmail, owner))
+    .orderBy(desc(clients.updatedAt));
+  return rows.map(rowToClient);
+}
+
+/** Fetch a single directory client by id; null when not found or not owned. */
+export async function getClient(owner: string, id: string): Promise<ClientRecord | null> {
+  const rows = await getDb()
+    .select()
+    .from(clients)
+    .where(and(eq(clients.id, id), eq(clients.ownerEmail, owner)))
+    .limit(1);
+  return rows[0] ? rowToClient(rows[0]) : null;
+}
+
+/**
+ * Create a new directory client for `owner`. The DB generates the uuid and
+ * both timestamps; the returned record reflects what was actually stored.
+ */
+export async function createClient(
+  owner: string,
+  input: ClientRecordInput,
+): Promise<ClientRecord> {
+  const [row] = await getDb()
+    .insert(clients)
+    .values({
+      ownerEmail: owner,
+      name: input.name,
+      company: input.company,
+      email: input.email,
+      phone: input.phone,
+      taxId: input.taxId,
+      address: input.address,
+      notes: input.notes,
+    })
+    .returning();
+  return rowToClient(row);
+}
+
+/**
+ * Owner-scoped update — only provided patch fields are overwritten. Stamps
+ * updatedAt unconditionally. Returns the updated record, or null if no row
+ * matched (id not found, or owned by someone else).
+ */
+export async function updateClient(
+  owner: string,
+  id: string,
+  patch: ClientRecordPatch,
+): Promise<ClientRecord | null> {
+  const updated = await getDb()
+    .update(clients)
+    .set({
+      ...(patch.name !== undefined && { name: patch.name }),
+      ...(patch.company !== undefined && { company: patch.company }),
+      ...(patch.email !== undefined && { email: patch.email }),
+      ...(patch.phone !== undefined && { phone: patch.phone }),
+      ...(patch.taxId !== undefined && { taxId: patch.taxId }),
+      ...(patch.address !== undefined && { address: patch.address }),
+      ...(patch.notes !== undefined && { notes: patch.notes }),
+      updatedAt: new Date(),
+    })
+    .where(and(eq(clients.id, id), eq(clients.ownerEmail, owner)))
+    .returning();
+  return updated[0] ? rowToClient(updated[0]) : null;
+}
+
+/**
+ * Owner-scoped delete. The FK ON DELETE SET NULL on `quotes.client_id`
+ * automatically unlinks any quotes that reference this client; no quotes are
+ * deleted.
+ */
+export async function deleteClient(owner: string, id: string): Promise<void> {
+  await getDb()
+    .delete(clients)
+    .where(and(eq(clients.id, id), eq(clients.ownerEmail, owner)));
+}
+
+/**
+ * All quotes for `owner` that are linked to `clientId`, newest first.
+ * Uses the `client_id` FK column — not the snapshot — so this returns only
+ * quotes explicitly connected to the directory entry.
+ */
+export async function listQuotesByClient(
+  owner: string,
+  clientId: string,
+): Promise<QuoteDoc[]> {
+  const rows = await getDb()
+    .select()
+    .from(quotes)
+    .where(and(eq(quotes.ownerEmail, owner), eq(quotes.clientId, clientId)))
+    .orderBy(desc(quotes.updatedAt));
+  return rows.map(rowToQuoteDoc);
 }

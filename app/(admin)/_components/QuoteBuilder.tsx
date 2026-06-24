@@ -2,12 +2,13 @@
 
 import { useState, useTransition, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, BookUser, Save } from 'lucide-react';
 import { useDictionary } from '@/lib/i18n/provider';
 import { computeTotals, formatMoney } from '@/lib/admin/totals';
 import { saveQuoteAction } from './quote-actions';
+import { createClientAction } from './client-actions';
 import { QUOTE_STATUSES } from '@/lib/admin/types';
-import type { LineItem, QuoteDoc, QuoteLanguage, QuoteStatus } from '@/lib/admin/types';
+import type { ClientRecord, LineItem, QuoteDoc, QuoteLanguage, QuoteStatus } from '@/lib/admin/types';
 
 // --------------------------------------------------------------------------
 // Component
@@ -16,13 +17,17 @@ import type { LineItem, QuoteDoc, QuoteLanguage, QuoteStatus } from '@/lib/admin
 export function QuoteBuilder({
   initialQuote,
   isNew,
+  savedClients = [],
 }: {
   initialQuote: QuoteDoc;
   isNew?: boolean;
+  /** Directory clients fetched server-side, passed from the page. */
+  savedClients?: ClientRecord[];
 }) {
   const { admin } = useDictionary();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isSavingClient, startSavingClient] = useTransition();
 
   // Seed state directly from the server-fetched prop.
   const [quote, setQuote] = useState<QuoteDoc>(initialQuote);
@@ -86,7 +91,49 @@ export function QuoteBuilder({
     });
   }, [quote, router]);
 
+  // Copy a saved ClientRecord's fields into the quote's client block and link clientId.
+  const handleSelectClient = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const id = e.target.value;
+      if (!id) return;
+      const record = savedClients.find((c) => c.id === id);
+      if (!record) return;
+      setQuote((q) => ({
+        ...q,
+        clientId: record.id,
+        client: {
+          name: record.name,
+          company: record.company,
+          email: record.email,
+          phone: record.phone,
+          taxId: record.taxId,
+          address: record.address,
+        },
+      }));
+    },
+    [savedClients],
+  );
+
+  // Save the current client block as a new ClientRecord in the directory.
+  const handleSaveAsClient = useCallback(() => {
+    if (!quote.client.name.trim()) return;
+    startSavingClient(async () => {
+      const record = await createClientAction({
+        name: quote.client.name,
+        company: quote.client.company,
+        email: quote.client.email,
+        phone: quote.client.phone,
+        taxId: quote.client.taxId,
+        address: quote.client.address,
+        notes: '',
+      });
+      // Link the new directory entry to this quote.
+      setQuote((q) => ({ ...q, clientId: record.id }));
+    });
+  }, [quote.client]);
+
   const b = admin.builder;
+  const c = admin.clients;
   const totals = computeTotals(quote.items, quote.vatRate);
   // isNew is available for future use (e.g. different header copy)
   void isNew;
@@ -98,7 +145,33 @@ export function QuoteBuilder({
           Client details
       ---------------------------------------------------------------- */}
       <section className="card p-5">
-        <h2 className="!mb-4 text-[var(--t-20)]">{b.sectionClient}</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="!mb-0 text-[var(--t-20)]">{b.sectionClient}</h2>
+
+          {/* Saved-client affordances — only shown when the directory is non-empty */}
+          {savedClients.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {/* "Use a saved client" picker */}
+              <div className="flex items-center gap-1.5">
+                <BookUser className="h-3.5 w-3.5 text-fg-3" strokeWidth={1.5} aria-hidden="true" />
+                <select
+                  className="admin-select py-1 text-xs"
+                  defaultValue=""
+                  onChange={handleSelectClient}
+                  aria-label={c.selectClient}
+                >
+                  <option value="" disabled>{c.selectClient}</option>
+                  {savedClients.map((cl) => (
+                    <option key={cl.id} value={cl.id}>
+                      {cl.name}{cl.company ? ` — ${cl.company}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="admin-field">
             <label className="admin-label" htmlFor="client-name">{b.clientName}</label>
@@ -169,6 +242,22 @@ export function QuoteBuilder({
             />
           </div>
         </div>
+
+        {/* "Save to clients" — only shown when name is non-empty and not yet linked */}
+        {quote.client.name.trim() && !quote.clientId && (
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSaveAsClient}
+              disabled={isSavingClient}
+              aria-disabled={isSavingClient}
+              className="btn btn-secondary btn-sm inline-flex items-center gap-1.5 text-xs"
+            >
+              <Save className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
+              {c.saveAsClient}
+            </button>
+          </div>
+        )}
       </section>
 
       {/* ----------------------------------------------------------------
@@ -220,7 +309,7 @@ export function QuoteBuilder({
             />
           </div>
           <div className="admin-field sm:col-span-2">
-            <label className="admin-label" htmlFor="quote-terms">{b.terms}</label>
+          <label className="admin-label" htmlFor="quote-terms">{b.terms}</label>
             <textarea
               id="quote-terms"
               className="admin-textarea"

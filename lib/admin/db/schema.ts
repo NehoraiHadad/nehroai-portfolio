@@ -7,8 +7,9 @@
 // they're queryable, while `client` and `items` are JSONB snapshots. A quote is
 // a self-contained document — the client's details and line items are frozen at
 // issue time and must not retroactively change — so embedding them as JSONB
-// keeps the `QuoteDoc` shape identical end-to-end. A normalized `clients` table
-// is a future feature (client management), not this migration. See FUTURE.md.
+// keeps the `QuoteDoc` shape identical end-to-end. The `clients` table is a
+// separate address-book directory; `quotes.client_id` is a nullable FK back to
+// that directory, but the snapshot in `client` jsonb remains authoritative.
 
 import {
   pgTable,
@@ -45,6 +46,10 @@ export const quotes = pgTable(
     vatRate: doublePrecision('vat_rate').notNull(),
     client: jsonb('client').$type<Client>().notNull(),
     items: jsonb('items').$type<LineItem[]>().notNull(),
+    // Nullable link to the source client directory entry; snapshot in `client`
+    // jsonb stays authoritative. ON DELETE SET NULL auto-unlinks when a directory
+    // client is deleted — it never cascades to delete the quote itself.
+    clientId: uuid('client_id').references(() => clients.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -72,6 +77,27 @@ export const quoteCounters = pgTable(
     seq: integer('seq').notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.ownerEmail, t.year] })],
+);
+
+// Client directory — the address-book source used to pre-populate new quotes and
+// anchor "all quotes for this client" queries. Distinct from the frozen per-quote
+// `client` JSONB snapshot; editing a directory entry never mutates issued quotes.
+export const clients = pgTable(
+  'clients',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    ownerEmail: text('owner_email').notNull(),
+    name: text('name').notNull(),
+    company: text('company').notNull().default(''),
+    email: text('email').notNull().default(''),
+    phone: text('phone').notNull().default(''),
+    taxId: text('tax_id').notNull().default(''),
+    address: text('address').notNull().default(''),
+    notes: text('notes').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('clients_owner_updated_idx').on(t.ownerEmail, t.updatedAt)],
 );
 
 // Hashed agent API tokens for non-interactive (machine/agent) auth. Owner-scoped
