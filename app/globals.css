@@ -1114,68 +1114,148 @@ body[data-scene="showcase"] {
   .admin-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 }
 
-/* Print scaffolding for the quote preview (chip #3 builds the sheet itself).
-   When printing, hide everything except the element marked .print-sheet, and
-   reset surfaces to white/black for clean A4 output. */
-@media print {
-  .no-print { display: none !important; }
-  .print-sheet {
-    box-shadow: none !important;
-    border: none !important;
+/* ============================================================
+   QUOTE PAPER — the printable quote renders as a real white
+   "sheet" with its OWN self-contained palette (not the dark
+   admin tokens), so it looks identical on screen (floating on
+   the dark canvas) and in the printed / PDF output (WYSIWYG).
+   Literal colours are intentional here — same rationale as the
+   print block below. RTL-safe via logical properties.
+   ============================================================ */
+@layer components {
+  .quote-paper {
+    --pp-bg: #FFFFFF;
+    --pp-bg-soft: #F6F8FC;
+    --pp-ink: #0B1220;
+    --pp-ink-1: #424B61;
+    --pp-ink-2: #7A8398;
+    --pp-line: #E6EAF2;
+    --pp-line-strong: #D6DCE8;
+    --pp-accent: #2563EB;
+    --pp-ok: #047857;
+
+    position: relative;
+    background: var(--pp-bg);
+    color: var(--pp-ink);
+    font-family: var(--font-sans);
+    border-radius: var(--r-3);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+      0 28px 64px -28px rgba(2, 8, 26, 0.65),
+      0 8px 24px -16px rgba(2, 8, 26, 0.5);
+    overflow: hidden;
+  }
+  .quote-paper--he { font-family: var(--font-sans-he); }
+
+  .quote-paper__bar {
+    height: 6px;
+    background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 45%, #60a5fa 100%);
+  }
+  .quote-paper__body { padding: clamp(28px, 5vw, 52px); }
+
+  .qp-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--ls-wider);
+    text-transform: uppercase;
+    color: var(--pp-ink-2);
+  }
+
+  .qp-ink { color: var(--pp-ink); }
+  .qp-ink-1 { color: var(--pp-ink-1); }
+  .qp-ink-2 { color: var(--pp-ink-2); }
+  .qp-discount { color: var(--pp-ok); }
+
+  .qp-monogram { background: var(--pp-ink); color: #fff; letter-spacing: -0.02em; }
+
+  .qp-card { background: var(--pp-bg-soft); border-radius: var(--r-2); }
+  .qp-box { border: 1px solid var(--pp-line); border-radius: var(--r-2); overflow: hidden; }
+  .qp-divide { border-top: 1px solid var(--pp-line); }
+
+  .qp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .qp-table thead th {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--ls-wide);
+    text-transform: uppercase;
+    color: var(--pp-ink-2);
+    text-align: start;
+    padding: 11px 14px;
+    background: var(--pp-bg-soft);
+    border-bottom: 1px solid var(--pp-line-strong);
+  }
+  .qp-table tbody td {
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--pp-line);
+    vertical-align: top;
+    line-height: var(--lh-snug);
+  }
+  .qp-table tbody tr:last-child td { border-bottom: 0; }
+
+  .qp-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border: 1px solid;
+    border-radius: var(--r-pill);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--ls-wide);
+    text-transform: uppercase;
+  }
+  .qp-status--draft { color: #5f6b8a; background: #f1f4fa; border-color: #d6dce8; }
+  .qp-status--sent { color: #1d4ed8; background: #eff4ff; border-color: #bbd0ff; }
+  .qp-status--approved { color: #047857; background: #e7f7f0; border-color: #a7e3cc; }
+  .qp-status--rejected { color: #b91c1c; background: #fdecec; border-color: #f3c0c0; }
+  .qp-status--expired { color: #7a8398; background: #f1f4fa; border-color: #d6dce8; }
+
+  .qp-total {
+    padding: 11px 16px;
+    border-radius: var(--r-1);
+    background: linear-gradient(120deg, #1d4ed8, #2563eb);
+    color: #fff;
   }
 }
 
-/* A4 quote-sheet print rules. Supplements the scaffolding above.
-   Plain colours (not tokens) are intentional here — tokens map to the dark
-   navy palette which renders as grey on most printers; white/black gives a
-   clean, professional A4 output. Only affects @media print — no screen impact. */
+/* Print — the quote sheet is the only thing on the page. Admin chrome is marked
+   .no-print; the sheet already carries its own paper palette, so we only flatten
+   it (no shadow/round) and force colour-accurate fills for the accent devices. */
 @media print {
+  .no-print { display: none !important; }
+
+  html,
+  body { background: #fff !important; }
+
+  .admin-main { margin-inline-start: 0 !important; }
+  .admin-content { padding: 0 !important; }
+
   @page {
     size: A4;
-    margin: 18mm 16mm;
+    margin: 14mm;
   }
 
-  /* Reset page surface to white/black for print */
-  html, body {
-    background: #fff !important;
-    color: #111 !important;
-  }
-
-  /* Override dark tokens on the sheet so all text prints legibly */
-  .print-sheet {
-    background: #fff !important;
-    color: #111 !important;
+  .print-sheet,
+  .quote-paper {
+    box-shadow: none !important;
+    border-radius: 0 !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
   }
+  .quote-paper,
+  .quote-paper * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .quote-paper__bar { border-radius: 0 !important; }
+  .quote-paper__body { padding: 0 !important; }
 
-  /* Override token-coloured foreground classes inside the sheet */
-  .print-sheet .text-fg-0,
-  .print-sheet .text-fg-1 {
-    color: #111 !important;
-  }
-  .print-sheet .text-fg-2 {
-    color: #555 !important;
-  }
-
-  /* Table hairlines */
-  .print-sheet .admin-table th,
-  .print-sheet .admin-table td {
-    border-color: #ccc !important;
-    color: #111 !important;
-  }
-  .print-sheet .border-line,
-  .print-sheet hr {
-    border-color: #ccc !important;
-  }
-
-  /* Status badge — keep text, simplify border for B&W printers */
-  .print-sheet [class*="border-"] {
-    border-color: #999 !important;
-  }
-
-  /* Ensure page breaks don't split the totals block */
-  .print-sheet dl { page-break-inside: avoid; }
-  .print-sheet section { page-break-inside: avoid; }
+  /* Repeat the table header across page breaks; keep blocks intact */
+  .qp-table thead { display: table-header-group; }
+  .qp-table tr,
+  .quote-paper dl,
+  .quote-paper section,
+  .quote-paper footer { page-break-inside: avoid; }
 }

@@ -10,7 +10,7 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-3 no-print">
       <div>
         <h1 className="!mb-1 text-[var(--t-30)]">{title}</h1>
         {subtitle && <p className="text-sm text-fg-2">{subtitle}</p>}

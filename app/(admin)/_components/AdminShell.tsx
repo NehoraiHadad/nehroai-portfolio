@@ -72,13 +72,13 @@ export function AdminShell({ user, children }: { user: AdminUser; children: Reac
   return (
     <div className="min-h-screen">
       {/* Desktop sidebar — fixed on the inline-start edge (RTL-aware) */}
-      <aside className="fixed inset-y-0 start-0 z-40 hidden w-64 flex-col border-e border-line bg-surface md:flex">
+      <aside className="fixed inset-y-0 start-0 z-40 hidden w-64 flex-col border-e border-line bg-surface md:flex no-print">
         <SidebarBody user={user} />
       </aside>
 
       {/* Mobile drawer */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label={admin.appName}>
+        <div className="fixed inset-0 z-50 md:hidden no-print" role="dialog" aria-modal="true" aria-label={admin.appName}>
           <button
             type="button"
             aria-label={admin.topbar.closeMenu}
@@ -96,8 +96,8 @@ export function AdminShell({ user, children }: { user: AdminUser; children: Reac
       )}
 
       {/* Main column */}
-      <div className="flex min-h-screen flex-col md:ms-64">
-        <header className="sticky top-0 z-30 flex h-[var(--header-h)] items-center gap-3 border-b border-line bg-[color-mix(in_oklab,var(--bg-0)_70%,transparent)] px-4 backdrop-blur-[12px] sm:px-6">
+      <div className="flex min-h-screen flex-col md:ms-64 admin-main">
+        <header className="sticky top-0 z-30 flex h-[var(--header-h)] items-center gap-3 border-b border-line bg-[color-mix(in_oklab,var(--bg-0)_70%,transparent)] px-4 backdrop-blur-[12px] sm:px-6 no-print">
           <button
             ref={menuButtonRef}
             type="button"
@@ -113,7 +113,7 @@ export function AdminShell({ user, children }: { user: AdminUser; children: Reac
           <ThemeToggle />
         </header>
 
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 admin-content">{children}</main>
       </div>
     </div>
   );

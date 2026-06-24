@@ -3,21 +3,21 @@
 import Image from 'next/image';
 import { useDictionary } from '@/lib/i18n/provider';
 import { computeTotals, formatMoney } from '@/lib/admin/totals';
-import { QuoteStatusBadge } from './QuoteStatusBadge';
 import type { QuoteDoc, BrandProfile } from '@/lib/admin/types';
 
-// Pure, printable, branded quote sheet. No client-side state — all data flows
-// in via props. The `dir` attribute is driven by quote.language (he → rtl) so
-// a Hebrew quote prints RTL even when the admin UI is in English.
+// Premium, printable quote document. Renders as a real white "paper" sheet with
+// a self-contained palette (.quote-paper in globals.css) so screen and print are
+// identical (WYSIWYG). `dir` follows quote.language (he → rtl); Hebrew quotes use
+// the Rubik stack via .quote-paper--he.
 
-function Monogram() {
+function PaperMonogram() {
   return (
-    <div
+    <span
       aria-hidden="true"
-      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--r-1)] border border-line bg-accent-dim font-mono text-xl font-semibold tracking-tight text-accent-pale"
+      className="qp-monogram grid h-12 w-12 shrink-0 place-items-center rounded-[var(--r-1)] font-mono text-lg font-bold"
     >
       NH
-    </div>
+    </span>
   );
 }
 
@@ -25,170 +25,184 @@ export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandPr
   const { admin } = useDictionary();
   const p = admin.preview;
   const t = admin.totals;
-  const dir = quote.language === 'he' ? 'rtl' : 'ltr';
+  const b = admin.builder;
+  const he = quote.language === 'he';
+  const dir = he ? 'rtl' : 'ltr';
   const totals = computeTotals(quote.items, quote.vatRate);
   const money = (n: number) => formatMoney(n, quote.language);
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(he ? 'he-IL' : 'en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  const hasDiscountCol = quote.items.some((i) => i.discountPct);
+  const colCount = hasDiscountCol ? 5 : 4;
 
   return (
     <div
       dir={dir}
-      lang={quote.language === 'he' ? 'he' : 'en'}
-      className="print-sheet card mx-auto max-w-3xl p-8 text-fg-0"
+      lang={he ? 'he' : 'en'}
+      className={`print-sheet quote-paper mx-auto max-w-[820px]${he ? ' quote-paper--he' : ''}`}
     >
-      {/* Header — brand + quote meta */}
-      <header className="mb-8 flex flex-wrap items-start justify-between gap-6">
-        {/* Brand block */}
-        <div className="flex items-center gap-4">
-          {brand.logoUrl ? (
-            <Image
-              src={brand.logoUrl}
-              alt={brand.name}
-              width={56}
-              height={56}
-              unoptimized
-              className="h-14 w-14 rounded-[var(--r-1)] object-contain"
-            />
-          ) : (
-            <Monogram />
-          )}
-          <div>
-            <p className="text-[var(--t-20)] font-semibold leading-tight text-fg-0">{brand.name}</p>
-            {brand.tagline && <p className="text-xs text-fg-2">{brand.tagline}</p>}
-            {brand.email && (
-              <p className="text-xs text-fg-2">
-                <a href={`mailto:${brand.email}`} className="hover:underline">{brand.email}</a>
+      <div className="quote-paper__bar" aria-hidden="true" />
+
+      <div className="quote-paper__body">
+        {/* Letterhead — brand ⟷ document title + number + status */}
+        <header className="flex flex-wrap items-start justify-between gap-6">
+          <div className="flex items-center gap-4">
+            {brand.logoUrl ? (
+              <Image
+                src={brand.logoUrl}
+                alt={brand.name}
+                width={48}
+                height={48}
+                unoptimized
+                className="h-12 w-12 rounded-[var(--r-1)] object-contain"
+              />
+            ) : (
+              <PaperMonogram />
+            )}
+            <div>
+              <p className="qp-ink text-[18px] font-semibold leading-tight">{brand.name}</p>
+              {brand.tagline && <p className="qp-ink-2 mt-0.5 text-[12px]">{brand.tagline}</p>}
+            </div>
+          </div>
+
+          <div className="text-end">
+            <p className="qp-eyebrow">{p.title}</p>
+            <p className="qp-ink admin-num mt-1 font-mono text-[20px] font-semibold">{quote.number}</p>
+            <div className="mt-2 flex justify-end">
+              <span className={`qp-status qp-status--${quote.status}`}>{admin.status[quote.status]}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Meta strip — prepared-for ⟷ issued ⟷ valid until */}
+        <div className="qp-card mt-8 grid gap-6 p-5 sm:grid-cols-[1.5fr_1fr_1fr]">
+          <section>
+            <p className="qp-eyebrow mb-1.5">{p.quoteFor}</p>
+            <p className="qp-ink text-[15px] font-semibold">{quote.client.name || '—'}</p>
+            {quote.client.company && <p className="qp-ink-1 text-[13px]">{quote.client.company}</p>}
+            {quote.client.email && <p className="qp-ink-1 text-[13px]">{quote.client.email}</p>}
+            {quote.client.phone && (
+              <p className="qp-ink-1 text-[13px] text-start" dir="ltr">
+                {quote.client.phone}
               </p>
             )}
-            {brand.phone && <p className="text-xs text-fg-2">{brand.phone}</p>}
-            {brand.address && <p className="text-xs text-fg-2">{brand.address}</p>}
-          </div>
-        </div>
-
-        {/* Quote number + date + status */}
-        <div className="text-end">
-          <p className="font-mono text-xs uppercase tracking-[var(--ls-wide)] text-fg-2">{p.quoteNumber}</p>
-          <p className="admin-num font-mono text-[var(--t-20)] font-semibold text-fg-0">{quote.number}</p>
-          <p className="mt-1 text-xs text-fg-2">
-            <span className="font-mono uppercase tracking-[var(--ls-wide)]">{p.date}</span>{' '}
-            {new Date(quote.createdAt).toLocaleDateString(quote.language === 'he' ? 'he-IL' : 'en-IL')}
-          </p>
-          <div className="mt-2 flex justify-end">
-            <QuoteStatusBadge status={quote.status} />
-          </div>
-        </div>
-      </header>
-
-      <hr className="mb-6 border-line" />
-
-      {/* Client + project */}
-      <div className="mb-6 grid gap-6 sm:grid-cols-2">
-        {/* Client */}
-        <section aria-label={p.quoteFor}>
-          <p className="eyebrow mb-2">{p.quoteFor}</p>
-          <p className="font-semibold text-fg-0">{quote.client.name}</p>
-          {quote.client.company && <p className="text-sm text-fg-1">{quote.client.company}</p>}
-          {quote.client.email && (
-            <p className="text-sm text-fg-1">
-              <a href={`mailto:${quote.client.email}`} className="hover:underline">{quote.client.email}</a>
-            </p>
+            {quote.client.taxId && (
+              <p className="qp-ink-2 mt-0.5 text-[12px]">
+                {b.clientTaxId}: {quote.client.taxId}
+              </p>
+            )}
+            {quote.client.address && <p className="qp-ink-2 text-[12px]">{quote.client.address}</p>}
+          </section>
+          <section>
+            <p className="qp-eyebrow mb-1.5">{p.date}</p>
+            <p className="qp-ink admin-num text-[14px]">{fmtDate(quote.createdAt)}</p>
+          </section>
+          {quote.validUntil && (
+            <section>
+              <p className="qp-eyebrow mb-1.5">{p.validUntil}</p>
+              <p className="qp-ink admin-num text-[14px]">{fmtDate(quote.validUntil)}</p>
+            </section>
           )}
-          {quote.client.phone && <p className="text-sm text-fg-1">{quote.client.phone}</p>}
-          {quote.client.taxId && <p className="text-xs text-fg-2">{quote.client.taxId}</p>}
-          {quote.client.address && <p className="text-xs text-fg-2">{quote.client.address}</p>}
-        </section>
+        </div>
 
         {/* Project */}
-        <section aria-label={p.project}>
-          <p className="eyebrow mb-2">{p.project}</p>
-          {quote.projectTitle && (
-            <p className="font-semibold text-fg-0">{quote.projectTitle}</p>
-          )}
-          {quote.projectDescription && (
-            <p className="mt-1 text-sm text-fg-1">{quote.projectDescription}</p>
-          )}
-        </section>
-      </div>
-
-      {/* Line items */}
-      <div className="mb-6 overflow-x-auto">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th className="text-start">{admin.builder.itemDescription}</th>
-              <th className="admin-num text-end">{admin.builder.itemQty}</th>
-              <th className="admin-num text-end">{admin.builder.itemUnitPrice}</th>
-              {quote.items.some((i) => i.discountPct) && (
-                <th className="admin-num text-end">{admin.builder.itemDiscount}</th>
-              )}
-              <th className="admin-num text-end">{admin.builder.itemLineTotal}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {quote.items.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center text-fg-2">{admin.builder.noItems}</td>
-              </tr>
+        {(quote.projectTitle || quote.projectDescription) && (
+          <section className="mt-8">
+            <p className="qp-eyebrow mb-1.5">{p.project}</p>
+            {quote.projectTitle && <p className="qp-ink text-[16px] font-semibold">{quote.projectTitle}</p>}
+            {quote.projectDescription && (
+              <p className="qp-ink-1 mt-1 max-w-[64ch] text-[14px] leading-relaxed">{quote.projectDescription}</p>
             )}
-            {quote.items.map((item) => {
-              const gross = item.quantity * item.unitPrice;
-              const net = gross - gross * (item.discountPct / 100);
-              return (
-                <tr key={item.id}>
-                  <td className="text-fg-0">{item.description}</td>
-                  <td className="admin-num text-end text-fg-1">{item.quantity}</td>
-                  <td className="admin-num text-end text-fg-1">{money(item.unitPrice)}</td>
-                  {quote.items.some((i) => i.discountPct) && (
-                    <td className="admin-num text-end text-fg-2">
-                      {item.discountPct ? `${item.discountPct}%` : '—'}
-                    </td>
-                  )}
-                  <td className="admin-num text-end text-fg-0">{money(net)}</td>
+          </section>
+        )}
+
+        {/* Line items */}
+        <div className="qp-box mt-7">
+          <table className="qp-table">
+            <thead>
+              <tr>
+                <th>{b.itemDescription}</th>
+                <th className="admin-num text-end">{b.itemQty}</th>
+                <th className="admin-num text-end">{b.itemUnitPrice}</th>
+                {hasDiscountCol && <th className="admin-num text-end">{b.itemDiscount}</th>}
+                <th className="admin-num text-end">{b.itemLineTotal}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {quote.items.length === 0 && (
+                <tr>
+                  <td colSpan={colCount} className="qp-ink-2 text-center">
+                    {b.noItems}
+                  </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              )}
+              {quote.items.map((item) => {
+                const gross = item.quantity * item.unitPrice;
+                const net = gross - gross * (item.discountPct / 100);
+                return (
+                  <tr key={item.id}>
+                    <td className="qp-ink">{item.description || '—'}</td>
+                    <td className="qp-ink-1 admin-num text-end">{item.quantity}</td>
+                    <td className="qp-ink-1 admin-num text-end">{money(item.unitPrice)}</td>
+                    {hasDiscountCol && (
+                      <td className="qp-ink-2 admin-num text-end">{item.discountPct ? `−${item.discountPct}%` : '—'}</td>
+                    )}
+                    <td className="qp-ink admin-num text-end font-semibold">{money(net)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-      {/* Totals block */}
-      <div className="mb-6 flex justify-end">
-        <dl className="w-64 space-y-1">
-          <div className="flex justify-between text-sm text-fg-1">
-            <dt>{t.subtotal}</dt>
-            <dd className="admin-num">{money(totals.subtotal)}</dd>
-          </div>
-          {totals.discountTotal > 0 && (
-            <div className="flex justify-between text-sm text-[var(--ok)]">
-              <dt>{t.discount}</dt>
-              <dd className="admin-num">−{money(totals.discountTotal)}</dd>
+        {/* Totals */}
+        <div className="mt-6 flex justify-end">
+          <dl className="w-full max-w-[300px] space-y-2">
+            <div className="flex justify-between text-[13px]">
+              <dt className="qp-ink-1">{t.subtotal}</dt>
+              <dd className="qp-ink admin-num">{money(totals.subtotal)}</dd>
             </div>
-          )}
-          <div className="flex justify-between text-sm text-fg-1">
-            <dt>{t.vat} ({quote.vatRate}%)</dt>
-            <dd className="admin-num">{money(totals.vatTotal)}</dd>
-          </div>
-          <div className="flex justify-between border-t border-line pt-1 text-base font-semibold text-fg-0">
-            <dt>{t.total}</dt>
-            <dd className="admin-num">{money(totals.total)}</dd>
-          </div>
-        </dl>
+            {totals.discountTotal > 0 && (
+              <div className="flex justify-between text-[13px]">
+                <dt className="qp-discount">{t.discount}</dt>
+                <dd className="qp-discount admin-num">−{money(totals.discountTotal)}</dd>
+              </div>
+            )}
+            <div className="flex justify-between text-[13px]">
+              <dt className="qp-ink-1">
+                {t.vat} ({quote.vatRate}%)
+              </dt>
+              <dd className="qp-ink admin-num">{money(totals.vatTotal)}</dd>
+            </div>
+            <div className="qp-total mt-1 flex items-baseline justify-between">
+              <dt className="font-mono text-[12px] uppercase tracking-[var(--ls-wide)]">{t.total}</dt>
+              <dd className="admin-num text-[18px] font-bold">{money(totals.total)}</dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* Terms */}
+        <section className="qp-divide mt-8 pt-4">
+          <p className="qp-eyebrow mb-1.5">{p.terms}</p>
+          <p className="qp-ink-1 max-w-[72ch] whitespace-pre-wrap text-[13px] leading-relaxed">
+            {quote.terms || p.termsPlaceholder}
+          </p>
+        </section>
+
+        {/* Footer — brand contact line */}
+        <footer className="qp-divide mt-8 flex flex-wrap items-center justify-between gap-2 pt-4">
+          <p className="qp-ink-2 text-[12px]">
+            <span className="qp-ink font-semibold">{brand.name}</span>
+            {brand.email ? ` · ${brand.email}` : ''}
+            {brand.phone ? ` · ${brand.phone}` : ''}
+          </p>
+          <p className="qp-ink-2 text-[12px]">{p.thankYou}</p>
+        </footer>
       </div>
-
-      {/* Validity */}
-      {quote.validUntil && (
-        <p className="mb-4 text-xs text-fg-2">
-          <span className="font-mono uppercase tracking-[var(--ls-wide)]">{p.validUntil}</span>{' '}
-          {new Date(quote.validUntil).toLocaleDateString(quote.language === 'he' ? 'he-IL' : 'en-IL')}
-        </p>
-      )}
-
-      {/* Terms */}
-      <section aria-label={p.terms} className="border-t border-line pt-4">
-        <p className="eyebrow mb-1">{p.terms}</p>
-        <p className="whitespace-pre-wrap text-sm text-fg-1">
-          {quote.terms || p.termsPlaceholder}
-        </p>
-      </section>
     </div>
   );
 }

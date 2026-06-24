@@ -564,6 +564,7 @@ export const enDictionary: AppDictionary = {
       quoteNumber: 'Quote no.',
       date: 'Date',
       logoPlaceholder: 'Logo',
+      thankYou: 'Thank you for your business.',
     },
     actions: {
       saveDraft: 'Save draft',

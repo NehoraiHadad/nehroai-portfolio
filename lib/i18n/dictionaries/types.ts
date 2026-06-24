@@ -341,6 +341,7 @@ export interface AdminDictionary {
     quoteNumber: string;
     date: string;
     logoPlaceholder: string;
+    thankYou: string;
   };
   actions: {
     saveDraft: string;

@@ -564,6 +564,7 @@ export const heDictionary: AppDictionary = {
       quoteNumber: 'הצעה מס׳',
       date: 'תאריך',
       logoPlaceholder: 'לוגו',
+      thankYou: 'תודה שבחרתם בנו.',
     },
     actions: {
       saveDraft: 'שמירת טיוטה',
