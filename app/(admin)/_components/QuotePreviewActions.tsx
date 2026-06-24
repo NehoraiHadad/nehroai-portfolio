@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { Check, Copy, FileDown, Pencil, Save, Send } from 'lucide-react';
+import { Check, Copy, FileDown, Mail, MessageCircle, Pencil, Save, Send } from 'lucide-react';
 import { useDictionary } from '@/lib/i18n/provider';
 import { saveQuoteAction, shareQuoteAction } from './quote-actions';
 import type { QuoteDoc } from '@/lib/admin/types';
+import { toWhatsAppNumber } from '@/lib/admin/phone';
 
 // Action bar for the quote preview. Hidden when printing (.no-print).
 // Layout: left cluster (Save, Edit) — right cluster (Download PDF, Send).
@@ -143,19 +144,35 @@ export function QuotePreviewActions({ quote }: { quote: QuoteDoc }) {
       {shareUrl && (
         <div className="rounded-md border border-[var(--ok,#22c55e)]/40 bg-[var(--ok,#22c55e)]/5 p-3 flex flex-col gap-2">
           <p className="text-xs font-medium text-fg-2">{a.shareLinkLabel}</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              readOnly
-              value={shareUrl}
-              className="flex-1 overflow-x-auto rounded bg-[var(--surface-2,#1e1e2e)] px-2 py-1.5 text-xs font-mono text-fg-1 whitespace-nowrap border-0 outline-none"
-              dir="ltr"
-              onFocus={(e) => e.currentTarget.select()}
-              aria-label={a.shareLinkLabel}
-            />
+
+          {/* Channel buttons — WhatsApp, Email, then copy-link fallback */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* WhatsApp — pre-fills the client's number when available */}
+            <a
+              href={`https://wa.me/${toWhatsAppNumber(quote.client.phone) ?? ''}?text=${encodeURIComponent(a.shareWhatsappText + shareUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary btn-sm"
+              aria-label={a.shareWhatsapp}
+            >
+              <MessageCircle className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+              {a.shareWhatsapp}
+            </a>
+
+            {/* Email — opens the default mail client with subject + body pre-filled */}
+            <a
+              href={`mailto:${quote.client.email}?subject=${encodeURIComponent(a.shareEmailSubject.replace('{number}', quote.number))}&body=${encodeURIComponent(a.shareEmailBody + shareUrl)}`}
+              className="btn btn-secondary btn-sm"
+              aria-label={a.shareEmail}
+            >
+              <Mail className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+              {a.shareEmail}
+            </a>
+
+            {/* Copy link — fallback for any other channel */}
             <button
               type="button"
-              className="btn btn-sm shrink-0"
+              className="btn btn-secondary btn-sm shrink-0"
               onClick={handleCopyLink}
               aria-label={a.copyLink}
             >
@@ -167,6 +184,17 @@ export function QuotePreviewActions({ quote }: { quote: QuoteDoc }) {
               <span className="ms-1">{copied ? a.linkCopied : a.copyLink}</span>
             </button>
           </div>
+
+          {/* Readonly URL — select-to-copy convenience */}
+          <input
+            type="text"
+            readOnly
+            value={shareUrl}
+            className="w-full overflow-x-auto rounded bg-[var(--surface-2,#1e1e2e)] px-2 py-1.5 text-xs font-mono text-fg-1 whitespace-nowrap border-0 outline-none"
+            dir="ltr"
+            onFocus={(e) => e.currentTarget.select()}
+            aria-label={a.shareLinkLabel}
+          />
         </div>
       )}
     </div>

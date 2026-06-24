@@ -400,6 +400,16 @@ export interface AdminDictionary {
     copyLink: string;
     linkCopied: string;
     shareError: string;
+    /** Channel-aware share: send via WhatsApp */
+    shareWhatsapp: string;
+    /** Channel-aware share: send via email */
+    shareEmail: string;
+    /** WhatsApp message prefix — component appends the URL */
+    shareWhatsappText: string;
+    /** Email subject — component replaces {number} with the quote number */
+    shareEmailSubject: string;
+    /** Email body prefix — component appends the URL */
+    shareEmailBody: string;
   };
   publicQuote: {
     approve: string;
@@ -416,5 +426,7 @@ export interface AdminDictionary {
     expiredTitle: string;
     expiredBody: string;
     errorBody: string;
+    /** Lead text for the soft contact line shown below the Approve button. */
+    undecidedPrompt: string;
   };
 }

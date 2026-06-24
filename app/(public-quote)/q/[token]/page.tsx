@@ -9,11 +9,13 @@
 // This page MUST remain dynamic (reading params is enough — Next.js opts it
 // out of static generation automatically). Do NOT add `export const dynamic`.
 import { notFound } from 'next/navigation';
+import { Mail, MessageCircle, Phone } from 'lucide-react';
 import { getPublicQuoteByShareToken } from '@/lib/admin/db/queries';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { I18nProvider } from '@/lib/i18n/provider';
 import { QuotePreview } from '@/app/(admin)/_components/QuotePreview';
 import { PublicQuoteActions } from '../../_components/PublicQuoteActions';
+import { toWhatsAppNumber } from '@/lib/admin/phone';
 
 // Banner color recipes — all values from the existing design token palette in
 // globals.css. We use CSS variable references via inline style so the dark /
@@ -123,6 +125,49 @@ export default async function PublicQuotePage(props: {
 
           {/* Action buttons — only when the quote is still awaiting a decision */}
           {state === 'pending' && <PublicQuoteActions token={token} />}
+
+          {/* Soft contact line — subtle, below the dominant Approve button.
+              Only rendered when pending and at least one contact point exists. */}
+          {state === 'pending' && (brand.phone || brand.email) && (
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm"
+              style={{ color: 'var(--fg-2)' }}
+            >
+              <span>{t.undecidedPrompt}</span>
+              {brand.phone && (
+                <a
+                  href={`tel:${brand.phone}`}
+                  className="inline-flex items-center gap-1.5 hover:underline"
+                  style={{ color: 'var(--fg-2)' }}
+                >
+                  <Phone className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                  {brand.phone}
+                </a>
+              )}
+              {toWhatsAppNumber(brand.phone ?? '') && (
+                <a
+                  href={`https://wa.me/${toWhatsAppNumber(brand.phone ?? '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 hover:underline"
+                  style={{ color: 'var(--fg-2)' }}
+                  aria-label="WhatsApp"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                  WhatsApp
+                </a>
+              )}
+              {brand.email && (
+                <a
+                  href={`mailto:${brand.email}`}
+                  className="inline-flex items-center gap-1.5 hover:underline"
+                  style={{ color: 'var(--fg-2)' }}
+                >
+                  <Mail className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                  {brand.email}
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Quote preview — the branded paper sheet, centered by its own max-width */}
