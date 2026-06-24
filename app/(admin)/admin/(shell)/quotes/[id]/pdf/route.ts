@@ -12,50 +12,18 @@
  *   __Secure-authjs.session-token  (prod / HTTPS)
  * Both are forwarded because we forward everything — no need to pick by name.
  *
- * Local dev: uses the installed Windows Chrome (LOCAL_CHROME_PATH env var, or
- *   the default Chrome path). No Chromium download needed.
- * Vercel / serverless: uses @sparticuz/chromium's bundled headless Chromium.
+ * Chromium launch logic lives in lib/admin/pdf/launch-browser.ts and is shared
+ * with the agent PDF endpoint (app/api/admin/v1/quotes/[id]/pdf/route.ts).
  */
 
 import { requireAdmin } from '@/lib/admin/auth';
 import { getQuote } from '@/lib/admin/db/queries';
+import { launchBrowser } from '@/lib/admin/pdf/launch-browser';
 
 export const runtime = 'nodejs';
 // 300s ceiling — generous headroom for Chromium cold starts. Hobby allows up to
 // 300s; Pro up to far more. Real PDF runs are a few seconds; this is only a cap.
 export const maxDuration = 300;
-
-/** Launch Chromium: bundled sparticuz binary on Vercel, local Chrome elsewhere. */
-async function launchBrowser() {
-  // Dynamic imports so bundler never tries to tree-shake these out
-  const puppeteer = (await import('puppeteer-core')).default;
-
-  if (process.env.VERCEL) {
-    // Serverless: use @sparticuz/chromium-min and fetch the matching Chromium
-    // pack from a URL at runtime. We do NOT bundle the ~64MB binary into the
-    // function — Turbopack's build ignores outputFileTracingIncludes, so the
-    // bundled-binary approach 500s with "input directory … does not exist". The
-    // pack is downloaded+inflated to /tmp on cold start (fast on warm reuse).
-    // The version in the URL MUST match the installed @sparticuz/chromium-min.
-    const chromium = (await import('@sparticuz/chromium-min')).default;
-    const packUrl =
-      process.env.CHROMIUM_PACK_URL ||
-      'https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar';
-    // PDF rendering needs no WebGL — skip the swiftshader graphics stack.
-    chromium.setGraphicsMode = false;
-    return puppeteer.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath(packUrl),
-      headless: true,
-    });
-  }
-
-  const executablePath =
-    process.env.LOCAL_CHROME_PATH ||
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-
-  return puppeteer.launch({ executablePath, headless: true });
-}
 
 export async function GET(
   request: Request,

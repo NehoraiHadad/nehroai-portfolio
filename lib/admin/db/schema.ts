@@ -73,3 +73,28 @@ export const quoteCounters = pgTable(
   },
   (t) => [primaryKey({ columns: [t.ownerEmail, t.year] })],
 );
+
+// Hashed agent API tokens for non-interactive (machine/agent) auth. Owner-scoped
+// like everything else — one admin can never see or revoke another's tokens. The
+// plaintext token is generated once, returned once, and never stored. Only the
+// SHA-256 hex digest (`token_hash`) lives here; `prefix` is the first ~11 chars
+// kept for display ("nh_AbCd1234") so the UI can identify tokens without ever
+// holding the secret.
+export const apiTokens = pgTable(
+  'api_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    ownerEmail: text('owner_email').notNull(),
+    label: text('label').notNull().default(''),
+    tokenHash: text('token_hash').notNull(),
+    prefix: text('prefix').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('api_tokens_hash_idx').on(t.tokenHash),
+    index('api_tokens_owner_idx').on(t.ownerEmail),
+  ],
+);

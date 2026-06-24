@@ -1,21 +1,27 @@
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { requireAdmin } from '@/lib/admin/auth';
-import { getBrand } from '@/lib/admin/db/queries';
+import { getBrand, listApiTokens } from '@/lib/admin/db/queries';
 import { adminLang } from '../../../_components/lang';
 import { PageHeader } from '../../../_components/PageHeader';
 import { SettingsForm } from '../../../_components/SettingsForm';
+import { AgentTokensCard } from '../../../_components/AgentTokensCard';
 
 export default async function SettingsPage() {
   const user = await requireAdmin();
   const lang = await adminLang();
   const dict = await getDictionary(lang);
-  const brand = await getBrand(user.email, lang);
+  const [brand, tokens] = await Promise.all([
+    getBrand(user.email, lang),
+    listApiTokens(user.email),
+  ]);
   const s = dict.admin.settings;
   return (
     <>
       <PageHeader title={s.title} subtitle={s.subtitle} />
       <div className="flex flex-col gap-6">
         <SettingsForm initialBrand={brand} />
+
+        <AgentTokensCard initialTokens={tokens} />
 
         {/* Future scope — see plans/admin and FUTURE.md */}
         <div className="card p-5">
