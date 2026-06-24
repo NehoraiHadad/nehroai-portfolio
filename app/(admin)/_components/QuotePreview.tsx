@@ -37,76 +37,76 @@ export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandPr
     <div
       dir={dir}
       lang={he ? 'he' : 'en'}
-      className={`print-sheet quote-paper mx-auto max-w-[820px]${he ? ' quote-paper--he' : ''}`}
+      className={`print-sheet quote-paper mx-auto w-full max-w-[794px]${he ? ' quote-paper--he' : ''}`}
     >
       <div className="quote-paper__bar" aria-hidden="true" />
 
       <div className="quote-paper__body">
         {/* Letterhead — brand ⟷ document title + number */}
-        <header className="flex flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-3.5">
+        <header className="flex flex-wrap items-start justify-between gap-6">
+          <div className="flex items-center gap-4">
             {brand.logoUrl ? (
               <Image
                 src={brand.logoUrl}
                 alt={brand.name}
-                width={200}
-                height={48}
+                width={220}
+                height={56}
                 unoptimized
-                className="h-12 w-auto max-w-[200px] object-contain"
+                className="h-14 w-auto max-w-[220px] object-contain"
               />
             ) : (
               <Image
                 src={DEFAULT_MARK}
                 alt={brand.name}
-                width={48}
-                height={48}
+                width={56}
+                height={56}
                 unoptimized
-                className="h-12 w-12 object-contain"
+                className="h-14 w-14 object-contain"
               />
             )}
             <div>
-              <p className="qp-ink text-[17px] font-semibold leading-tight">{brand.name}</p>
-              {brand.tagline && <p className="qp-ink-2 mt-0.5 text-[12px]">{brand.tagline}</p>}
+              <p className="qp-ink text-[18px] font-semibold leading-tight">{brand.name}</p>
+              {brand.tagline && <p className="qp-ink-2 mt-1 text-[12px]">{brand.tagline}</p>}
             </div>
           </div>
 
           <div className="text-end">
             <p className="qp-eyebrow">{p.title}</p>
-            <p className="qp-ink admin-num mt-1 font-mono text-[22px] font-semibold">{quote.number}</p>
+            <p className="qp-ink admin-num mt-1.5 font-mono text-[24px] font-bold leading-none">{quote.number}</p>
           </div>
         </header>
 
         <div className="qp-divide mt-7" />
 
-        {/* Info band — who it's for ⟷ quote details (balanced two columns) */}
-        <div className="qp-card mt-7 grid gap-x-10 gap-y-6 p-5 sm:grid-cols-2">
-          <section>
-            <p className="qp-eyebrow mb-2">{p.quoteFor}</p>
+        {/* Summary band — who it's for ⟷ quote details + the headline amount */}
+        <div className="qp-summary mt-7 grid sm:grid-cols-2">
+          <section className="qp-summary__col">
+            <p className="qp-eyebrow mb-3">{p.quoteFor}</p>
             <p className="qp-ink text-[15px] font-semibold">{quote.client.name || '—'}</p>
-            {quote.client.company && <p className="qp-ink-1 text-[13px]">{quote.client.company}</p>}
+            {quote.client.company && <p className="qp-ink-1 mt-0.5 text-[13px]">{quote.client.company}</p>}
             {/* bdi isolates Latin/number runs so they read correctly while the
                line still aligns to the start edge (right in RTL) like the rest. */}
             {quote.client.email && (
-              <p className="qp-ink-1 text-[13px]">
+              <p className="qp-ink-1 mt-0.5 text-[13px]">
                 <bdi>{quote.client.email}</bdi>
               </p>
             )}
             {quote.client.phone && (
-              <p className="qp-ink-1 text-[13px]">
+              <p className="qp-ink-1 mt-0.5 text-[13px]">
                 <bdi>{quote.client.phone}</bdi>
               </p>
             )}
             {quote.client.taxId && (
-              <p className="qp-ink-2 mt-0.5 text-[12px]">
+              <p className="qp-ink-2 mt-1 text-[12px]">
                 {b.clientTaxId}: <bdi>{quote.client.taxId}</bdi>
               </p>
             )}
-            {quote.client.address && <p className="qp-ink-2 text-[12px]">{quote.client.address}</p>}
+            {quote.client.address && <p className="qp-ink-2 mt-0.5 text-[12px]">{quote.client.address}</p>}
           </section>
 
-          <section>
-            <p className="qp-eyebrow mb-2">{p.details}</p>
-            <dl className="space-y-2">
+          <section className="qp-summary__col">
+            <p className="qp-eyebrow mb-3">{p.details}</p>
+            <dl className="space-y-2.5">
               <div className="flex items-center justify-between gap-4">
                 <dt className="qp-ink-2 text-[12px]">{b.quoteStatus}</dt>
                 <dd>
@@ -179,26 +179,28 @@ export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandPr
 
         {/* Totals */}
         <div className="mt-6 flex justify-end">
-          <dl className="w-full max-w-[300px] space-y-2">
+          <dl className="qp-totals">
             <div className="flex justify-between text-[13px]">
               <dt className="qp-ink-1">{t.subtotal}</dt>
               <dd className="qp-ink admin-num">{money(totals.subtotal)}</dd>
             </div>
             {totals.discountTotal > 0 && (
-              <div className="flex justify-between text-[13px]">
+              <div className="mt-2 flex justify-between text-[13px]">
                 <dt className="qp-discount">{t.discount}</dt>
                 <dd className="qp-discount admin-num">−{money(totals.discountTotal)}</dd>
               </div>
             )}
-            <div className="flex justify-between text-[13px]">
+            <div className="mt-2 flex justify-between text-[13px]">
               <dt className="qp-ink-1">
                 {t.vat} ({quote.vatRate}%)
               </dt>
               <dd className="qp-ink admin-num">{money(totals.vatTotal)}</dd>
             </div>
-            <div className="qp-total mt-1 flex items-baseline justify-between">
-              <dt className="font-mono text-[12px] uppercase tracking-[var(--ls-wide)]">{t.total}</dt>
-              <dd className="admin-num text-[18px] font-bold">{money(totals.total)}</dd>
+            <div className="qp-total flex items-baseline justify-between">
+              <dt className="qp-ink font-mono text-[12px] font-semibold uppercase tracking-[var(--ls-wide)]">
+                {t.total}
+              </dt>
+              <dd className="qp-amount admin-num text-[20px]">{money(totals.total)}</dd>
             </div>
           </dl>
         </div>

@@ -1125,13 +1125,16 @@ body[data-scene="showcase"] {
 @layer components {
   .quote-paper {
     --pp-bg: #FFFFFF;
-    --pp-bg-soft: #F6F8FC;
+    --pp-bg-soft: #F7F9FC;
     --pp-ink: #0B1220;
-    --pp-ink-1: #424B61;
-    --pp-ink-2: #7A8398;
-    --pp-line: #E6EAF2;
-    --pp-line-strong: #D6DCE8;
+    --pp-ink-1: #3D4660;
+    --pp-ink-2: #79839B;
+    --pp-line: #E8ECF4;
+    --pp-line-strong: #D7DEEA;
     --pp-accent: #2563EB;
+    --pp-accent-deep: #1D4ED8;
+    --pp-accent-soft: #EFF4FF;
+    --pp-accent-line: #C9DBFF;
     --pp-ok: #047857;
 
     position: relative;
@@ -1147,17 +1150,23 @@ body[data-scene="showcase"] {
   }
   .quote-paper--he { font-family: var(--font-sans-he); }
 
+  /* Top accent — a slim brand rule. A faint tinted wash bleeds from it down the
+     letterhead so the header reads as a designed masthead, not a bare margin. */
   .quote-paper__bar {
-    height: 6px;
+    height: 5px;
     background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 45%, #60a5fa 100%);
   }
-  /* Flex column + A4-proportioned min-height so the footer can be pinned to the
-     bottom of the sheet (footer uses margin-block-start: auto). */
+  /* Flex column so the footer can be pinned to the foot (footer uses
+     margin-block-start: auto). min-height ≈ one A4 page (297mm) at the 794px
+     sheet width, minus the 5px top bar — so the on-screen sheet is the same
+     shape as the generated A4 PDF (WYSIWYG). */
   .quote-paper__body {
     display: flex;
     flex-direction: column;
-    min-height: 1140px;
-    padding: clamp(28px, 5vw, 52px);
+    min-height: 1118px;
+    padding: clamp(28px, 6.6vw, 52px);
+    background:
+      radial-gradient(120% 220px at 100% 0, var(--pp-accent-soft) 0%, rgba(239, 244, 255, 0) 60%);
   }
 
   .qp-eyebrow {
@@ -1174,7 +1183,28 @@ body[data-scene="showcase"] {
   .qp-ink-2 { color: var(--pp-ink-2); }
   .qp-discount { color: var(--pp-ok); }
 
-  .qp-card { background: var(--pp-bg-soft); border-radius: var(--r-2); }
+  /* Summary band — a bordered panel split into two columns by a hairline, not a
+     flat grey slab. Subtle top-down wash gives it depth. */
+  .qp-summary {
+    border: 1px solid var(--pp-line-strong);
+    border-radius: var(--r-2);
+    background: linear-gradient(180deg, #FCFDFF 0%, var(--pp-bg-soft) 100%);
+    overflow: hidden;
+  }
+  .qp-summary__col { padding: 20px 22px; }
+  /* Logical inline-start border → flips to the correct edge in RTL automatically. */
+  .qp-summary__col + .qp-summary__col {
+    border-inline-start: 1px solid var(--pp-line);
+  }
+
+  /* Accent figure — the grand total in the totals card. */
+  .qp-amount {
+    font-family: var(--font-mono);
+    font-weight: var(--fw-bold);
+    color: var(--pp-accent-deep);
+    letter-spacing: -0.01em;
+  }
+
   .qp-box { border: 1px solid var(--pp-line); border-radius: var(--r-2); overflow: hidden; }
   .qp-divide { border-top: 1px solid var(--pp-line); }
 
@@ -1187,16 +1217,18 @@ body[data-scene="showcase"] {
     text-transform: uppercase;
     color: var(--pp-ink-2);
     text-align: start;
-    padding: 11px 14px;
+    padding: 12px 16px;
     background: var(--pp-bg-soft);
     border-bottom: 1px solid var(--pp-line-strong);
   }
   .qp-table tbody td {
-    padding: 13px 14px;
+    padding: 14px 16px;
     border-bottom: 1px solid var(--pp-line);
     vertical-align: top;
     line-height: var(--lh-snug);
   }
+  /* Zebra the body rows for legible multi-line tables. */
+  .qp-table tbody tr:nth-child(even) td { background: rgba(247, 249, 252, 0.6); }
   .qp-table tbody tr:last-child td { border-bottom: 0; }
 
   .qp-status {
@@ -1217,11 +1249,20 @@ body[data-scene="showcase"] {
   .qp-status--rejected { color: #b91c1c; background: #fdecec; border-color: #f3c0c0; }
   .qp-status--expired { color: #7a8398; background: #f1f4fa; border-color: #d6dce8; }
 
+  /* Totals — a quiet bordered card, NOT a CTA button. The grand total is set off
+     by a 2px accent rule and rendered in accent ink. */
+  .qp-totals {
+    width: 100%;
+    max-width: 320px;
+    padding: 16px 18px;
+    border: 1px solid var(--pp-line-strong);
+    border-radius: var(--r-2);
+    background: var(--pp-bg-soft);
+  }
   .qp-total {
-    padding: 11px 16px;
-    border-radius: var(--r-1);
-    background: linear-gradient(120deg, #1d4ed8, #2563eb);
-    color: #fff;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid var(--pp-accent);
   }
 }
 
@@ -1237,9 +1278,12 @@ body[data-scene="showcase"] {
   .admin-main { margin-inline-start: 0 !important; }
   .admin-content { padding: 0 !important; }
 
+  /* Full-bleed A4 — no page margin, so the accent bar runs to the physical paper
+     edge (matching the on-screen sheet). The content inset is provided by the
+     body padding instead of the page margin. */
   @page {
     size: A4;
-    margin: 14mm;
+    margin: 0;
   }
 
   .print-sheet,
@@ -1249,15 +1293,26 @@ body[data-scene="showcase"] {
     max-width: 100% !important;
     margin: 0 !important;
   }
+  /* Sheet fills the page so the footer pins to the foot; flex column lets the
+     body grow between the top bar and the footer. 295mm leaves a hair of slack
+     under the 297mm page so a short quote never spills to a second sheet. */
+  .quote-paper {
+    display: flex !important;
+    flex-direction: column;
+    min-height: 295mm;
+  }
   .quote-paper,
   .quote-paper * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
   .quote-paper__bar { border-radius: 0 !important; }
-  /* On paper, min-height ≈ one A4 content area so the footer sits near the page
-     foot (kept under the usable 269mm to avoid spilling to a second page). */
-  .quote-paper__body { padding: 0 !important; min-height: 250mm; }
+  .quote-paper__body {
+    flex: 1 0 auto;
+    min-height: 0 !important;
+    padding: 14mm 15mm !important;
+    background: none !important; /* drop the screen masthead wash for clean print */
+  }
 
   /* Repeat the table header across page breaks; keep blocks intact */
   .qp-table thead { display: table-header-group; }

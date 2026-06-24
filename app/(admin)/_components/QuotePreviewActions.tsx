@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { FileDown, Pencil, Save, Send } from 'lucide-react';
 import { useDictionary } from '@/lib/i18n/provider';
@@ -15,6 +15,7 @@ export function QuotePreviewActions({ quote }: { quote: QuoteDoc }) {
   const { admin } = useDictionary();
   const a = admin.actions;
   const [isPending, startTransition] = useTransition();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleSaveDraft = () => {
     startTransition(async () => {
@@ -22,8 +23,25 @@ export function QuotePreviewActions({ quote }: { quote: QuoteDoc }) {
     });
   };
 
-  const handleDownloadPdf = () => {
-    window.print();
+  const handleDownloadPdf = async () => {
+    setIsGenerating(true);
+    try {
+      const res = await fetch(`/admin/quotes/${quote.id}/pdf`);
+      if (!res.ok) throw new Error(`PDF request failed: ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${quote.number || 'quote'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[QuotePreviewActions] PDF download failed:', err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -61,6 +79,8 @@ export function QuotePreviewActions({ quote }: { quote: QuoteDoc }) {
         <button
           type="button"
           onClick={handleDownloadPdf}
+          disabled={isGenerating}
+          aria-disabled={isGenerating}
           className="btn btn-primary btn-sm"
           aria-label={a.downloadPdf}
         >
