@@ -11,6 +11,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "token:create": "tsx scripts/create-token.ts",
+    "token:revoke": "tsx scripts/revoke-token.ts",
     "skill:sync": "tsx scripts/sync-skill.ts"
   },
   "dependencies": {
