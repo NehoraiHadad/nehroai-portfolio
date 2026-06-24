@@ -285,6 +285,23 @@ export interface AdminDictionary {
     saved: string;
     comingSoon: string;
     comingSoonItems: string[];
+    tokens: {
+      heading: string;
+      description: string;
+      labelPlaceholder: string;
+      createButton: string;
+      revealWarning: string;
+      copyButton: string;
+      copied: string;
+      dismiss: string;
+      revoke: string;
+      revoked: string;
+      never: string;
+      createdLabel: string;
+      lastUsedLabel: string;
+      emptyState: string;
+      createError: string;
+    };
   };
   status: {
     draft: string;
