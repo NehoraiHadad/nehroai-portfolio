@@ -173,6 +173,42 @@ export function buildOpenApiDocument(origin: string): object {
         },
       },
 
+      '/skill': {
+        get: {
+          operationId: 'getSkill',
+          summary: 'Fetch the nehroai-admin skill (Markdown) for agent self-install',
+          security: [],
+          parameters: [
+            {
+              name: 'format',
+              in: 'query',
+              required: false,
+              schema: { type: 'string', enum: ['json'] },
+              description: 'Omit for raw Markdown (text/markdown). Pass format=json for { name, description, markdown } envelope.',
+            },
+          ],
+          responses: {
+            '200': {
+              description: 'The nehroai-admin skill guide.',
+              content: {
+                'text/markdown': { schema: { type: 'string' } },
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    required: ['name', 'description', 'markdown'],
+                    properties: {
+                      name: { type: 'string' },
+                      description: { type: 'string' },
+                      markdown: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+
       '/brand': {
         get: {
           operationId: 'getBrand',
