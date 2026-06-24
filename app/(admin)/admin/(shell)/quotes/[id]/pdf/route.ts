@@ -31,12 +31,22 @@ async function launchBrowser() {
   const puppeteer = (await import('puppeteer-core')).default;
 
   if (process.env.VERCEL) {
-    const chromium = (await import('@sparticuz/chromium')).default;
+    // Serverless: use @sparticuz/chromium-min and fetch the matching Chromium
+    // pack from a URL at runtime. We do NOT bundle the ~64MB binary into the
+    // function — Turbopack's build ignores outputFileTracingIncludes, so the
+    // bundled-binary approach 500s with "input directory … does not exist". The
+    // pack is downloaded+inflated to /tmp on cold start (fast on warm reuse).
+    // The version in the URL MUST match the installed @sparticuz/chromium-min.
+    const chromium = (await import('@sparticuz/chromium-min')).default;
+    const packUrl =
+      process.env.CHROMIUM_PACK_URL ||
+      'https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar';
+    // PDF rendering needs no WebGL — skip the swiftshader graphics stack.
+    chromium.setGraphicsMode = false;
     return puppeteer.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      executablePath: await chromium.executablePath(packUrl),
+      headless: true,
     });
   }
 

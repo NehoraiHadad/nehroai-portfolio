@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
-    "@sparticuz/chromium": "^149.0.0",
+    "@sparticuz/chromium-min": "149.0.0",
     "@xyflow/react": "^12.10.1",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^0.546.0",
