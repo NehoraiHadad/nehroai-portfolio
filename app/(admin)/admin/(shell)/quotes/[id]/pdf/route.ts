@@ -34,8 +34,9 @@ async function launchBrowser() {
     const chromium = (await import('@sparticuz/chromium')).default;
     return puppeteer.launch({
       args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
-      headless: true,
+      headless: chromium.headless,
     });
   }
 
@@ -135,6 +136,13 @@ export async function GET(
       await browser.close().catch(() => {});
     }
     console.error('[pdf/route] PDF generation failed:', err);
-    return new Response('PDF generation failed', { status: 500 });
+    // This route is admin-only (requireAdmin above), so returning the error
+    // detail is safe and makes server-side failures diagnosable from the client.
+    const detail =
+      err instanceof Error ? `${err.name}: ${err.message}\n\n${err.stack ?? ''}` : String(err);
+    return new Response(`PDF generation failed\n\n${detail}`, {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
   }
 }
