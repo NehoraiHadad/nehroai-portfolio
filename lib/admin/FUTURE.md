@@ -17,5 +17,18 @@ the Settings → "Coming soon" panel.
 - **SUMIT integration** — issue invoices / receipts from an approved quote.
 - **Client portal** — clients see their own quotes/history.
 - **Audit log** — who changed what, when.
-- **File storage** — attach assets (logo upload, supporting docs) instead of a
-  logo URL.
+- **File storage / logo upload (Vercel Blob)** — today the brand logo is a URL
+  string (`BrandProfile.logoUrl`); the document falls back to the bundled dark
+  Nehorai wordmark (`/brand/wordmark-dark.svg`) when it is empty. To allow a real
+  uploaded logo (and later, attaching supporting docs):
+  1. `pnpm add @vercel/blob`; the Vercel project already provisions a
+     `BLOB_READ_WRITE_TOKEN` once a Blob store is created in the dashboard.
+  2. Add a Server Action `uploadBrandLogoAction(formData)` next to
+     `brand-actions.ts`: `requireAdmin()` → validate (image mime, ≤ ~2 MB) →
+     `put(\`brand/\${owner}/logo-\${id}.\${ext}\`, file, { access: 'public' })`
+     → persist the returned `url` into `logoUrl` via `saveBrand`.
+  3. Swap the Settings logo URL field for a file input + preview; keep the URL
+     field as a manual fallback. The public Blob URL is what gets stored, so
+     `QuotePreview` needs no change (it already renders `brand.logoUrl`).
+  - Build only when there's a real need to host uploaded assets; the wordmark
+    default covers the common case.

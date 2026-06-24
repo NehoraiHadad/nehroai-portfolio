@@ -1167,8 +1167,6 @@ body[data-scene="showcase"] {
   .qp-ink-2 { color: var(--pp-ink-2); }
   .qp-discount { color: var(--pp-ok); }
 
-  .qp-monogram { background: var(--pp-ink); color: #fff; letter-spacing: -0.02em; }
-
   .qp-card { background: var(--pp-bg-soft); border-radius: var(--r-2); }
   .qp-box { border: 1px solid var(--pp-line); border-radius: var(--r-2); overflow: hidden; }
   .qp-divide { border-top: 1px solid var(--pp-line); }

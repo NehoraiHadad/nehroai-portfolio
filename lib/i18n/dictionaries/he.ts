@@ -494,7 +494,7 @@ export const heDictionary: AppDictionary = {
       brandPhone: 'טלפון',
       brandAddress: 'כתובת',
       brandLogo: 'כתובת לוגו (URL)',
-      brandLogoHint: 'אופציונלי. מונוגרמה מוצגת כברירת מחדל כשריק.',
+      brandLogoHint: 'אופציונלי. הדביקו כתובת תמונה (למשל /brand/wordmark-dark.svg). אם ריק — המסמך משתמש בוורדמרק של Nehorai.',
       save: 'שמירת שינויים',
       saved: 'נשמר',
       comingSoon: 'בקרוב',

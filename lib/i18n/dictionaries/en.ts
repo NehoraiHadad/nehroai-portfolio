@@ -494,7 +494,7 @@ export const enDictionary: AppDictionary = {
       brandPhone: 'Phone',
       brandAddress: 'Address',
       brandLogo: 'Logo URL',
-      brandLogoHint: 'Optional. A monogram placeholder is shown when empty.',
+      brandLogoHint: 'Optional. Paste an image URL (e.g. /brand/wordmark-dark.svg). Left empty, the document uses the Nehorai wordmark.',
       save: 'Save changes',
       saved: 'Saved',
       comingSoon: 'Coming soon',

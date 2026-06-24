@@ -9,17 +9,11 @@ import type { QuoteDoc, BrandProfile } from '@/lib/admin/types';
 // a self-contained palette (.quote-paper in globals.css) so screen and print are
 // identical (WYSIWYG). `dir` follows quote.language (he → rtl); Hebrew quotes use
 // the Rubik stack via .quote-paper--he.
-
-function PaperMonogram() {
-  return (
-    <span
-      aria-hidden="true"
-      className="qp-monogram grid h-12 w-12 shrink-0 place-items-center rounded-[var(--r-1)] font-mono text-lg font-bold"
-    >
-      NH
-    </span>
-  );
-}
+//
+// Brand mark: a custom brand.logoUrl wins; otherwise the document falls back to
+// the dark Nehorai wordmark shipped in /public/brand (the dark-ink variant reads
+// on the white sheet — the monogram variants are built for dark surfaces).
+const DEFAULT_WORDMARK = '/brand/wordmark-dark.svg';
 
 export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandProfile }) {
   const { admin } = useDictionary();
@@ -50,23 +44,30 @@ export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandPr
       <div className="quote-paper__body">
         {/* Letterhead — brand ⟷ document title + number + status */}
         <header className="flex flex-wrap items-start justify-between gap-6">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-2.5">
             {brand.logoUrl ? (
               <Image
                 src={brand.logoUrl}
                 alt={brand.name}
-                width={48}
-                height={48}
+                width={220}
+                height={56}
                 unoptimized
-                className="h-12 w-12 rounded-[var(--r-1)] object-contain"
+                className="h-12 w-auto max-w-[220px] object-contain"
               />
             ) : (
-              <PaperMonogram />
+              <Image
+                src={DEFAULT_WORDMARK}
+                alt={brand.name}
+                width={150}
+                height={41}
+                unoptimized
+                className="h-9 w-auto"
+              />
             )}
-            <div>
-              <p className="qp-ink text-[18px] font-semibold leading-tight">{brand.name}</p>
-              {brand.tagline && <p className="qp-ink-2 mt-0.5 text-[12px]">{brand.tagline}</p>}
-            </div>
+            <p className="qp-ink-2 text-[12px] leading-snug">
+              <span className="qp-ink font-semibold">{brand.name}</span>
+              {brand.tagline ? ` · ${brand.tagline}` : ''}
+            </p>
           </div>
 
           <div className="text-end">
