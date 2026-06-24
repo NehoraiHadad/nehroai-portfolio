@@ -34,6 +34,18 @@ export async function generateQuotePdf(opts: {
       timeout: 30000,
     });
 
+    // Block until every declared @font-face (incl. the Rubik Hebrew subset) is
+    // loaded AND laid out. networkidle0 alone is NOT enough: next/font ships
+    // Rubik with `display: swap`, so Chromium paints the fallback immediately
+    // and substitutes the real glyphs later — and may report the page idle
+    // mid-swap. On Vercel's chromium-min there is no system Hebrew fallback, so
+    // any Hebrew glyph captured during that swap window drops to chromium-min's
+    // minimal fallback (which lacks U+05F4 gershayim → tofu). Awaiting
+    // document.fonts.ready closes that race for ALL glyphs, not just סה״כ.
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
     // Renders in @media print — shared globals.css print styles apply.
     const pdf = await page.pdf({
       format: 'A4',
