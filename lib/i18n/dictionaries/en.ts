@@ -559,6 +559,7 @@ export const enDictionary: AppDictionary = {
       from: 'From',
       validUntil: 'Valid until',
       project: 'Project',
+      details: 'Quote details',
       terms: 'Terms',
       termsPlaceholder: 'Payment terms and notes will appear here.',
       quoteNumber: 'Quote no.',

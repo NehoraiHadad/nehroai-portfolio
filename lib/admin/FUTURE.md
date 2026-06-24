@@ -18,9 +18,9 @@ the Settings → "Coming soon" panel.
 - **Client portal** — clients see their own quotes/history.
 - **Audit log** — who changed what, when.
 - **File storage / logo upload (Vercel Blob)** — today the brand logo is a URL
-  string (`BrandProfile.logoUrl`); the document falls back to the bundled dark
-  Nehorai wordmark (`/brand/wordmark-dark.svg`) when it is empty. To allow a real
-  uploaded logo (and later, attaching supporting docs):
+  string (`BrandProfile.logoUrl`); the document falls back to the bundled Nehorai
+  monogram for light surfaces (`/brand/monogram-light.svg`) when it is empty. To
+  allow a real uploaded logo (and later, attaching supporting docs):
   1. `pnpm add @vercel/blob`; the Vercel project already provisions a
      `BLOB_READ_WRITE_TOKEN` once a Blob store is created in the dashboard.
   2. Add a Server Action `uploadBrandLogoAction(formData)` next to

@@ -336,6 +336,7 @@ export interface AdminDictionary {
     from: string;
     validUntil: string;
     project: string;
+    details: string;
     terms: string;
     termsPlaceholder: string;
     quoteNumber: string;

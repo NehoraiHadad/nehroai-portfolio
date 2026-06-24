@@ -559,6 +559,7 @@ export const heDictionary: AppDictionary = {
       from: 'מאת',
       validUntil: 'בתוקף עד',
       project: 'פרויקט',
+      details: 'פרטי הצעה',
       terms: 'תנאים',
       termsPlaceholder: 'תנאי תשלום והערות יופיעו כאן.',
       quoteNumber: 'הצעה מס׳',

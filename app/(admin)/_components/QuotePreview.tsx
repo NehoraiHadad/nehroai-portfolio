@@ -11,9 +11,9 @@ import type { QuoteDoc, BrandProfile } from '@/lib/admin/types';
 // the Rubik stack via .quote-paper--he.
 //
 // Brand mark: a custom brand.logoUrl wins; otherwise the document falls back to
-// the dark Nehorai wordmark shipped in /public/brand (the dark-ink variant reads
-// on the white sheet — the monogram variants are built for dark surfaces).
-const DEFAULT_WORDMARK = '/brand/wordmark-dark.svg';
+// the Nehorai monogram built for light surfaces (/brand/monogram-light.svg — a
+// dark-navy N that reads on the white sheet; the plain monogram is for dark UI).
+const DEFAULT_MARK = '/brand/monogram-light.svg';
 
 export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandProfile }) {
   const { admin } = useDictionary();
@@ -42,47 +42,46 @@ export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandPr
       <div className="quote-paper__bar" aria-hidden="true" />
 
       <div className="quote-paper__body">
-        {/* Letterhead — brand ⟷ document title + number + status */}
-        <header className="flex flex-wrap items-start justify-between gap-6">
-          <div className="flex flex-col gap-2.5">
+        {/* Letterhead — brand ⟷ document title + number */}
+        <header className="flex flex-wrap items-center justify-between gap-6">
+          <div className="flex items-center gap-3.5">
             {brand.logoUrl ? (
               <Image
                 src={brand.logoUrl}
                 alt={brand.name}
-                width={220}
-                height={56}
+                width={200}
+                height={48}
                 unoptimized
-                className="h-12 w-auto max-w-[220px] object-contain"
+                className="h-12 w-auto max-w-[200px] object-contain"
               />
             ) : (
               <Image
-                src={DEFAULT_WORDMARK}
+                src={DEFAULT_MARK}
                 alt={brand.name}
-                width={150}
-                height={41}
+                width={48}
+                height={48}
                 unoptimized
-                className="h-9 w-auto"
+                className="h-12 w-12 object-contain"
               />
             )}
-            <p className="qp-ink-2 text-[12px] leading-snug">
-              <span className="qp-ink font-semibold">{brand.name}</span>
-              {brand.tagline ? ` · ${brand.tagline}` : ''}
-            </p>
+            <div>
+              <p className="qp-ink text-[17px] font-semibold leading-tight">{brand.name}</p>
+              {brand.tagline && <p className="qp-ink-2 mt-0.5 text-[12px]">{brand.tagline}</p>}
+            </div>
           </div>
 
           <div className="text-end">
             <p className="qp-eyebrow">{p.title}</p>
-            <p className="qp-ink admin-num mt-1 font-mono text-[20px] font-semibold">{quote.number}</p>
-            <div className="mt-2 flex justify-end">
-              <span className={`qp-status qp-status--${quote.status}`}>{admin.status[quote.status]}</span>
-            </div>
+            <p className="qp-ink admin-num mt-1 font-mono text-[22px] font-semibold">{quote.number}</p>
           </div>
         </header>
 
-        {/* Meta strip — prepared-for ⟷ issued ⟷ valid until */}
-        <div className="qp-card mt-8 grid gap-6 p-5 sm:grid-cols-[1.5fr_1fr_1fr]">
+        <div className="qp-divide mt-7" />
+
+        {/* Info band — who it's for ⟷ quote details (balanced two columns) */}
+        <div className="qp-card mt-7 grid gap-x-10 gap-y-6 p-5 sm:grid-cols-2">
           <section>
-            <p className="qp-eyebrow mb-1.5">{p.quoteFor}</p>
+            <p className="qp-eyebrow mb-2">{p.quoteFor}</p>
             <p className="qp-ink text-[15px] font-semibold">{quote.client.name || '—'}</p>
             {quote.client.company && <p className="qp-ink-1 text-[13px]">{quote.client.company}</p>}
             {quote.client.email && <p className="qp-ink-1 text-[13px]">{quote.client.email}</p>}
@@ -98,16 +97,28 @@ export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandPr
             )}
             {quote.client.address && <p className="qp-ink-2 text-[12px]">{quote.client.address}</p>}
           </section>
+
           <section>
-            <p className="qp-eyebrow mb-1.5">{p.date}</p>
-            <p className="qp-ink admin-num text-[14px]">{fmtDate(quote.createdAt)}</p>
+            <p className="qp-eyebrow mb-2">{p.details}</p>
+            <dl className="space-y-2">
+              <div className="flex items-center justify-between gap-4">
+                <dt className="qp-ink-2 text-[12px]">{b.quoteStatus}</dt>
+                <dd>
+                  <span className={`qp-status qp-status--${quote.status}`}>{admin.status[quote.status]}</span>
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="qp-ink-2 text-[12px]">{p.date}</dt>
+                <dd className="qp-ink admin-num text-[13px]">{fmtDate(quote.createdAt)}</dd>
+              </div>
+              {quote.validUntil && (
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="qp-ink-2 text-[12px]">{p.validUntil}</dt>
+                  <dd className="qp-ink admin-num text-[13px]">{fmtDate(quote.validUntil)}</dd>
+                </div>
+              )}
+            </dl>
           </section>
-          {quote.validUntil && (
-            <section>
-              <p className="qp-eyebrow mb-1.5">{p.validUntil}</p>
-              <p className="qp-ink admin-num text-[14px]">{fmtDate(quote.validUntil)}</p>
-            </section>
-          )}
         </div>
 
         {/* Project */}
