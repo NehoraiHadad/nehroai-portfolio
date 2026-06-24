@@ -197,7 +197,19 @@ export function QuotePreview({ quote, brand }: { quote: QuoteDoc; brand: BrandPr
               <dd className="qp-ink admin-num">{money(totals.vatTotal)}</dd>
             </div>
             <div className="qp-total flex items-baseline justify-between">
-              <dt className="qp-ink font-mono text-[12px] font-semibold uppercase tracking-[var(--ls-wide)]">
+              {/* The mono + uppercase + letter-spacing "eyebrow" treatment is a
+                  Latin typographic device — these are Tailwind utilities, which
+                  live in @layer utilities and therefore outrank the Hebrew-label
+                  override in @layer components. So we must drop them in markup
+                  (not CSS) for RTL: on Hebrew the Latin mono stack detaches and
+                  drops the gershayim (סה״כ → tofu). Hebrew keeps the Rubik sans. */}
+              <dt
+                className={
+                  he
+                    ? 'qp-ink text-[13px] font-semibold'
+                    : 'qp-ink font-mono text-[12px] font-semibold uppercase tracking-[var(--ls-wide)]'
+                }
+              >
                 {t.total}
               </dt>
               <dd className="qp-amount admin-num text-[20px]">{money(totals.total)}</dd>

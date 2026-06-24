@@ -1269,9 +1269,12 @@ body[data-scene="showcase"] {
      a Latin typographic device. On Hebrew it detaches the gershayim/geresh
      (סה״כ → "סה ״ כ") and falls back to a mono font with poor Hebrew glyphs.
      For RTL documents, render every label run in the Hebrew sans with normal
-     spacing and no uppercasing. Covers eyebrows, table headers, status pills and
-     the totals label — anywhere the Latin label styling is applied. */
-  .quote-paper--he :is(.qp-eyebrow, .qp-table thead th, .qp-status, .qp-total dt) {
+     spacing and no uppercasing. Covers the CSS-class label runs: eyebrows, table
+     headers and status pills. NOTE: the grand-total label can't be fixed here —
+     it carries the same treatment via inline Tailwind utilities (@layer
+     utilities), which outrank this @layer components rule no matter the
+     specificity, so it's handled in QuotePreview markup instead. */
+  .quote-paper--he :is(.qp-eyebrow, .qp-table thead th, .qp-status) {
     font-family: var(--font-sans-he);
     letter-spacing: normal;
     text-transform: none;
