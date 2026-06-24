@@ -21,7 +21,9 @@ import { requireAdmin } from '@/lib/admin/auth';
 import { getQuote } from '@/lib/admin/db/queries';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+// 300s ceiling — generous headroom for Chromium cold starts. Hobby allows up to
+// 300s; Pro up to far more. Real PDF runs are a few seconds; this is only a cap.
+export const maxDuration = 300;
 
 /** Launch Chromium: bundled sparticuz binary on Vercel, local Chrome elsewhere. */
 async function launchBrowser() {
