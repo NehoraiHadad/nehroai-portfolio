@@ -4,7 +4,7 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/admin/auth';
 import { upsertQuote, deleteQuote, shareQuote } from '@/lib/admin/db/queries';
-import { buildShareUrl } from '@/lib/admin/share-url';
+import { buildShareUrl, resolveShareOrigin } from '@/lib/admin/share-url';
 import type { QuoteDoc } from '@/lib/admin/types';
 
 // Server Actions for quote mutations. Each action re-verifies auth independently
@@ -39,10 +39,17 @@ export async function shareQuoteAction(
   if (!quote || !quote.shareToken) {
     throw new Error('Quote not found.');
   }
+  // Share links go to the PUBLIC app origin (PUBLIC_APP_ORIGIN), not this admin
+  // host — admin.* redirects /q/* to the dashboard. The request host is only a
+  // dev fallback (localhost) when PUBLIC_APP_ORIGIN is unset.
   const h = await headers();
   const host = h.get('host') ?? '';
   const proto = h.get('x-forwarded-proto') ?? (host.includes('localhost') ? 'http' : 'https');
-  const url = buildShareUrl(`${proto}://${host}`, quote.shareToken);
+  const origin = resolveShareOrigin(host ? `${proto}://${host}` : null);
+  if (!origin) {
+    throw new Error('Cannot build share link: set PUBLIC_APP_ORIGIN to the public app origin.');
+  }
+  const url = buildShareUrl(origin, quote.shareToken);
   revalidatePath('/admin/quotes');
   revalidatePath(`/admin/quotes/${id}`);
   revalidatePath(`/admin/quotes/${id}/preview`);
