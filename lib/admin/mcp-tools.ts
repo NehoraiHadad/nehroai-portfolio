@@ -25,7 +25,7 @@ import {
   listQuotesByClient,
 } from './db/queries';
 import { buildAndCreateQuote, applyQuotePatch } from './build-quote';
-import { buildShareUrl } from './share-url';
+import { buildShareUrl, resolveShareOrigin } from './share-url';
 import { computeTotals } from './totals';
 import { generateQuotePdf } from './pdf/generate-quote-pdf';
 import {
@@ -395,18 +395,19 @@ export function registerQuoteTools(server: McpServer): void {
           return toolError(`Quote ${args.id} not found.`);
         }
 
-        // Resolve the origin the same way get_quote_pdf does: prefer the value
-        // the MCP route stashed from the real HTTP request, then fall back to
-        // env vars. If none is available, still return the token so the agent
-        // can construct the URL itself or fall back to the HTTP endpoint.
+        // Share links point at the PUBLIC app origin (PUBLIC_APP_ORIGIN) where
+        // /q/<token> is served — never the admin host. The origin the MCP route
+        // stashed from the real HTTP request is only a dev fallback. (We do NOT
+        // fall back to AUTH_URL — that's the admin subdomain, whose proxy bounces
+        // /q/* to the dashboard.)
         const stashedOrigin = extra.authInfo?.extra?.origin as string | undefined;
-        const origin = stashedOrigin ?? process.env.AUTH_URL ?? process.env.APP_URL;
+        const origin = resolveShareOrigin(stashedOrigin ?? null);
         if (!origin) {
           return toolError(
             'Quote shared (token: ' +
               quote.shareToken +
-              ') but could not determine the app origin to build the full URL. ' +
-              'Set APP_URL=https://your-domain.com in your environment variables, or use the ' +
+              ') but could not determine the public app origin to build the full URL. ' +
+              'Set PUBLIC_APP_ORIGIN=https://your-public-host in your environment variables, or use the ' +
               'HTTP endpoint POST /api/admin/v1/quotes/' +
               args.id +
               '/share which returns the full URL.',

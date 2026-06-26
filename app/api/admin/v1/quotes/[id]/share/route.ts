@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 
 import { getPublicOrigin } from 'mcp-handler';
 import { shareQuote } from '@/lib/admin/db/queries';
-import { buildShareUrl } from '@/lib/admin/share-url';
+import { buildShareUrl, resolveShareOrigin } from '@/lib/admin/share-url';
 import { authed, json, notFound, internal } from '../../../_lib/respond';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -19,7 +19,11 @@ export async function POST(req: Request, ctx: Ctx): Promise<Response> {
   try {
     const quote = await shareQuote(identity.ownerEmail, id);
     if (!quote || !quote.shareToken) return notFound();
-    const url = buildShareUrl(getPublicOrigin(req), quote.shareToken);
+    // PUBLIC_APP_ORIGIN is the source of truth; the request origin is only a
+    // dev fallback. Both resolve to the public host that serves /q/<token>.
+    const origin = resolveShareOrigin(getPublicOrigin(req));
+    if (!origin) return internal(new Error('PUBLIC_APP_ORIGIN is not configured.'));
+    const url = buildShareUrl(origin, quote.shareToken);
     return json({ url, quote });
   } catch (err) {
     return internal(err);
