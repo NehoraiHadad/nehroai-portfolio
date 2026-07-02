@@ -147,6 +147,8 @@ export const enDictionary: AppDictionary = {
     matrixMessage: 'Wake up, Neo... The Matrix has you.',
     analyzingMessage: '> Orchestrator: Analyzing intent...',
     routingMessage: '> Orchestrator: Routing to {agentName}...',
+    errorMessage:
+      "I couldn't reach the assistant service just now. Please try again in a moment — or email nehorai.hadad@gmail.com directly.",
     inputPlaceholder: 'Ask the orchestrator...',
     matrixInputPlaceholder: 'Enter command...',
     agentNames: {

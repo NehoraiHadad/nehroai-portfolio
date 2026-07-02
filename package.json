@@ -12,13 +12,16 @@
     "db:studio": "drizzle-kit studio",
     "token:create": "tsx scripts/create-token.ts",
     "token:revoke": "tsx scripts/revoke-token.ts",
-    "skill:sync": "tsx scripts/sync-skill.ts"
+    "skill:sync": "tsx scripts/sync-skill.ts",
+    "eval:agent": "tsx scripts/eval-agent-retrieval.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@neondatabase/serverless": "^1.1.0",
     "@sparticuz/chromium-min": "149.0.0",
     "@xyflow/react": "^12.10.1",
+    "ai": "^7.0.9",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^0.546.0",
     "mcp-handler": "^1.1.0",

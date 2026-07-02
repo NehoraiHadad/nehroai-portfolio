@@ -172,6 +172,8 @@ export interface AppDictionary {
     matrixMessage: string;
     analyzingMessage: string;
     routingMessage: string;
+    /** Agent-bubble fallback when the portfolio-chat API fails or is unreachable. */
+    errorMessage: string;
     inputPlaceholder: string;
     matrixInputPlaceholder: string;
     agentNames: {

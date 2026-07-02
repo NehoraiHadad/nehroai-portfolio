@@ -147,6 +147,8 @@ export const heDictionary: AppDictionary = {
     matrixMessage: 'תתעורר, Neo... ה-Matrix מחזיקה בך.',
     analyzingMessage: '> Orchestrator: מנתח כוונה...',
     routingMessage: '> Orchestrator: מנתב אל {agentName}...',
+    errorMessage:
+      'לא הצלחתי להתחבר לשירות העוזר כרגע. נסו שוב עוד רגע — או כתבו ישירות ל-nehorai.hadad@gmail.com.',
     inputPlaceholder: 'שאל את ה-Orchestrator...',
     matrixInputPlaceholder: 'הכנס פקודה...',
     agentNames: {

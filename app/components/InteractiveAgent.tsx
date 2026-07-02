@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { Send, Terminal, Cpu, Bot, X } from 'lucide-react';
-import { useDictionary, useDirection } from '@/lib/i18n/provider';
+import { useDictionary, useDirection, useLocale } from '@/lib/i18n/provider';
 import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 import { TerminalFrame } from '@/app/components/TerminalFrame';
 import { EASE_OUT } from '@/lib/motion';
@@ -13,6 +13,10 @@ interface Message {
   type: 'user' | 'agent' | 'system';
   content: string;
   agentName?: string;
+  /** True for answers streamed from the API — rendered directly (the network
+   * stream is the typing effect) instead of through JitteredTyping, which
+   * restarts its timers whenever `text` changes. */
+  live?: boolean;
 }
 
 // 3.8: Jittered per-character typewriter for agent message streaming.
@@ -66,6 +70,7 @@ const JitteredTyping = ({
 export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => {
   const { assistant, a11y, dossier } = useDictionary();
   const direction = useDirection();
+  const locale = useLocale();
   const prefersReduced = usePrefersReducedMotion();
   const titleId = useId();
   const messageIdRef = useRef(assistant.initialMessages.length);
@@ -79,6 +84,10 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
   const [isTyping, setIsTyping] = useState(false);
   const [matrixMode, setMatrixMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Abort an in-flight answer stream when the chat unmounts (mobile modal close).
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -97,8 +106,11 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
   };
 
   const normalizeInput = (value: string) => value.toLocaleLowerCase().trim();
-  const includesAnyKeyword = (value: string, keywords: string[]) =>
-    keywords.some((keyword) => value.includes(normalizeInput(keyword)));
+  // Commands match on EXACT input only (post-trim/lowercase). Substring matching
+  // ("clearly" → /clear, Hebrew "חיים" → CV download) would hijack natural
+  // questions that should reach the real agent API.
+  const matchesCommand = (value: string, keywords: string[]) =>
+    keywords.some((keyword) => value === normalizeInput(keyword));
   const inputDirection = inputValue.trim() ? 'auto' : direction;
 
   const handleSend = async (text: string) => {
@@ -111,7 +123,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
 
     const normalizedText = normalizeInput(text);
     
-    if (includesAnyKeyword(normalizedText, assistant.intentKeywords.commands.clear)) {
+    if (matchesCommand(normalizedText, assistant.intentKeywords.commands.clear)) {
       setTimeout(() => {
         setMatrixMode(false);
         setMessages([
@@ -122,7 +134,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       return;
     }
 
-    if (includesAnyKeyword(normalizedText, assistant.intentKeywords.commands.help)) {
+    if (matchesCommand(normalizedText, assistant.intentKeywords.commands.help)) {
       setTimeout(() => {
         setMessages(prev => [...prev, { 
           id: nextMessageId(), 
@@ -134,7 +146,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       return;
     }
 
-    if (includesAnyKeyword(normalizedText, assistant.intentKeywords.commands.download)) {
+    if (matchesCommand(normalizedText, assistant.intentKeywords.commands.download)) {
       setTimeout(() => {
         setMessages(prev => [...prev, {
           id: nextMessageId(),
@@ -154,7 +166,7 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       return;
     }
 
-    if (includesAnyKeyword(normalizedText, assistant.intentKeywords.commands.matrix)) {
+    if (matchesCommand(normalizedText, assistant.intentKeywords.commands.matrix)) {
       setTimeout(() => {
         setMatrixMode(true);
         setMessages(prev => [...prev, { 
@@ -167,38 +179,73 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
       return;
     }
 
-    // Simulate Agentic Workflow
-    setTimeout(() => {
-      setMessages(prev => [...prev, { id: `${nextMessageId()}-sys1`, type: 'system', content: assistant.analyzingMessage }]);
-    }, 600);
+    // Real agent call — POST the conversation window to /api/portfolio-chat and
+    // render the streamed answer as it arrives (the stream is the typing effect).
+    setMessages(prev => [...prev, { id: `${nextMessageId()}-sys1`, type: 'system', content: assistant.analyzingMessage }]);
 
-    setTimeout(() => {
-      let agentName = assistant.agentNames.portfolio;
-      let response = assistant.responses.default;
+    const agentName = assistant.agentNames.portfolio;
+    const history = [
+      ...messages
+        .filter((msg) => msg.type === 'user' || msg.type === 'agent')
+        .map((msg) => ({
+          role: msg.type === 'user' ? ('user' as const) : ('assistant' as const),
+          // Server caps each message at 8000 chars — truncate instead of letting
+          // a long JD paste 400 and dead-end the recruiter flow.
+          content: msg.content.slice(0, 8000),
+        })),
+      { role: 'user' as const, content: text.slice(0, 8000) },
+    ].slice(-10);
 
-      if (includesAnyKeyword(normalizedText, assistant.intentKeywords.routing.showcase)) {
-        agentName = assistant.agentNames.showcase;
-        response = assistant.responses.showcase;
-      } else if (includesAnyKeyword(normalizedText, assistant.intentKeywords.routing.tech)) {
-        agentName = assistant.agentNames.tech;
-        response = assistant.responses.tech;
-      } else if (includesAnyKeyword(normalizedText, assistant.intentKeywords.routing.contact)) {
-        agentName = assistant.agentNames.contact;
-        response = assistant.responses.contact;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    let answerId: string | null = null;
+    let received = '';
+    try {
+      const res = await fetch('/api/portfolio-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history, locale }),
+        signal: controller.signal,
+      });
+      if (!res.ok || !res.body) throw new Error(`portfolio-chat responded ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += decoder.decode(value, { stream: true });
+        const snapshot = received;
+        if (answerId === null) {
+          const routingId = `${nextMessageId()}-sys2`;
+          answerId = `${nextMessageId()}-ans`;
+          const createdId = answerId;
+          setMessages(prev => [
+            ...prev,
+            { id: routingId, type: 'system', content: assistant.routingMessage.replace('{agentName}', agentName) },
+            { id: createdId, type: 'agent', agentName, content: snapshot, live: true },
+          ]);
+        } else {
+          const targetId = answerId;
+          setMessages(prev => prev.map(msg => (msg.id === targetId ? { ...msg, content: snapshot } : msg)));
+        }
       }
-
-      setMessages(prev => [...prev, {
-        id: `${nextMessageId()}-sys2`,
-        type: 'system',
-        content: assistant.routingMessage.replace('{agentName}', agentName),
-      }]);
-      
-      setTimeout(() => {
-        setIsTyping(false);
-        setMessages(prev => [...prev, { id: `${nextMessageId()}-ans`, type: 'agent', agentName, content: response }]);
-      }, 1000);
-
-    }, 1500);
+      if (!received.trim()) throw new Error('portfolio-chat returned an empty answer');
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
+      // Keep any partial answer; only show the fallback when nothing arrived.
+      if (!received.trim()) {
+        setMessages(prev => [
+          ...prev,
+          { id: `${nextMessageId()}-err`, type: 'agent', agentName, content: assistant.errorMessage, live: true },
+        ]);
+      }
+    } finally {
+      if (abortRef.current === controller) abortRef.current = null;
+      if (!controller.signal.aborted) setIsTyping(false);
+    }
   };
 
   // Custom header for InteractiveAgent — token-driven via [data-matrix] on the panel root.
@@ -294,8 +341,10 @@ export const InteractiveAgent = ({ onClose }: { onClose?: () => void } = {}) => 
                       {msg.agentName}
                     </div>
                   )}
-                  {/* 3.8: jittered typing on agent messages; user/system render directly */}
-                  {msg.type === 'agent' ? (
+                  {/* 3.8: jittered typing on seeded agent messages; live (streamed) answers
+                      render directly — the network stream is the typing effect, and
+                      JitteredTyping restarts whenever its text prop changes. */}
+                  {msg.type === 'agent' && !msg.live ? (
                     <p className="text-sm leading-relaxed bidi-plaintext" dir="auto">
                       <JitteredTyping text={msg.content} reduced={prefersReduced} />
                     </p>

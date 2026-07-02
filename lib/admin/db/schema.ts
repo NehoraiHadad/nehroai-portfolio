@@ -108,6 +108,21 @@ export const clients = pgTable(
   (t) => [index('clients_owner_updated_idx').on(t.ownerEmail, t.updatedAt)],
 );
 
+// Fixed-window rate limiting for the public portfolio chat (/api/portfolio-chat).
+// Persisted in Neon because in-memory counters don't survive across Vercel
+// serverless instances. One row per (hashed IP, minute window); the route
+// upserts with count+1 and rejects past the per-window cap. Rows are pruned
+// opportunistically by the route — no scheduled job needed.
+export const chatRateLimits = pgTable(
+  'chat_rate_limits',
+  {
+    ipHash: text('ip_hash').notNull(),
+    windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
+    count: integer('count').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.ipHash, t.windowStart] })],
+);
+
 // Hashed agent API tokens for non-interactive (machine/agent) auth. Owner-scoped
 // like everything else — one admin can never see or revoke another's tokens. The
 // plaintext token is generated once, returned once, and never stored. Only the
